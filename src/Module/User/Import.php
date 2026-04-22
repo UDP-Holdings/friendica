@@ -201,14 +201,26 @@ class Import extends \Friendica\BaseModule
 		5. send message to dfrn contacts
 		*/
 
-		$available_memory = Strings::getBytesFromShorthand(ini_get('memory_limit'));
-		$available_memory = $available_memory > 0 ? ($available_memory / 2) : self::MEMORY_LIMIT;
-		if ($file['size'] > $available_memory) {
-			$this->systemMessages->addNotice($this->t('Account file size is too high'));
+		// The account export is a single JSON object.
+		// The full backup export uses newline-delimited JSON: the first line is the
+		// account record (identical in structure to the account export) and subsequent
+		// lines are batches of post items.  Read only the first line so that large
+		// backup files do not exhaust available memory.
+		$handle = fopen($file['tmp_name'], 'r');
+		if ($handle === false) {
+			$this->systemMessages->addNotice($this->t('Error reading account file'));
+			return;
+		}
+		$firstLine   = fgets($handle);
+		$hasItemData = !feof($handle);
+		fclose($handle);
+
+		if ($firstLine === false || trim($firstLine) === '') {
+			$this->systemMessages->addNotice($this->t('Error decoding account file'));
 			return;
 		}
 
-		$account = json_decode(file_get_contents($file['tmp_name']), true);
+		$account = json_decode($firstLine, true);
 		if ($account === null) {
 			$this->systemMessages->addNotice($this->t('Error decoding account file'));
 			return;
@@ -421,6 +433,10 @@ class Import extends \Friendica\BaseModule
 
 		// send relocate messages
 		Worker::add(Worker::PRIORITY_HIGH, 'Notifier', Delivery::RELOCATION, $newUid);
+
+		if ($hasItemData) {
+			$this->systemMessages->addInfo($this->t('Post history was not imported. In a federated network, posts remain associated with the server where they were created.'));
+		}
 
 		$this->systemMessages->addInfo($this->t('Done. You can now login with your username and password'));
 		$this->baseUrl->redirect('login');
