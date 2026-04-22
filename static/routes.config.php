@@ -641,9 +641,10 @@ return [
 			'/photo[/new]'       => [Module\Settings\Profile\Photo\Index::class, [R::GET, R::POST]],
 			'/photo/crop/{guid}' => [Module\Settings\Profile\Photo\Crop::class,  [R::GET, R::POST]],
 		],
-		'/removeme'              => [Module\Settings\RemoveMe::class,              [R::GET, R::POST]],
-		'/userexport[/{action}]' => [Module\Settings\UserExport::class,            [R::GET         ]],
-		'/2fa'                   => [
+		'/removeme'                    => [Module\Settings\RemoveMe::class,              [R::GET, R::POST]],
+		'/data-portability[/{action}]' => [Module\Settings\DataPortability::class,  [R::GET, R::POST]],
+		'/userexport[/{action}]'       => [Module\Settings\UserExport::class,       [R::GET         ]],
+		'/2fa'                         => [
 			'[/]'           => [Module\Settings\TwoFactor\Index::class,       [R::GET, R::POST]],
 			'/recovery'     => [Module\Settings\TwoFactor\Recovery::class,    [R::GET, R::POST]],
 			'/app_specific' => [Module\Settings\TwoFactor\AppSpecific::class, [R::GET, R::POST]],
