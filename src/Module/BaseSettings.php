@@ -168,6 +168,14 @@ class BaseSettings extends BaseModule
 			'accesskey' => 'e',
 		];
 
+		// UDP: Data Portability — export/import media ZIPs, full account exports
+		$tabs[] = [
+			'label'     => $this->t('Data Portability'),
+			'url'       => 'settings/data-portability',
+			'selected'  => static::class == Settings\DataPortability::class ? 'active' : '',
+			'accesskey' => '',
+		];
+
 		$tabs[] = [
 			'label'     => $this->t('Remove account'),
 			'url'       => 'settings/removeme',
