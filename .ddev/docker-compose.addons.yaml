@@ -1,0 +1,4 @@
+services:
+  web:
+    volumes:
+      - ../friendica-addons:/var/www/friendica-addons:cached
