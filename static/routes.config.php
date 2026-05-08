@@ -158,7 +158,7 @@ $apiRoutes = [
 ];
 
 return [
-	'/' => [Module\Home::class, [R::GET]],
+	'/' => [Module\UdpHome::class, [R::GET]], // UDP: redirect logged-in users to /feed
 
 	'/.well-known' => [
 		'/nodeinfo'       => [Module\WellKnown\NodeInfo::class,     [R::GET]],
@@ -656,10 +656,17 @@ return [
 	'/stats'         => [Module\Stats::class, [R::GET]],
 	'/stats/caching' => [Module\StatsCaching::class, [R::GET]],
 
+	// UDP: unified feed merging /network + local community posts
+	// NOTE: '/feed' is in BACKEND_MODULES (Mode.php) — it skips session auth. Use '/timeline' instead.
+	'/timeline' => [Module\Conversation\UdpFeed::class, [R::GET]],
+
+	'/udp/directory' => [Module\Udp\DirectoryEndpoint::class, [R::GET]],  // UDP: inter-node directory API
+	'/udp/pair'      => [Module\Udp\PairEndpoint::class,      [R::POST]], // UDP: inter-node pairing handshake
+
 	'/network' => [
-		'[/{content}]'                                                  => [Module\Conversation\Network::class, [R::GET]],
-		'/archive/{from:\d\d\d\d-\d\d-\d\d}[/{to:\d\d\d\d\-\d\d-\d\d}]' => [Module\Conversation\Network::class, [R::GET]],
-		'/circle/{circle_id:\d+}'                                       => [Module\Conversation\Network::class, [R::GET]],
+		'[/{content}]'                => [Module\Conversation\UdpNetwork::class, [R::GET]], // UDP: adds feed toggle
+		'/archive/{from:\d\d\d\d-\d\d-\d\d}[/{to:\d\d\d\d-\d\d-\d\d}]' => [Module\Conversation\Network::class, [R::GET]],
+		'/circle/{circle_id:\d+}'     => [Module\Conversation\Network::class, [R::GET]],
 	],
 
 	'/randprof'        => [Module\RandomProfile::class,         [R::GET]],
