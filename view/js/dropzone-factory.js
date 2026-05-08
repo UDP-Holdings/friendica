@@ -7,10 +7,16 @@ var DzFactory = function (max_imagesize) {
 	this.createDropzone = function(dropSelector, textareaElementId) {
 		return new Dropzone(dropSelector, {
 			paramName: 'userfile', // The name that will be used to transfer the file
-			maxFilesize: max_imagesize, // MB
+			maxFilesize: max_imagesize, // MB — overridden per file-type in the processing event
 			url: '/media/photo/upload?album=',
 			acceptedFiles: 'image/*,video/*,audio/*,application/*',
 			clickable: true,
+			// UDP: chunked upload for non-image files (video, audio, attachments)
+			chunking: false,              // toggled on per-file in the processing event
+			chunkSize: 50 * 1024 * 1024, // 50 MB per HTTP request
+			retryChunks: true,
+			retryChunksLimit: 3,
+			parallelChunkUploads: false,  // sequential chunks simplify server-side assembly
 			dictDefaultMessage: dzStrings.dictDefaultMessage,
 			dictFallbackMessage: dzStrings.dictFallbackMessage,
 			dictFallbackText: dzStrings.dictFallbackText,
@@ -33,10 +39,18 @@ var DzFactory = function (max_imagesize) {
 				this.on("processing", function(file) {
 					switch(file.type) {
 						case String(file.type.match(/image\/.*/)):
-							this.options.url = "/media/photo/upload?album=";
+							// Images: non-chunked, existing photo endpoint
+							this.options.url       = "/media/photo/upload?album=";
+							this.options.chunking  = false;
+							this.options.maxFilesize = max_imagesize;
 							break;
 						default:
-							this.options.url = "/media/attachment/upload?response=json";
+							// Video/audio/attachments: chunked, 50 MB per request
+							// maxFilesize here is the total file size limit (client-side UX only);
+							// server enforces system.maxfilesize independently.
+							this.options.url         = "/media/attachment/upload/chunk";
+							this.options.chunking    = true;
+							this.options.maxFilesize = 2048; // 2 GB client-side ceiling
 					}
 				});
 				this.on('success', function(file, serverResponse) {

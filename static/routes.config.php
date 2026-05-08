@@ -488,8 +488,9 @@ return [
 	'/friendica.webmanifest' => [Module\Manifest::class,     [R::GET]],
 
 	'/media' => [
-		'/attachment/browser'      => [Module\Media\Attachment\Browser::class, [R::GET]],
-		'/attachment/upload'       => [Module\Media\Attachment\Upload::class,  [       R::POST]],
+		'/attachment/browser'       => [Module\Media\Attachment\Browser::class,      [R::GET]],
+		'/attachment/upload'        => [Module\Media\Attachment\Upload::class,       [       R::POST]],
+		'/attachment/upload/chunk'  => [Module\Media\Attachment\UploadChunk::class,  [       R::POST]],
 		'/photo/browser[/{album}]' => [Module\Media\Photo\Browser::class,      [R::GET]],
 		'/photo/upload'            => [Module\Media\Photo\Upload::class,       [       R::POST]],
 	],
