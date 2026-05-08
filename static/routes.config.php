@@ -415,8 +415,8 @@ return [
 	'/delegation'               => [Module\User\Delegation::class,  [R::GET, R::POST]],
 	'/dfrn_notify[/{nickname}]' => [Module\DFRN\Notify::class,      [        R::POST]],
 	'/dfrn_poll/{nickname}'     => [Module\Feed::class,            [R::GET]],
-	'/dirfind'                  => [Module\Search\Directory::class, [R::GET]],
-	'/directory'                => [Module\Directory::class,        [R::GET]],
+	'/dirfind'                  => [Module\Search\Directory::class,  [R::GET]],
+	'/directory'                => [Module\Udp\Directory::class,    [R::GET]], // UDP: cross-node directory
 
 	'/display/{guid}'                                        => [Module\Item\Display::class, [R::GET]],
 	'/display/feed-item/{uri-id}[.atom]'                     => [Module\Item\Feed::class,    [R::GET]],
@@ -457,7 +457,7 @@ return [
 	],
 	'/hashtag'                    => [Module\Hashtag::class,           [R::GET]],
 	'/help[/{doc:.+}]'            => [Module\Help::class,              [R::GET]],
-	'/home'                       => [Module\Home::class,              [R::GET]],
+	'/home'                       => [Module\UdpHome::class,           [R::GET]], // UDP: redirect logged-in users to /feed
 	'/hcard/{profile}[/{action}]' => [Module\HCard::class,             [R::GET]],
 	'/inbox[/{nickname}]'         => [Module\ActivityPub\Inbox::class, [R::GET, R::POST]],
 	'/invite'                     => [Module\Invite::class,            [R::GET, R::POST]],
