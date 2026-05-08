@@ -109,12 +109,15 @@ class BaseSettings extends BaseModule
 			'accesskey' => 'i',
 		];
 
-		$tabs[] = [
-			'label'     => $this->t('Channels'),
-			'url'       => 'settings/channels',
-			'selected'  => static::class == Settings\Channels::class ? 'active' : '',
-			'accesskey' => '',
-		];
+		// UDP: Hide Channels settings tab when Channels feature is disabled system-wide
+		if (Feature::isEnabled($this->session->getLocalUserId(), Feature::CHANNELS)) {
+			$tabs[] = [
+				'label'     => $this->t('Channels'),
+				'url'       => 'settings/channels',
+				'selected'  => static::class == Settings\Channels::class ? 'active' : '',
+				'accesskey' => '',
+			];
+		}
 
 		$tabs[] = [
 			'label'     => $this->t('Social Networks'),
