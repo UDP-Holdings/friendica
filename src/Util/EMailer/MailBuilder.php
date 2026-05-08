@@ -243,7 +243,7 @@ abstract class MailBuilder
 			// load the template for private message notifications
 			$tpl     = Renderer::getMarkupTemplate('email/html.tpl');
 			$msgHtml = Renderer::replaceMacros($tpl, [
-				'$title'       => $this->l10n->t('Friendica Notification'),
+				'$title'       => $this->config->get('system', 'network_name', 'Friendica') . ' ' . $this->l10n->t('Notification'),
 				'$product'     => App::PLATFORM,
 				'$htmlversion' => $msgHtml,
 				'$sitename'    => $this->config->get('config', 'sitename'),

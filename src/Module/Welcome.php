@@ -19,7 +19,8 @@ class Welcome extends BaseModule
 	protected function content(array $request = []): string
 	{
 		$config             = DI::config();
-		DI::page()['title'] = DI::l10n()->t('Welcome to Friendica');
+		$sitename           = $config->get('system', 'sitename', 'Friendica');
+		DI::page()['title'] = DI::l10n()->t('Welcome to %s', $sitename);
 
 		$mail_disabled = ((function_exists('imap_open') &&
 							 (!$config->get('system', 'imap_disabled'))));
@@ -28,12 +29,12 @@ class Welcome extends BaseModule
 		$tpl = Renderer::getMarkupTemplate('welcome.tpl');
 
 		return Renderer::replaceMacros($tpl, [
-			'$welcome'     => DI::l10n()->t('Welcome to Friendica'),
+			'$welcome'     => DI::l10n()->t('Welcome to %s', $sitename),
 			'$checklist'   => DI::l10n()->t('New Member Checklist'),
 			'$description' => DI::l10n()->t('We would like to offer some tips and links to help make your experience enjoyable. Click any item to visit the relevant page. A link to this page will be visible from your home page for two weeks after your initial registration and then will quietly disappear.'),
 
 			'$started'          => DI::l10n()->t('Getting Started'),
-			'$walkthrough_link' => DI::l10n()->t('Friendica Walk-Through'),
+			'$walkthrough_link' => DI::l10n()->t('Network Walk-Through'),
 			'$walkthrough_txt'  => DI::l10n()->t('Complete the walk-through to get a quick overview of your profile and network tabs, establish new connections and find groups to join.'),
 
 			'$settings'       => DI::l10n()->t('Settings'),
@@ -65,7 +66,7 @@ class Welcome extends BaseModule
 			'$circle_contact_txt'  => DI::l10n()->t('Once you have made some friends, organize them into private conversation circles from the sidebar of your Contacts page and then you can interact with each circle privately on your Network page.'),
 			'$newuser_private'     => $newuser_private,
 			'$private_link'        => DI::l10n()->t('Why Aren\'t My Posts Public?'),
-			'$private_txt'         => DI::l10n()->t('Friendica respects your privacy. By default, your posts will only show up to people you\'ve added as friends. For more information, see the help section from the link above.'),
+			'$private_txt'         => DI::l10n()->t('%s respects your privacy. By default, your posts will only show up to people you\'ve added as friends. For more information, see the help section from the link above.', $sitename),
 
 			'$help'      => DI::l10n()->t('Getting Help'),
 			'$help_link' => DI::l10n()->t('Go to the Help Section'),

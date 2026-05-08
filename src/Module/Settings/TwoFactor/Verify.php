@@ -94,9 +94,9 @@ class Verify extends BaseSettings
 
 		parent::content();
 
-		$company = 'Friendica';
-		$holder  = $this->session->get('my_address');
-		$secret  = $this->pConfig->get($this->session->getLocalUserId(), '2fa', 'secret');
+		$company = \Friendica\DI::config()->get('system', 'network_name', 'Friendica'); // UDP: branding
+		$holder = $this->session->get('my_address');
+		$secret = $this->pConfig->get($this->session->getLocalUserId(), '2fa', 'secret');
 
 		$otpauthUrl = (new Google2FA())->getQRCodeUrl($company, $holder, $secret);
 

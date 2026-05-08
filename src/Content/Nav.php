@@ -109,6 +109,7 @@ class Nav
 			'$sitelocation'         => $nav_info['sitelocation'],
 			'$nav'                  => $nav_info['nav'],
 			'$banner'               => $nav_info['banner'],
+			'$sitename'             => $this->config->get('system', 'sitename', 'Friendica'), // UDP: branding
 			'$emptynotifications'   => $this->l10n->t('Nothing new here'),
 			'$loadingnotifications' => $this->l10n->t('Loading...'),
 			'$userinfo'             => $nav_info['userinfo'],
