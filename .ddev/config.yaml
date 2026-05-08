@@ -5,7 +5,7 @@
 name: my-friendica
 type: php
 docroot: ""
-php_version: "7.4"
+php_version: "8.2"
 webserver_type: apache-fpm
 router_http_port: "80"
 router_https_port: "443"
@@ -18,10 +18,15 @@ database:
 nfs_mount_enabled: false
 mutagen_enabled: false
 use_dns_when_possible: true
-composer_version: "1"
+composer_version: "2"
 web_environment: []
-nodejs_version: "16"
-webimage_extra_packages: [php7.4-gmp]
+nodejs_version: "20"
+webimage_extra_packages: [php8.2-gmp, ffmpeg]
+
+hooks:
+  post-start:
+    - exec: |
+        (crontab -l 2>/dev/null; echo "* * * * * cd /var/www/html && php bin/console.php worker >> /var/log/friendica-worker.log 2>&1") | sort -u | crontab -
 
 # Key features of ddev's config.yaml:
 
