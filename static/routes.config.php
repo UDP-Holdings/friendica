@@ -348,6 +348,8 @@ return [
 		'/themes/{theme}/embed' => [Module\Admin\Themes\Embed::class,   [R::GET, R::POST]],
 
 		'/tos' => [Module\Admin\Tos::class, [R::GET, R::POST]],
+
+		'/node-pair[/{action}]' => [Module\Admin\NodePair::class, [R::GET, R::POST]], // UDP: node pairing UI
 	],
 	'/amcd'              => [Module\AccountManagementControlDocument::class, [R::GET]],
 	'/acctlink'          => [Module\Acctlink::class,     [R::GET]],
