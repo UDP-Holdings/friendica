@@ -16,9 +16,12 @@
 		</div>
 	</form>
 
-	{{* Directory links *}}
-	<div class="side-link" id="side-directory-link"><a href="directory" class="side-link-link">{{$nv.local_directory}}</a></div>
-	<div class="side-link" id="side-directory-link"><a href="{{$nv.global_dir}}" class="side-link-link" target="extlink">{{$nv.directory}}</a></div>
+	{{* Directory links — UDP: single "Directory" link covers local + all paired nodes *}}
+	{{if $nv.global_dir}}
+	<div class="side-link" id="side-directory-link"><a href="{{$nv.global_dir}}" class="side-link-link">Directory</a></div>
+	{{else}}
+	<div class="side-link" id="side-directory-link"><a href="directory" class="side-link-link">Directory</a></div>
+	{{/if}}
 	{{* Additional links *}}
 	<div class="side-link" id="side-match-link"><a href="contact/match" class="side-link-link">{{$nv.similar}}</a></div>
 	<div class="side-link" id="side-suggest-link"><a href="contact/suggestions" class="side-link-link">{{$nv.suggest}}</a></div>
