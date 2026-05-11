@@ -994,7 +994,9 @@ class Media
 
 		if (preg_match_all("/\[audio\]([^\[\]]*)\[\/audio\]$endmatchpattern/ism", $body, $audios, PREG_SET_ORDER)) {
 			foreach ($audios as $audio) {
-				$body = str_replace($audio[0], '', $body);
+				if (!DI::baseUrl()->isLocalUrl($audio[1])) {
+					$body = str_replace($audio[0], '', $body);
+				}
 
 				$attachments[$audio[1]] = ['uri-id' => $uriid, 'type' => self::AUDIO, 'url' => $audio[1]];
 			}
@@ -1002,7 +1004,9 @@ class Media
 
 		if (preg_match_all("/\[video\]([^\[\]]*)\[\/video\]$endmatchpattern/ism", $body, $videos, PREG_SET_ORDER)) {
 			foreach ($videos as $video) {
-				$body = str_replace($video[0], '', $body);
+				if (!DI::baseUrl()->isLocalUrl($video[1])) {
+					$body = str_replace($video[0], '', $body);
+				}
 
 				$attachments[$video[1]] = ['uri-id' => $uriid, 'type' => self::VIDEO, 'url' => $video[1]];
 			}

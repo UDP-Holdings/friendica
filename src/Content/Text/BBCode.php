@@ -37,7 +37,7 @@ use GuzzleHttp\Psr7\Uri;
 class BBCode
 {
 	// Update this value to the current date whenever changes are made to BBCode::convert
-	public const VERSION = '2024-04-07';
+	public const VERSION = '2024-04-07-udp1';
 
 	public const INTERNAL     = 0;
 	public const EXTERNAL     = 1;
@@ -1888,7 +1888,7 @@ class BBCode
 		$text = preg_replace_callback("/\[(video)\](.*?)\[\/video\]/ism", [self::class, 'sanitizeLinksCallback'], $text);
 		$text = preg_replace_callback("/\[(audio)\](.*?)\[\/audio\]/ism", [self::class, 'sanitizeLinksCallback'], $text);
 
-		if ($simple_html == self::NPF) {
+		if (in_array($simple_html, [self::NPF, self::INTERNAL, self::EXTERNAL])) {
 			$text = preg_replace(
 				"/\[video\](.*?)\[\/video\]/ism",
 				'</p><video src="$1" controls width="100%" height="auto">$1</video><p>',
@@ -1896,8 +1896,8 @@ class BBCode
 			);
 			$text = preg_replace(
 				"/\[audio\](.*?)\[\/audio\]/ism",
-				'</p><audio src="$1" controls>$1">$1</audio><p>',
-				$text,
+				'</p><audio src="$1" controls>$1</audio><p>',
+				$text
 			);
 		} else {
 			$text = preg_replace("/\[video\](.*?)\[\/video\]/ism", '[embed]$1[/embed]', $text);
