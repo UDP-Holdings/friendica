@@ -410,7 +410,7 @@
 		// save already existent content
 		var currentText = $("#profile-jot-text").val();
 		//insert the data as new value
-		textfield.value = currentText + data;
+		textfield.value = currentText + (currentText.length > 0 && !currentText.endsWith('\n') ? '\n' : '') + data + '\n';
 		autosize.update($("#profile-jot-text"));
 		formModified = true; // Mark the form as modified
 	}

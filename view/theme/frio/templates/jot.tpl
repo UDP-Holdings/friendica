@@ -127,6 +127,10 @@
 						<li><button type="button" class="hidden-xs btn-link icon italic" style="cursor: pointer;" aria-label="{{$editalic}}" title="{{$editalic}}" onclick="insertFormattingToPost('i');"><i class="fa fa-italic"></i></button></li>
 						<li><button type="button" class="hidden-xs btn-link icon bold" style="cursor: pointer;" aria-label="{{$edbold}}" title="{{$edbold}}" onclick="insertFormattingToPost('b');"><i class="fa fa-bold"></i></button></li>
 						<li><button type="button" class="hidden-xs btn-link icon quote" style="cursor: pointer;" aria-label="{{$edquote}}" title="{{$edquote}}" onclick="insertFormattingToPost('quote');"><i class="fa fa-quote-left"></i></button></li>
+						<li><button type="button" class="hidden-xs btn-link icon emojis" style="cursor: pointer;" aria-label="{{$edemojis}}" title="{{$edemojis}}"><i class="fa fa-smile-o"></i></button></li>
+						<li><button type="button" class="btn-link icon" style="cursor: pointer;" aria-label="{{$edurl}}" title="{{$edurl}}" onclick="insertFormattingToPost('url');"><i class="fa fa-link"></i></button></li>
+						<li><button type="button" class="btn-link" id="profile-attach"  ondragenter="return linkDropper(event);" ondragover="return linkDropper(event);" ondrop="linkDrop(event);" onclick="jotGetLink();" title="{{$edattach}}"><i class="fa fa-paperclip"></i></button></li>
+						<li><label class="btn-link" title="{{$uploadmedia}}" aria-label="{{$uploadmedia}}" style="cursor:pointer;position:relative;overflow:hidden;margin:0;"><i class="fa fa-camera" aria-hidden="true"></i><input type="file" id="profile-upload-media" accept="image/*,video/*,audio/*,application/*" multiple style="position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;"></label></li>
 						<li><button type="button" class="btn-link" id="profile-location" onclick="jotGetLocation();" title="{{$setloc}}"><i class="fa fa-map-marker" aria-hidden="true"></i></button></li>
 						<li><button type="button" class="hidden-xs btn-link icon underline" style="cursor: pointer;" aria-label="{{$contentwarn}}" title="{{$contentwarn}}" onclick="insertFormattingToPost('abstract');"><i class="fa fa-eye"></i></button></li>
 						<li><button type="button" class="hidden-xs btn-link" style="cursor: pointer;" aria-label="{{$edcode}}" title="{{$edcode}}" onclick="insertFormattingToPost('code');"><i class="fa fa-code"></i></button></li>
@@ -172,7 +176,7 @@
 				<div id="jot-fbrowser-wrapper" class="minimize" aria-labelledby="jot-browser-link" role="tabpanel" aria-hidden="true"></div>
 
 			</form>
-			<div id="dz-preview-jot" class="dropzone-preview"></div>
+			<div id="dz-preview-jot" class="dropzone"></div>
 
 			{{if $content}}<script type="text/javascript">initEditor();</script>{{/if}}
 		</div>
@@ -194,5 +198,10 @@ can load different content into the jot modal (e.g. the item edit jot)
 </div>
 
 <script>
-	dzFactory.setupDropzone('#jot-text-wrap', 'profile-jot-text');
+	var dzJot = dzFactory.setupDropzone('#jot-text-wrap', 'profile-jot-text', false, '#dz-preview-jot');
+	document.getElementById('profile-upload-media').addEventListener('change', function() {
+		var files = this.files;
+		for (var i = 0; i < files.length; i++) { dzJot.addFile(files[i]); }
+		this.value = '';
+	});
 </script>
