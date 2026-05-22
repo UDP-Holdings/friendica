@@ -11,8 +11,7 @@ use Friendica\App;
 use Friendica\BaseModule;
 use Friendica\Core\Config\Capability\IManageConfigValues;
 use Friendica\Core\L10n;
-use Friendica\Core\Session\Capability\IHandleUserSessions;
-use Friendica\Core\System;
+use Friendica\Core\Session\Model\UserSession;
 use Friendica\Model\Attach;
 use Friendica\Model\User;
 use Friendica\Module\Response;
@@ -21,11 +20,11 @@ use Psr\Log\LoggerInterface;
 
 class UploadChunk extends BaseModule
 {
-	private IHandleUserSessions $userSession;
+	private UserSession $userSession;
 	private IManageConfigValues $config;
 
 	public function __construct(
-		IHandleUserSessions $userSession,
+		UserSession $userSession,
 		IManageConfigValues $config,
 		L10n $l10n,
 		App\BaseURL $baseUrl,
@@ -45,11 +44,11 @@ class UploadChunk extends BaseModule
 	{
 		$owner = User::getOwnerDataById($this->userSession->getLocalUserId());
 		if (!$owner) {
-			$this->jsonReturn(401, ['error' => 'Not authenticated.']);
+			$this->jsonError(401, ['error' => 'Not authenticated.']);
 		}
 
 		if (empty($_FILES['userfile'])) {
-			$this->jsonReturn(400, ['error' => 'No file chunk received.']);
+			$this->jsonError(400, ['error' => 'No file chunk received.']);
 		}
 
 		// Dropzone chunk metadata
@@ -62,23 +61,23 @@ class UploadChunk extends BaseModule
 		// Sanitize UUID to safe filesystem chars
 		$safeUuid = preg_replace('/[^a-zA-Z0-9\-]/', '', $uuid);
 		if (empty($safeUuid)) {
-			$this->jsonReturn(400, ['error' => 'Invalid upload session ID.']);
+			$this->jsonError(400, ['error' => 'Invalid upload session ID.']);
 		}
 
 		$uploadDir = sys_get_temp_dir() . '/udp_upload_' . $safeUuid;
 		if (!is_dir($uploadDir) && !mkdir($uploadDir, 0700, true)) {
-			$this->jsonReturn(500, ['error' => 'Could not create temporary upload directory.']);
+			$this->jsonError(500, ['error' => 'Could not create temporary upload directory.']);
 		}
 
 		// Write chunk to disk; zero-pad index so glob() sorts numerically
 		$chunkPath = $uploadDir . '/chunk_' . sprintf('%06d', $chunkIndex);
 		if (!move_uploaded_file($_FILES['userfile']['tmp_name'], $chunkPath)) {
-			$this->jsonReturn(500, ['error' => 'Failed to save chunk.']);
+			$this->jsonError(500, ['error' => 'Failed to save chunk.']);
 		}
 
 		// Not the last chunk — acknowledge and wait for the rest
 		if ($chunkIndex < $totalChunks - 1) {
-			$this->jsonReturn(200, ['ok' => true, 'partial' => true]);
+			$this->jsonExit(['ok' => true, 'partial' => true]);
 		}
 
 		// Last chunk received — assemble into a single temp file
@@ -86,7 +85,7 @@ class UploadChunk extends BaseModule
 		foreach (range(0, $totalChunks - 1) as $i) {
 			$part = $uploadDir . '/chunk_' . sprintf('%06d', $i);
 			if (!file_exists($part)) {
-				$this->jsonReturn(500, ['error' => 'Missing chunk ' . $i . ' during assembly.']);
+				$this->jsonError(500, ['error' => 'Missing chunk ' . $i . ' during assembly.']);
 			}
 			// Append each chunk; each is at most 50 MB so this is memory-safe
 			file_put_contents($assembledPath, file_get_contents($part), FILE_APPEND);
@@ -96,7 +95,7 @@ class UploadChunk extends BaseModule
 		$pathToStore = $this->maybeTranscodeVideo($assembledPath, $mimeType, $fileName);
 
 		// Store via existing Attach pipeline (reads assembled file into memory once)
-		$newId = Attach::storeFile($assembledPath, $owner['uid'], $fileName, $mimeType, '<' . $owner['id'] . '>');
+		$newId = Attach::storeFile($pathToStore, $owner['uid'], $fileName, $mimeType, '<' . $owner['id'] . '>');
 
 		// Clean up temp directory regardless of outcome
 		foreach (glob($uploadDir . '/*') as $f) {
@@ -105,10 +104,10 @@ class UploadChunk extends BaseModule
 		@rmdir($uploadDir);
 
 		if ($newId === false) {
-			$this->jsonReturn(500, ['error' => 'File storage failed.']);
+			$this->jsonError(500, ['error' => 'File storage failed.']);
 		}
 
-		$this->jsonReturn(200, ['ok' => true, 'id' => $newId]);
+		$this->jsonExit(['ok' => true, 'id' => $newId]);
 	}
 
 	/**
