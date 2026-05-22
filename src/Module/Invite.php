@@ -130,7 +130,7 @@ class Invite extends BaseModule
 
 		$dirLocation = Search::getGlobalDirectory();
 		if (strlen($dirLocation)) {
-			if (Register::getPolicy() === Register::CLOSED) {
+			if (Register::getPolicy() === Register::CLOSED && !$inviteOnly) { // invitation_only should link to local /register
 				$linkTxt = DI::l10n()->t('Visit %s for a list of public sites that you can join. Friendica members on other sites can all connect with each other, as well as with members of many other social networks.', $dirLocation . '/servers');
 			} else {
 				$linkTxt = DI::l10n()->t('To accept this invitation, please visit and register at %s or any other public Friendica website.', DI::baseUrl() . '/register')
