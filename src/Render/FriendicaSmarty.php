@@ -9,6 +9,7 @@ namespace Friendica\Render;
 
 use Smarty;
 use Friendica\Core\Renderer;
+use Friendica\Core\Theme;
 
 /**
  * Friendica extension of the Smarty3 template engine
