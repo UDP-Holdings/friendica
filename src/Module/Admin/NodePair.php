@@ -31,7 +31,7 @@ class NodePair extends BaseAdmin
 		if ($action === 'generate') {
 			self::checkFormSecurityTokenRedirectOnError('/admin/node-pair/generate', 'admin_node_pair_generate');
 
-			$token = bin2hex(random_bytes(32));
+			$token = bin2hex(random_bytes(24)); // 48 hex chars — fits config.k (varbinary(50))
 			DI::config()->set('udp_pair', $token, json_encode([
 				'domain'     => DI::baseUrl()->getHost(),
 				'expires_at' => time() + 86400,
@@ -47,7 +47,7 @@ class NodePair extends BaseAdmin
 			$payload     = json_decode(base64_decode(strtr($payload_raw, '-_', '+/')), true);
 
 			if (empty($payload['d']) || empty($payload['t'])) {
-				notice(DI::l10n()->t('Invalid pairing payload — check that you scanned or pasted the full token.'));
+				DI::sysmsg()->addNotice(DI::l10n()->t('Invalid pairing payload — check that you scanned or pasted the full token.'));
 				DI::baseUrl()->redirect('admin/node-pair/accept');
 			}
 
@@ -64,19 +64,19 @@ class NodePair extends BaseAdmin
 			);
 
 			if (!$result->isSuccess()) {
-				notice(DI::l10n()->t('Could not reach %s or the token was rejected. Make sure the token has not expired (24 h limit).', $remote_domain));
+				DI::sysmsg()->addNotice(DI::l10n()->t('Could not reach %s or the token was rejected. Make sure the token has not expired (24 h limit).', $remote_domain));
 				DI::baseUrl()->redirect('admin/node-pair/accept');
 			}
 
 			$response = json_decode($result->getBodyString(), true);
 			if (empty($response['success'])) {
-				notice(DI::l10n()->t('Pairing rejected by %s: %s', $remote_domain, $response['error'] ?? 'unknown error'));
+				DI::sysmsg()->addNotice(DI::l10n()->t('Pairing rejected by %s: %s', $remote_domain, $response['error'] ?? 'unknown error'));
 				DI::baseUrl()->redirect('admin/node-pair/accept');
 			}
 
 			$this->addToAllowedSites($remote_domain);
 
-			info(DI::l10n()->t('Successfully paired with %s! Posts from that node will now appear in your feeds.', $remote_domain));
+			DI::sysmsg()->addInfo(DI::l10n()->t('Successfully paired with %s! Posts from that node will now appear in your feeds.', $remote_domain));
 			DI::baseUrl()->redirect('admin/node-pair');
 		}
 	}
