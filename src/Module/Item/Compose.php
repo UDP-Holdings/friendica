@@ -93,7 +93,7 @@ class Compose extends BaseModule
 			return Login::form('compose');
 		}
 
-		if ($this->appHelper->getCurrentTheme() !== 'frio') {
+		if (!Theme::isDescendantOf($this->appHelper->getCurrentTheme(), 'frio')) {
 			throw new NotImplementedException($this->l10n->t('This feature is only available with the frio theme.'));
 		}
 

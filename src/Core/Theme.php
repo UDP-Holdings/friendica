@@ -331,4 +331,21 @@ class Theme
 
 		return $return;
 	}
+
+	/**
+	 * Returns true if $theme is $ancestor or extends it (walks the full chain).
+	 */
+	public static function isDescendantOf(string $theme, string $ancestor): bool
+	{
+		$seen    = [];
+		$current = $theme;
+		while ($current !== '' && !in_array($current, $seen)) {
+			if ($current === $ancestor) {
+				return true;
+			}
+			$seen[]  = $current;
+			$current = static::getInfo($current)['extends'] ?? '';
+		}
+		return false;
+	}
 }
