@@ -172,12 +172,21 @@ $(function() {
 
 	/* event from comment textarea button popups */
 	/* insert returned bbcode at cursor position or replace selected text */
-	$('body').on('fbrowser.photo.comment', function(e, filename, bbcode, id) {
+	$('body').on('fbrowser.photo.comment', function(e, filename, bbcode, id, img) {
 		$.colorbox.close();
-		var textarea = document.getElementById("comment-edit-text-" +id);
+		var textarea = document.getElementById("comment-edit-text-" + id);
+		if (typeof window.commentPhotoInsert === 'function') {
+			window.commentPhotoInsert(textarea, bbcode, img || '', filename);
+			return;
+		}
 		var start = textarea.selectionStart;
-		var end = textarea.selectionEnd;
-		textarea.value = textarea.value.substring(0, start) + bbcode + textarea.value.substring(end, textarea.value.length);
+		var end   = textarea.selectionEnd;
+		var prefix = textarea.value.substring(0, start);
+		var suffix = textarea.value.substring(end);
+		textarea.value = prefix
+			+ (prefix.length > 0 && !prefix.endsWith('\n') ? '\n' : '')
+			+ bbcode + '\n'
+			+ suffix;
 		$(textarea).trigger('change');
 	});
 
