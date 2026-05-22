@@ -92,6 +92,9 @@ class UploadChunk extends BaseModule
 			file_put_contents($assembledPath, file_get_contents($part), FILE_APPEND);
 		}
 
+		// Transcode HEVC/other non-H.264 video to H.264 MP4 for universal browser support
+		$pathToStore = $this->maybeTranscodeVideo($assembledPath, $mimeType, $fileName);
+
 		// Store via existing Attach pipeline (reads assembled file into memory once)
 		$newId = Attach::storeFile($assembledPath, $owner['uid'], $fileName, $mimeType, '<' . $owner['id'] . '>');
 
@@ -108,14 +111,90 @@ class UploadChunk extends BaseModule
 		$this->jsonReturn(200, ['ok' => true, 'id' => $newId]);
 	}
 
-	private function jsonReturn(int $httpCode, array $payload): void
+	/**
+	 * Transcode a video file to H.264/AAC MP4 for universal browser compatibility.
+	 * Skips transcode if ffmpeg is unavailable, the file is already H.264, or
+	 * ffmpeg returns a non-zero exit code. Falls back to the original on any failure.
+	 * Updates $mimeType and $fileName by reference on success.
+	 *
+	 * Android often sends an empty MIME type or application/octet-stream for HEVC
+	 * files, so we treat those as "unknown" and let ffprobe determine whether the
+	 * file is actually a video before deciding whether to transcode.
+	 */
+	private function maybeTranscodeVideo(string $inputPath, string &$mimeType, string &$fileName): string
 	{
-		if ($httpCode >= 400) {
-			$this->response->setStatus($httpCode);
+		// Explicitly non-video MIME types (image/*, audio/*, text/*, …) — skip without probing.
+		// Empty or application/octet-stream means the browser didn't report a type; fall through.
+		if (!empty($mimeType)
+			&& !str_starts_with($mimeType, 'video/')
+			&& $mimeType !== 'application/octet-stream') {
+			return $inputPath;
 		}
-		$this->response->setType(Response::TYPE_JSON, 'application/json');
-		$this->response->addContent(json_encode($payload, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
-		System::echoResponse($this->response->generate());
-		System::exit();
+
+		if (!$this->config->get('system', 'ffmpeg_installed')) {
+			return $inputPath;
+		}
+
+		$ffmpeg  = trim((string) shell_exec('which ffmpeg'));
+		$ffprobe = trim((string) shell_exec('which ffprobe'));
+
+		if (empty($ffmpeg)) {
+			return $inputPath;
+		}
+
+		// Probe the file to determine whether it has a video stream and what codec it uses.
+		// This is the authoritative check — it handles both explicit video/* MIME types and
+		// the empty/octet-stream case common for HEVC uploads from Android.
+		$codec = '';
+		if (!empty($ffprobe)) {
+			$codec = trim((string) shell_exec(
+				escapeshellarg($ffprobe)
+				. ' -v quiet -select_streams v:0'
+				. ' -show_entries stream=codec_name -of csv=p=0 '
+				. escapeshellarg($inputPath)
+				. ' 2>/dev/null'
+			));
+		}
+
+		if (empty($codec)) {
+			// ffprobe found no video stream — not a video file, nothing to transcode.
+			return $inputPath;
+		}
+
+		// File is a video. Normalise MIME type if the browser didn't report one.
+		if (empty($mimeType) || $mimeType === 'application/octet-stream') {
+			$mimeType = 'video/mp4';
+		}
+
+		// Already H.264 — no transcode needed.
+		if ($codec === 'h264') {
+			return $inputPath;
+		}
+
+		$outputPath = $inputPath . '_h264.mp4';
+		exec(
+			escapeshellarg($ffmpeg)
+			. ' -i ' . escapeshellarg($inputPath)
+			. ' -c:v libx264 -preset fast -crf 23'
+			. ' -c:a aac -map 0:v -map 0:a?'
+			. ' -movflags +faststart '
+			. escapeshellarg($outputPath)
+			. ' 2>/dev/null',
+			$cmdOut,
+			$exitCode
+		);
+
+		if ($exitCode !== 0 || !file_exists($outputPath) || filesize($outputPath) === 0) {
+			$this->logger->warning('UDP: video transcode failed, serving original', [
+				'input' => basename($inputPath),
+				'exit'  => $exitCode,
+			]);
+			@unlink($outputPath);
+			return $inputPath;
+		}
+
+		$mimeType = 'video/mp4';
+		$fileName = preg_replace('/\.[^.]+$/', '', $fileName) . '.mp4';
+		return $outputPath;
 	}
 }
