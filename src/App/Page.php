@@ -491,7 +491,7 @@ class Page implements ArrayAccess
 			$target = new DOMDocument();
 			$target->loadXML("<root></root>");
 
-			$content = mb_convert_encoding($this->page["content"], 'HTML-ENTITIES', "UTF-8");
+			$content = mb_encode_numericentity($this->page["content"], [0x80, 0x10FFFF, 0, 0xFFFFFF], 'UTF-8');
 
 			/// @TODO one day, kill those error-suppressing @ stuff, or PHP should ban it
 			@$doc->loadHTML($content);
