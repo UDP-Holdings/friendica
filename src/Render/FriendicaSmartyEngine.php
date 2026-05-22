@@ -8,6 +8,7 @@
 namespace Friendica\Render;
 
 use Friendica\Core\Hook;
+use Friendica\Core\Theme;
 use Friendica\DI;
 use Friendica\Network\HTTPException\ServiceUnavailableException;
 use Friendica\Util\Strings;
@@ -102,8 +103,8 @@ final class FriendicaSmartyEngine extends TemplateEngine
 
 		if (file_exists("{$root}view/theme/$this->theme/$filename")) {
 			$template_file = "{$root}view/theme/$this->theme/$filename";
-		} elseif (!empty($this->theme_info['extends']) && file_exists(sprintf('%sview/theme/%s}/%s', $root, $this->theme_info['extends'], $filename))) {
-			$template_file = sprintf('%sview/theme/%s}/%s', $root, $this->theme_info['extends'], $filename);
+		} elseif (($extends = (!empty($this->theme_info['extends']) ? $this->theme_info['extends'] : (Theme::getInfo($this->theme)['extends'] ?? ''))) && file_exists(sprintf('%sview/theme/%s/%s', $root, $extends, $filename))) {
+			$template_file = sprintf('%sview/theme/%s/%s', $root, $extends, $filename);
 		} elseif (file_exists("{$root}/$filename")) {
 			$template_file = "{$root}/$filename";
 		} else {

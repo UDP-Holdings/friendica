@@ -26,8 +26,12 @@ class FriendicaSmarty extends Smarty
 		// setTemplateDir can be set to an array, which Smarty will parse in order.
 		// The order is thus very important here
 		$template_dirs = ['theme' => "view/theme/$theme/" . self::SMARTY3_TEMPLATE_FOLDER . '/'];
-		if (!empty($theme_info['extends'])) {
-			$template_dirs = $template_dirs + ['extends' => 'view/theme/' . $theme_info['extends'] . '/' . self::SMARTY3_TEMPLATE_FOLDER . '/'];
+		$extends = $theme_info['extends'] ?? '';
+		if (empty($extends)) {
+			$extends = Theme::getInfo($theme)['extends'] ?? '';
+		}
+		if (!empty($extends)) {
+			$template_dirs = $template_dirs + ['extends' => 'view/theme/' . $extends . '/' . self::SMARTY3_TEMPLATE_FOLDER . '/'];
 		}
 
 		$template_dirs = $template_dirs + ['base' => 'view/' . self::SMARTY3_TEMPLATE_FOLDER . '/'];
@@ -41,6 +45,9 @@ class FriendicaSmarty extends Smarty
 
 		$this->registerPlugin('modifier', 'is_string', function ($value) {
 			return is_string($value);
+		});
+		$this->registerPlugin('modifier', 'is_null', function ($value) {
+			return is_null($value);
 		});
 		$this->registerPlugin("modifier", "str_ends_with", "str_ends_with");
 

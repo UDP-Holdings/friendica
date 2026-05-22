@@ -64,6 +64,7 @@ class Theme
 			'maintainer'   => [],
 			'version'      => "",
 			'credits'      => "",
+			'extends'      => "",
 			'experimental' => file_exists("view/theme/$theme/experimental"),
 			'unsupported'  => file_exists("view/theme/$theme/unsupported")
 		];
