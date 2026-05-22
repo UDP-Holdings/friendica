@@ -2107,6 +2107,26 @@ return [
 		],
 		"engine" => "MEMORY",
 	],
+	// UDP Social: unified media index (Cat3 minimal — new table only, no upstream fields changed)
+	"udp-media" => [
+		"comment" => "UDP Social unified media index — links photo and attach records with album and thumbnail metadata",
+		"fields" => [
+			"id"               => ["type" => "int unsigned", "not null" => "1", "extra" => "auto_increment", "primary" => "1", "comment" => "generated index"],
+			"uid"              => ["type" => "mediumint unsigned", "not null" => "1", "default" => "0", "foreign" => ["user" => "uid"], "comment" => "Owner user id"],
+			"media-type"       => ["type" => "varchar(16)", "not null" => "1", "default" => "", "comment" => "photo, video, or audio"],
+			"ref-table"        => ["type" => "varchar(16)", "not null" => "1", "default" => "", "comment" => "source table: photo or attach"],
+			"ref-id"           => ["type" => "int unsigned", "not null" => "1", "default" => "0", "comment" => "id in the source table"],
+			"resource-id"      => ["type" => "varchar(255)", "not null" => "1", "default" => "", "comment" => "photo resource-id (for photo rows) or empty"],
+			"album"            => ["type" => "varchar(255)", "not null" => "1", "default" => "", "comment" => "user-assigned album name; empty = unorganized"],
+			"thumb-resource-id"=> ["type" => "varchar(255)", "not null" => "1", "default" => "", "comment" => "photo resource-id of video thumbnail, or empty"],
+			"created"          => ["type" => "datetime", "not null" => "1", "default" => DBA::NULL_DATETIME, "comment" => "upload timestamp"],
+		],
+		"indexes" => [
+			"PRIMARY" => ["id"],
+			"uid"     => ["uid"],
+			"uid_album" => ["uid", "album(64)"],
+		],
+	],
 	"worker-ipc" => [
 		"comment" => "Inter process communication between the frontend and the worker",
 		"fields"  => [

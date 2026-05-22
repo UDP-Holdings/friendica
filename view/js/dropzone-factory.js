@@ -61,7 +61,7 @@ var DzFactory = function (max_imagesize) {
 			maxFilesize: 2048,
 			url: function(files) {
 				return effectiveType(files[0]).match(/^image\//)
-					? '/media/photo/upload?album='
+					? '/udp/media/photo/upload'
 					: '/media/attachment/upload/chunk';
 			},
 			acceptedFiles: null, // input[accept] gates the OS picker; Dropzone's check breaks empty-type files on mobile

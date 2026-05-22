@@ -13,6 +13,7 @@ use Friendica\Core\Config\Capability\IManageConfigValues;
 use Friendica\Core\L10n;
 use Friendica\Core\Session\Model\UserSession;
 use Friendica\Model\Attach;
+use Friendica\Model\UdpMedia;
 use Friendica\Model\User;
 use Friendica\Module\Response;
 use Friendica\Util\Profiler;
@@ -106,6 +107,10 @@ class UploadChunk extends BaseModule
 		if ($newId === false) {
 			$this->jsonError(500, ['error' => 'File storage failed.']);
 		}
+
+		// Index in udp-media for the unified media manager
+		$udpMediaType = str_starts_with($mimeType, 'audio/') ? UdpMedia::TYPE_AUDIO : UdpMedia::TYPE_VIDEO;
+		UdpMedia::create($owner['uid'], $udpMediaType, UdpMedia::REF_ATTACH, (int) $newId);
 
 		$this->jsonExit(['ok' => true, 'id' => $newId]);
 	}

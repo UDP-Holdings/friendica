@@ -222,6 +222,18 @@ Three fixes applied together:
 
 ---
 
+### `static/dbstructure.config.php`
+
+**Category 3 — UDP-specific (minimal: new table only)**
+
+Added `udp-media` table definition. This is a new table with no FK conflicts against any upstream table beyond the standard `user.uid` reference. No existing table fields or indexes were modified.
+
+*Why:* Unified media index for the UDP media management layer. Links `photo` and `attach` records with album metadata and video thumbnail references.
+
+*Re-apply:* Re-insert the `udp-media` block (alphabetically between any future `u*` table and `worker-ipc`). The table itself is not subject to upstream changes.
+
+---
+
 ## Re-apply Checklist (after upstream merge)
 
 1. `git diff upstream/stable..HEAD -- src/Module/BaseSettings.php` — reapply both hunks
@@ -241,3 +253,4 @@ Three fixes applied together:
 14. `git diff upstream/stable..HEAD -- src/App/Page.php` — reapply `mb_encode_numericentity` replacement; check if upstream fixed it (Cat 1)
 15. `git diff upstream/stable..HEAD -- src/Content/Text/BBCode.php` — reapply INTERNAL/EXTERNAL to video/audio rendering condition; check if upstream fixed it (Cat 1)
 16. `git diff upstream/stable..HEAD -- src/Model/Post/Media.php` — reapply `isLocalUrl` guard in `insertFromBody` for video/audio; check if upstream fixed it (Cat 1)
+17. `git diff upstream/stable..HEAD -- static/dbstructure.config.php` — reapply `udp-media` table block; no conflict expected but verify it's still present after merge
