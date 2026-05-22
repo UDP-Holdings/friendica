@@ -48,9 +48,10 @@ class Attach extends BaseModule
 
 		// Use quotes around the filename to prevent a "multiple Content-Disposition"
 		// error in Chrome for filenames with commas in them
+		$isInline = str_starts_with($item['filetype'], 'video/') || str_starts_with($item['filetype'], 'audio/');
 		header('Content-type: ' . $item['filetype']);
 		header('Content-length: ' . $item['filesize']);
-		header('Content-disposition: attachment; filename="' . $item['filename'] . '"');
+		header('Content-disposition: ' . ($isInline ? 'inline' : 'attachment') . '; filename="' . $item['filename'] . '"');
 
 		echo $data;
 		System::exit();
