@@ -63,12 +63,22 @@ if ($minimal) {
 	<main>
 		<div class="container">
 			<div class="row">
-				<div class="col-xs-12" id="content" tabindex="0">
-					<section class="sectiontop <?php echo ($page['section'] ?? '') . '-content-wrapper'; ?>">
-						<?php if (!empty($page['content'])) echo $page['content']; ?>
-						<div id="pause"></div>
-					</section>
-				</div>
+<?php
+			if ((empty($_REQUEST['pagename']) || $_REQUEST['pagename'] != 'lostpass') && ($_SERVER['REQUEST_URI'] != $basepath)) {
+				echo '<aside class="col-lg-3 col-md-3 offcanvas-sm offcanvas-xs">';
+				if (!empty($page['aside']))       echo $page['aside'];
+				if (!empty($page['right_aside'])) echo $page['right_aside'];
+				echo '</aside>';
+				echo '<div class="col-lg-7 col-md-7 col-sm-12 col-xs-12" id="content" tabindex="0">';
+				echo '<section class="sectiontop ' . ($page['section'] ?? '') . '-content-wrapper">';
+				if (!empty($page['content'])) echo $page['content'];
+				echo '<div id="pause"></div></section></div>';
+			} else {
+				echo '<section class="col-lg-12 col-md-12 col-sm-12 col-xs-12" id="content" style="margin-top:50px;">';
+				if (!empty($page['content'])) echo $page['content'];
+				echo '</section>';
+			}
+?>
 			</div>
 		</div>
 

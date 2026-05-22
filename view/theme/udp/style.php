@@ -17,24 +17,28 @@ $udp_nav_icon_color = !empty($nav_icon_color) ? $nav_icon_color : '#ffffff';
 ?>
 
 /* ====================================================================
-   UDP Mobile Theme — mobile-first layout overrides
+   UDP Mobile Theme — responsive overrides
+   Mobile PWA layout at ≤767px; frio desktop layout at ≥768px.
    ==================================================================== */
 
-/* ---- Suppress frio's desktop top bars ---- */
-#topbar-first,
-#topbar-second,
-#site-location,
-#banner {
-	display: none !important;
+/* ---- Mobile only: suppress frio's desktop top bars + body offset ---- */
+@media (max-width: 767px) {
+	#topbar-first,
+	#topbar-second,
+	#site-location,
+	#banner,
+	#search-mobile,
+	#frio-nav-public {
+		display: none !important;
+	}
+
+	body {
+		padding-top: 48px !important;
+		padding-bottom: 70px !important;
+	}
 }
 
-/* ---- Offset body for our fixed top + bottom bars ---- */
-body {
-	padding-top: 48px !important;
-	padding-bottom: 70px !important;
-}
-
-/* ---- Slim fixed top bar ---- */
+/* ---- UDP chrome styling (display controlled by breakpoint below) ---- */
 #udp-topbar {
 	position: fixed;
 	top: 0;
@@ -159,23 +163,20 @@ body {
 	object-fit: cover;
 }
 
-/* ---- No sidebar — always full-width ---- */
-aside { display: none !important; }
-
-.col-lg-8.col-md-8,
-.col-lg-8,
-.col-md-8 {
-	width: 100% !important;
-	max-width: 100% !important;
+/* ---- Desktop only: hide UDP chrome, let frio nav bars render naturally ---- */
+@media (min-width: 768px) {
+	#udp-topbar,
+	#udp-bottom-nav,
+	#udp-search-bar,
+	#udp-user-menu {
+		display: none !important;
+	}
 }
 
-#content {
-	width: 100% !important;
-	max-width: 100% !important;
-	margin: 0 !important;
+/* ---- Mobile only: compact container ---- */
+@media (max-width: 767px) {
+	.container { padding-left: 8px; padding-right: 8px; }
 }
-
-.container { padding-left: 8px; padding-right: 8px; }
 
 /* ---- Search bar (toggleable below top bar) ---- */
 #udp-search-bar {
@@ -320,19 +321,19 @@ aside { display: none !important; }
 	margin: 4px 0;
 }
 
-/* ---- Touch-friendliness ---- */
-/* Prevent iOS zoom on textarea focus */
-.jot-text, .profile-jot-text-full, #profile-jot-text,
-textarea, input[type="text"], input[type="email"],
-input[type="password"], input[type="search"], select {
-	font-size: 16px !important;
-}
-
-/* Back to top button — clear of bottom nav */
-#back-to-top { bottom: 70px; }
-
-/* Post items — remove side borders for edge-to-edge feel */
+/* ---- Mobile only: touch-friendliness + misc ---- */
 @media (max-width: 767px) {
+	/* Prevent iOS zoom on input focus */
+	.jot-text, .profile-jot-text-full, #profile-jot-text,
+	textarea, input[type="text"], input[type="email"],
+	input[type="password"], input[type="search"], select {
+		font-size: 16px !important;
+	}
+
+	/* Back to top button — clear of bottom nav */
+	#back-to-top { bottom: 70px; }
+
+	/* Post items — edge-to-edge feel */
 	.wall-item-container { border-radius: 0; border-left: none; border-right: none; }
 	.panel { border-radius: 0; }
 	.panel + .panel { margin-top: 4px; }

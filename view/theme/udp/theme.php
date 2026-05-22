@@ -2,7 +2,7 @@
 /**
  * Name: UDP
  * Description: Mobile-first PWA theme for UDP Social, extending frio.
- * Version: 1.0
+ * Version: 1.1
  * Author: UDP Holdings
  * extends: frio
  */
@@ -19,6 +19,12 @@ function udp_init(AppHelper $appHelper)
 
 	// Override viewport for mobile-first + iOS safe-area support
 	DI::page()['htmlhead'] .= '<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">';
+
+	// UDP always routes "New post" directly to /compose — no jot modal
+	$uid = DI::userSession()->getLocalUserId();
+	if ($uid) {
+		DI::pConfig()->set($uid, 'frio', 'always_open_compose', true);
+	}
 }
 
 function udp_install()
