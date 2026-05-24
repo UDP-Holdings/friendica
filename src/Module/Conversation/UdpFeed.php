@@ -6,6 +6,7 @@
 
 namespace Friendica\Module\Conversation;
 
+use Friendica\Content\Conversation\Entity\Network as NetworkEntity;
 use Friendica\Content\Nav;
 use Friendica\Database\DBA;
 use Friendica\Model\Item;
@@ -23,6 +24,23 @@ use Friendica\Model\Post;
  */
 class UdpFeed extends Network
 {
+	protected function parseRequest(array $request): void
+	{
+		parent::parseRequest($request);
+
+		// Channel filters (e.g. "For You") route to getChannelItems() and bypass
+		// getItems() entirely — showing nothing on a small network. Reset any
+		// persisted channel selection so the unified feed always runs getItems().
+		if ($this->channel->isTimeline($this->selectedTab)
+			|| $this->userDefinedChannel->isTimeline($this->selectedTab, $this->session->getLocalUserId())
+		) {
+			$this->selectedTab = NetworkEntity::COMMENTED;
+			$this->order       = 'commented';
+			$this->session->set('network-tab', NetworkEntity::COMMENTED);
+			$this->pConfig->set($this->session->getLocalUserId(), 'network.view', 'selected_tab', NetworkEntity::COMMENTED);
+		}
+	}
+
 	protected function content(array $request = []): string
 	{
 		$o = parent::content($request);
