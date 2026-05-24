@@ -6,6 +6,10 @@
 
 namespace Friendica\Module\Admin;
 
+use BaconQrCode\Renderer\Image\SvgImageBackEnd;
+use BaconQrCode\Renderer\ImageRenderer;
+use BaconQrCode\Renderer\RendererStyle\RendererStyle;
+use BaconQrCode\Writer;
 use Friendica\Core\Renderer;
 use Friendica\DI;
 use Friendica\Module\BaseAdmin;
@@ -87,6 +91,7 @@ class NodePair extends BaseAdmin
 
 		$action     = $this->parameters['action'] ?? '';
 		$qr_payload = '';
+		$qr_svg     = '';
 
 		if ($action === 'generate') {
 			$token  = $request['token'] ?? '';
@@ -97,6 +102,9 @@ class NodePair extends BaseAdmin
 				if (!empty($data['expires_at']) && $data['expires_at'] > time()) {
 					$payload    = ['d' => $data['domain'], 't' => $token];
 					$qr_payload = rtrim(strtr(base64_encode(json_encode($payload)), '+/', '-_'), '=');
+
+					$renderer = new ImageRenderer(new RendererStyle(256), new SvgImageBackEnd());
+					$qr_svg   = str_replace('<?xml version="1.0" encoding="UTF-8"?>', '', (new Writer($renderer))->writeString($qr_payload));
 				}
 			}
 
@@ -111,6 +119,7 @@ class NodePair extends BaseAdmin
 			'$page'                       => DI::l10n()->t('Node Pairing'),
 			'$action'                     => $action,
 			'$qr_payload'                 => $qr_payload,
+			'$qr_svg'                     => $qr_svg,
 			'$form_security_token_gen'    => self::getFormSecurityToken('admin_node_pair_generate'),
 			'$form_security_token_accept' => self::getFormSecurityToken('admin_node_pair_accept'),
 			'$baseurl'                    => (string) DI::baseUrl(),

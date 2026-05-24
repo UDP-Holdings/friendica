@@ -33,7 +33,7 @@
 
 	<div style="margin:1.5em 0; display:flex; gap:2em; flex-wrap:wrap; align-items:flex-start;">
 		<div>
-			<div id="udp-qr" style="background:#fff; padding:12px; display:inline-block; border:1px solid #ccc; border-radius:4px;"></div>
+			<div style="background:#fff; padding:12px; display:inline-block; border:1px solid #ccc; border-radius:4px;">{{$qr_svg nofilter}}</div>
 		</div>
 		<div style="flex:1; min-width:220px;">
 			<label for="udp-token-text"><strong>Copy-pastable token</strong></label>
@@ -47,15 +47,6 @@
 	</div>
 
 	<a href="{{$baseurl}}/admin/node-pair" class="btn btn-link">&larr; Back</a>
-
-	<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" integrity="sha512-CNgIRecGo7nphbeZ04Sc13ka07paqdeTu0WR1IM4kNcpmBAUSHSE1crfrDn9ASegi0/zBPNR08N+7oKmRAfMHg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-	<script>
-		new QRCode(document.getElementById('udp-qr'), {
-			text:   '{{$qr_payload}}',
-			width:  200,
-			height: 200,
-		});
-	</script>
 
 {{elseif $action == "accept"}}
 	{{* ── Accept: Admin A scans or pastes ────────────────────────────── *}}

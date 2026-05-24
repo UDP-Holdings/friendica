@@ -72,12 +72,13 @@ abstract class BaseAdmin extends BaseModule
 				'federation' => ['admin/federation'  , DI::l10n()->t('Federation Statistics')   , 'federation']
 			]],
 			'configuration' => [DI::l10n()->t('Configuration'), [
-				'site'     => ['admin/site'        , DI::l10n()->t('Site')                    , 'site'],
-				'storage'  => ['admin/storage'     , DI::l10n()->t('Storage')                 , 'storage'],
-				'addons'   => ['admin/addons'      , DI::l10n()->t('Addons')                  , 'addons'],
-				'themes'   => ['admin/themes'      , DI::l10n()->t('Themes')                  , 'themes'],
-				'features' => ['admin/features'    , DI::l10n()->t('Additional features')     , 'features'],
-				'tos'      => ['admin/tos'         , DI::l10n()->t('Terms of Service')        , 'tos'],
+				'site'      => ['admin/site'        , DI::l10n()->t('Site')                    , 'site'],
+				'storage'   => ['admin/storage'     , DI::l10n()->t('Storage')                 , 'storage'],
+				'addons'    => ['admin/addons'      , DI::l10n()->t('Addons')                  , 'addons'],
+				'themes'    => ['admin/themes'      , DI::l10n()->t('Themes')                  , 'themes'],
+				'features'  => ['admin/features'    , DI::l10n()->t('Additional features')     , 'features'],
+				'tos'       => ['admin/tos'         , DI::l10n()->t('Terms of Service')        , 'tos'],
+				'node-pair' => ['admin/node-pair'   , DI::l10n()->t('Node Pairing')            , 'node-pair'],
 			]],
 			'database' => [DI::l10n()->t('Database'), [
 				'dbsync'      => ['admin/dbsync'      , DI::l10n()->t('DB updates')              , 'dbsync'],
