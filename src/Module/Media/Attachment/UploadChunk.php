@@ -4,6 +4,10 @@
 // Receives individual 50 MB chunks from Dropzone.js and assembles them
 // into a single file on the last chunk, then feeds the result into the
 // standard Attach::storeFile() pipeline.
+//
+// Video transcoding is done asynchronously via UdpTranscodeVideo worker.
+// A thumbnail is extracted synchronously (~1s) so the media card populates
+// immediately while the transcode is still pending.
 
 namespace Friendica\Module\Media\Attachment;
 
@@ -12,11 +16,15 @@ use Friendica\BaseModule;
 use Friendica\Core\Config\Capability\IManageConfigValues;
 use Friendica\Core\L10n;
 use Friendica\Core\Session\Model\UserSession;
+use Friendica\Core\Worker;
 use Friendica\Model\Attach;
+use Friendica\Model\Photo;
 use Friendica\Model\UdpMedia;
 use Friendica\Model\User;
 use Friendica\Module\Response;
+use Friendica\Object\Image;
 use Friendica\Util\Profiler;
+use Friendica\Util\Strings;
 use Psr\Log\LoggerInterface;
 
 class UploadChunk extends BaseModule
@@ -88,17 +96,34 @@ class UploadChunk extends BaseModule
 			if (!file_exists($part)) {
 				$this->jsonError(500, ['error' => 'Missing chunk ' . $i . ' during assembly.']);
 			}
-			// Append each chunk; each is at most 50 MB so this is memory-safe
 			file_put_contents($assembledPath, file_get_contents($part), FILE_APPEND);
 		}
 
-		// Transcode HEVC/other non-H.264 video to H.264 MP4 for universal browser support
-		$pathToStore = $this->maybeTranscodeVideo($assembledPath, $mimeType, $fileName);
+		// Probe to determine whether this is a video and what codec it uses.
+		// Empty/octet-stream MIME from Android is treated as unknown and probed.
+		$codec    = '';
+		$isVideo  = false;
+		if ($this->config->get('system', 'ffmpeg_installed')) {
+			$codec   = $this->probeVideoCodec($assembledPath, $mimeType);
+			$isVideo = ($codec !== '');
+		}
 
-		// Store via existing Attach pipeline (reads assembled file into memory once)
-		$newId = Attach::storeFile($pathToStore, $owner['uid'], $fileName, $mimeType, '<' . $owner['id'] . '>');
+		// Normalise MIME for videos where the browser didn't report a type
+		if ($isVideo && (empty($mimeType) || $mimeType === 'application/octet-stream')) {
+			$mimeType = 'video/mp4';
+		}
 
-		// Clean up temp directory regardless of outcome
+		// Generate a thumbnail synchronously (~1s) so the media card populates
+		// immediately, before the async transcode completes.
+		$thumbResourceId = '';
+		if ($isVideo) {
+			$thumbResourceId = $this->generateThumbnail($assembledPath, $owner['uid'], (int) $owner['id']);
+		}
+
+		// Store the original file immediately — transcode happens in the background
+		$newId = Attach::storeFile($assembledPath, $owner['uid'], $fileName, $mimeType, '<' . $owner['id'] . '>');
+
+		// Clean up temp directory
 		foreach (glob($uploadDir . '/*') as $f) {
 			@unlink($f);
 		}
@@ -108,97 +133,108 @@ class UploadChunk extends BaseModule
 			$this->jsonError(500, ['error' => 'File storage failed.']);
 		}
 
-		// Index in udp-media for the unified media manager
+		// Index in udp-media
 		$udpMediaType = str_starts_with($mimeType, 'audio/') ? UdpMedia::TYPE_AUDIO : UdpMedia::TYPE_VIDEO;
-		UdpMedia::create($owner['uid'], $udpMediaType, UdpMedia::REF_ATTACH, (int) $newId);
+		$udpMediaId   = UdpMedia::create($owner['uid'], $udpMediaType, UdpMedia::REF_ATTACH, (int) $newId, '', '', $thumbResourceId);
+
+		// Queue async transcode for video files that aren't already H.264
+		if ($isVideo && $codec !== 'h264' && $udpMediaId !== false) {
+			Worker::add(Worker::PRIORITY_LOW, 'UdpTranscodeVideo', (int) $newId, (int) $udpMediaId);
+		}
 
 		$this->jsonExit(['ok' => true, 'id' => $newId]);
 	}
 
 	/**
-	 * Transcode a video file to H.264/AAC MP4 for universal browser compatibility.
-	 * Skips transcode if ffmpeg is unavailable, the file is already H.264, or
-	 * ffmpeg returns a non-zero exit code. Falls back to the original on any failure.
-	 * Updates $mimeType and $fileName by reference on success.
+	 * Probe a file for a video stream and return the codec name (e.g. 'hevc', 'h264').
+	 * Returns '' if the file has no video stream or ffprobe is unavailable.
 	 *
-	 * Android often sends an empty MIME type or application/octet-stream for HEVC
-	 * files, so we treat those as "unknown" and let ffprobe determine whether the
-	 * file is actually a video before deciding whether to transcode.
+	 * Android often sends empty MIME or application/octet-stream for HEVC files,
+	 * so we probe regardless of the reported type when it's ambiguous.
 	 */
-	private function maybeTranscodeVideo(string $inputPath, string &$mimeType, string &$fileName): string
+	private function probeVideoCodec(string $path, string $mimeType): string
 	{
-		// Explicitly non-video MIME types (image/*, audio/*, text/*, …) — skip without probing.
-		// Empty or application/octet-stream means the browser didn't report a type; fall through.
+		// Known non-video types — skip without probing
 		if (!empty($mimeType)
 			&& !str_starts_with($mimeType, 'video/')
 			&& $mimeType !== 'application/octet-stream') {
-			return $inputPath;
+			return '';
 		}
 
-		if (!$this->config->get('system', 'ffmpeg_installed')) {
-			return $inputPath;
-		}
-
-		$ffmpeg  = trim((string) shell_exec('which ffmpeg'));
 		$ffprobe = trim((string) shell_exec('which ffprobe'));
+		if (empty($ffprobe)) {
+			return '';
+		}
 
+		return trim((string) shell_exec(
+			escapeshellarg($ffprobe)
+			. ' -v quiet -select_streams v:0'
+			. ' -show_entries stream=codec_name -of csv=p=0 '
+			. escapeshellarg($path)
+			. ' 2>/dev/null'
+		));
+	}
+
+	/**
+	 * Extract a single frame from a video file and store it as a photo row.
+	 * Returns the photo resource-id on success, '' on failure.
+	 *
+	 * The thumbnail is generated from the assembled original so it is always
+	 * available immediately, even before the async transcode completes.
+	 */
+	private function generateThumbnail(string $videoPath, int $uid, int $ownerContactId): string
+	{
+		$ffmpeg = trim((string) shell_exec('which ffmpeg'));
 		if (empty($ffmpeg)) {
-			return $inputPath;
+			return '';
 		}
 
-		// Probe the file to determine whether it has a video stream and what codec it uses.
-		// This is the authoritative check — it handles both explicit video/* MIME types and
-		// the empty/octet-stream case common for HEVC uploads from Android.
-		$codec = '';
-		if (!empty($ffprobe)) {
-			$codec = trim((string) shell_exec(
-				escapeshellarg($ffprobe)
-				. ' -v quiet -select_streams v:0'
-				. ' -show_entries stream=codec_name -of csv=p=0 '
-				. escapeshellarg($inputPath)
-				. ' 2>/dev/null'
-			));
-		}
+		$thumbPath = $videoPath . '_thumb.jpg';
 
-		if (empty($codec)) {
-			// ffprobe found no video stream — not a video file, nothing to transcode.
-			return $inputPath;
-		}
-
-		// File is a video. Normalise MIME type if the browser didn't report one.
-		if (empty($mimeType) || $mimeType === 'application/octet-stream') {
-			$mimeType = 'video/mp4';
-		}
-
-		// Already H.264 — no transcode needed.
-		if ($codec === 'h264') {
-			return $inputPath;
-		}
-
-		$outputPath = $inputPath . '_h264.mp4';
 		exec(
 			escapeshellarg($ffmpeg)
-			. ' -i ' . escapeshellarg($inputPath)
-			. ' -c:v libx264 -preset fast -crf 23'
-			. ' -c:a aac -map 0:v -map 0:a?'
-			. ' -movflags +faststart '
-			. escapeshellarg($outputPath)
+			. ' -ss 0 -i ' . escapeshellarg($videoPath)
+			. ' -frames:v 1 -vf scale=640:-1 -q:v 5 '
+			. escapeshellarg($thumbPath)
 			. ' 2>/dev/null',
 			$cmdOut,
 			$exitCode
 		);
 
-		if ($exitCode !== 0 || !file_exists($outputPath) || filesize($outputPath) === 0) {
-			$this->logger->warning('UDP: video transcode failed, serving original', [
-				'input' => basename($inputPath),
-				'exit'  => $exitCode,
-			]);
-			@unlink($outputPath);
-			return $inputPath;
+		if ($exitCode !== 0 || !file_exists($thumbPath) || filesize($thumbPath) === 0) {
+			$this->logger->warning('UDP: thumbnail extraction failed', ['exit' => $exitCode]);
+			@unlink($thumbPath);
+			return '';
 		}
 
-		$mimeType = 'video/mp4';
-		$fileName = preg_replace('/\.[^.]+$/', '', $fileName) . '.mp4';
-		return $outputPath;
+		$data  = @file_get_contents($thumbPath);
+		@unlink($thumbPath);
+
+		if (empty($data)) {
+			return '';
+		}
+
+		$image = new Image($data, 'image/jpeg');
+		if (!$image->isValid()) {
+			return '';
+		}
+
+		$resourceId = Strings::getRandomHex();
+
+		Photo::storeWithPreview(
+			$image,
+			$uid,
+			$resourceId,
+			'video-thumb-' . $resourceId . '.jpg',
+			strlen($data),
+			'Video Thumbnails',
+			'',
+			'<' . $ownerContactId . '>',
+			'',
+			'',
+			''
+		);
+
+		return $resourceId;
 	}
 }

@@ -32,8 +32,9 @@ class UdpMedia
 	 * @param string $mediaType  One of the TYPE_* constants
 	 * @param string $refTable   One of the REF_* constants
 	 * @param int    $refId      id in the source table
-	 * @param string $resourceId photo resource-id (for photo rows), otherwise ''
-	 * @param string $album      Initial album name; empty = unorganized
+	 * @param string $resourceId      photo resource-id (for photo rows), otherwise ''
+	 * @param string $album           Initial album name; empty = unorganized
+	 * @param string $thumbResourceId photo resource-id of the video thumbnail; '' if none
 	 * @return int|false  Insert id or false on failure
 	 */
 	public static function create(
@@ -42,7 +43,8 @@ class UdpMedia
 		string $refTable,
 		int $refId,
 		string $resourceId = '',
-		string $album = ''
+		string $album = '',
+		string $thumbResourceId = ''
 	) {
 		$fields = [
 			'uid'              => $uid,
@@ -51,7 +53,7 @@ class UdpMedia
 			'ref-id'           => $refId,
 			'resource-id'      => $resourceId,
 			'album'            => $album,
-			'thumb-resource-id'=> '',
+			'thumb-resource-id'=> $thumbResourceId,
 			'created'          => DateTimeFormat::utcNow(),
 		];
 
