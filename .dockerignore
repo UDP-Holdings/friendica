@@ -1,0 +1,24 @@
+# Keep vendor/ from the base image — our fork has no new Composer deps
+vendor/
+
+# Git metadata
+.git/
+.gitignore
+.gitmodules
+
+# Dev tooling
+.github/
+bin/dev/
+tests/
+Dockerfile
+.dockerignore
+
+# Editor/OS artifacts
+.idea/
+*.swp
+*~
+.DS_Store
+
+# Logs and local state
+view/smarty3/compiled/
+view/smarty3/cache/
