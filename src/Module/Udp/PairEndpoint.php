@@ -54,13 +54,22 @@ class PairEndpoint extends BaseModule
 			$this->jsonExit(['success' => false, 'error' => 'token expired'], 'application/json', 403);
 		}
 
+		// Validate requesting_domain before touching any config
+		if (!$this->isValidHostname($requesting_domain)) {
+			$this->jsonExit(['success' => false, 'error' => 'invalid requesting_domain'], 'application/json', 400);
+		}
+
 		// Consume token (single-use)
 		DI::config()->delete('udp_pair', $token);
 
 		// Add the requesting node to this node's allowlist
 		$this->addToAllowedSites($requesting_domain);
 
-		$this->jsonExit(['success' => true, 'domain' => DI::baseUrl()->getHost()]);
+		// Generate a shared secret for HMAC-signed inter-node requests
+		$secret = bin2hex(random_bytes(32));
+		DI::config()->set('udp_shared_secret', $requesting_domain, $secret);
+
+		$this->jsonExit(['success' => true, 'domain' => DI::baseUrl()->getHost(), 'secret' => $secret]);
 	}
 
 	private function addToAllowedSites(string $domain): void
@@ -71,5 +80,10 @@ class PairEndpoint extends BaseModule
 			$domains[] = $domain;
 			DI::config()->set('system', 'allowed_sites', implode(',', $domains));
 		}
+	}
+
+	private function isValidHostname(string $domain): bool
+	{
+		return (bool) preg_match('/^(?:[a-zA-Z0-9](?:[a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}$/', $domain);
 	}
 }

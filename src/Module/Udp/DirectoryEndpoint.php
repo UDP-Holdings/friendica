@@ -28,9 +28,27 @@ class DirectoryEndpoint extends BaseModule
 {
 	protected function rawContent(array $request = []): void
 	{
-		// Validate the requesting node against our allowlist
 		$requestingNode = $_SERVER['HTTP_X_UDP_NODE'] ?? '';
-		if (!$this->isAllowedNode($requestingNode)) {
+		$ts             = (int) ($_SERVER['HTTP_X_UDP_TS']  ?? 0);
+		$sig            = $_SERVER['HTTP_X_UDP_SIG']  ?? '';
+
+		// Constant-time 403 for any missing field so callers learn nothing
+		if (!$requestingNode || !$ts || !$sig) {
+			$this->jsonExit(['error' => 'forbidden'], 'application/json', 403);
+		}
+
+		// Reject stale or future-dated requests (replay / clock-skew window: ±5 min)
+		if (abs(time() - $ts) > 300) {
+			$this->jsonExit(['error' => 'forbidden'], 'application/json', 403);
+		}
+
+		$secret = DI::config()->get('udp_shared_secret', $requestingNode) ?? '';
+		if (!$secret) {
+			$this->jsonExit(['error' => 'forbidden'], 'application/json', 403);
+		}
+
+		$expected = hash_hmac('sha256', $requestingNode . '|' . $ts, $secret);
+		if (!hash_equals($expected, $sig)) {
 			$this->jsonExit(['error' => 'forbidden'], 'application/json', 403);
 		}
 
@@ -52,13 +70,4 @@ class DirectoryEndpoint extends BaseModule
 		$this->jsonExit($users);
 	}
 
-	private function isAllowedNode(string $domain): bool
-	{
-		if (!$domain) {
-			return false;
-		}
-		$allowed = DI::config()->get('system', 'allowed_sites') ?? '';
-		$domains = array_filter(array_map('trim', explode(',', $allowed)));
-		return in_array($domain, $domains, true);
-	}
 }

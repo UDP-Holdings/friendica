@@ -80,6 +80,12 @@ class NodePair extends BaseAdmin
 
 			$this->addToAllowedSites($remote_domain);
 
+			// Store the shared secret returned by the remote node for HMAC-signed directory requests
+			$secret = $response['secret'] ?? '';
+			if ($secret && preg_match('/^[0-9a-f]{64}$/', $secret)) {
+				DI::config()->set('udp_shared_secret', $remote_domain, $secret);
+			}
+
 			DI::sysmsg()->addInfo(DI::l10n()->t('Successfully paired with %s! Posts from that node will now appear in your feeds.', $remote_domain));
 			DI::baseUrl()->redirect('admin/node-pair');
 		}
@@ -128,6 +134,9 @@ class NodePair extends BaseAdmin
 
 	private function addToAllowedSites(string $domain): void
 	{
+		if (!preg_match('/^(?:[a-zA-Z0-9](?:[a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}$/', $domain)) {
+			return;
+		}
 		$current = DI::config()->get('system', 'allowed_sites') ?? '';
 		$domains = array_filter(array_map('trim', explode(',', $current)));
 		if (!in_array($domain, $domains, true)) {

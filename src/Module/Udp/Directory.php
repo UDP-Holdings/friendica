@@ -106,6 +106,16 @@ class Directory extends BaseModule
 
 	private function fetchRemoteDirectory(string $domain, string $search): array
 	{
+		$secret = DI::config()->get('udp_shared_secret', $domain) ?? '';
+		if (!$secret) {
+			// Not yet paired with a shared secret — skip silently (re-pair required)
+			return [];
+		}
+
+		$myHost = DI::baseUrl()->getHost();
+		$ts     = (string) time();
+		$sig    = hash_hmac('sha256', $myHost . '|' . $ts, $secret);
+
 		$url = 'https://' . $domain . '/udp/directory';
 		if ($search !== '') {
 			$url .= '?search=' . urlencode($search);
@@ -113,7 +123,11 @@ class Directory extends BaseModule
 
 		try {
 			$result = DI::httpClient()->get($url, HttpClientAccept::JSON, [
-				HttpClientOptions::HEADERS => ['X-UDP-Node' => DI::baseUrl()->getHost()],
+				HttpClientOptions::HEADERS => [
+					'X-UDP-Node' => $myHost,
+					'X-UDP-Ts'   => $ts,
+					'X-UDP-Sig'  => $sig,
+				],
 			]);
 		} catch (\Throwable $e) {
 			return [];
