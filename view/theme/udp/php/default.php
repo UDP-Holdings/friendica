@@ -31,7 +31,7 @@ $nav_bg = DI::pConfig()->get($uid, 'frio', 'nav_bg') ?: DI::config()->get('frio'
 	<title><?php if (!empty($page['title'])) echo $page['title']; ?></title>
 	<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 	<meta request="<?php echo htmlspecialchars($_REQUEST['pagename'] ?? '') ?>">
-	<meta name="theme-color" content="<?php echo $nav_bg ?>">
+	<meta name="theme-color" content="<?php echo htmlspecialchars($nav_bg, ENT_QUOTES, 'UTF-8') ?>">
 	<script type="text/javascript">var baseurl = "<?php echo (string)DI::baseUrl(); ?>";</script>
 	<script type="text/javascript">var frio = "<?php echo $frio; ?>";</script>
 <?php
