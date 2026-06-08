@@ -1,4 +1,4 @@
-FROM friendica:2026.05-apache
+FROM friendica:2026.01-apache
 
 # Overlay UDP Friendica fork files on top of the official base image.
 #
