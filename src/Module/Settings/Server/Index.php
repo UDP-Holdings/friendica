@@ -7,11 +7,18 @@
 
 namespace Friendica\Module\Settings\Server;
 
+use BaconQrCode\Renderer\Image\SvgImageBackEnd;
+use BaconQrCode\Renderer\ImageRenderer;
+use BaconQrCode\Renderer\RendererStyle\RendererStyle;
+use BaconQrCode\Writer;
 use Friendica\App;
 use Friendica\Content\Pager;
+use Friendica\Core\Config\Capability\IManageConfigValues;
 use Friendica\Core\L10n;
+use Friendica\Core\PConfig\Capability\IManagePersonalConfigValues;
 use Friendica\Core\Renderer;
 use Friendica\Core\Session\Capability\IHandleUserSessions;
+use Friendica\Model\User;
 use Friendica\Module\BaseSettings;
 use Friendica\Module\Response;
 use Friendica\Navigation\SystemMessages;
@@ -27,13 +34,19 @@ class Index extends BaseSettings
 	private $repository;
 	/** @var SystemMessages */
 	private $systemMessages;
+	/** @var IManagePersonalConfigValues */
+	private $pConfig;
+	/** @var IManageConfigValues */
+	private $config;
 
-	public function __construct(SystemMessages $systemMessages, Repository\UserGServer $repository, IHandleUserSessions $session, App\Page $page, L10n $l10n, App\BaseURL $baseUrl, App\Arguments $args, LoggerInterface $logger, Profiler $profiler, Response $response, array $server, array $parameters = [])
+	public function __construct(SystemMessages $systemMessages, Repository\UserGServer $repository, IManagePersonalConfigValues $pConfig, IManageConfigValues $config, IHandleUserSessions $session, App\Page $page, L10n $l10n, App\BaseURL $baseUrl, App\Arguments $args, LoggerInterface $logger, Profiler $profiler, Response $response, array $server, array $parameters = [])
 	{
 		parent::__construct($session, $page, $l10n, $baseUrl, $args, $logger, $profiler, $response, $server, $parameters);
 
 		$this->repository     = $repository;
 		$this->systemMessages = $systemMessages;
+		$this->pConfig        = $pConfig;
+		$this->config         = $config;
 	}
 
 	protected function post(array $request = [])
@@ -84,6 +97,39 @@ class Index extends BaseSettings
 			return ['delete[' . $server->gsid . ']'];
 		}, $servers->getArrayCopy());
 
+		$join_qr_svg = '';
+		$join_url    = '';
+
+		$uid  = $this->session->getLocalUserId();
+		$user = User::getById($uid, ['username', 'email', 'nickname']);
+
+		if ($user) {
+			$token   = $this->pConfig->get($uid, 'udp_join_req', 'token');
+			$expires = $this->pConfig->get($uid, 'udp_join_req', 'expires_at');
+
+			if (!$token || !$expires || $expires < time()) {
+				if ($token) {
+					$this->config->delete('udp_join_req', $token);
+				}
+				$token   = bin2hex(random_bytes(24));
+				$expires = time() + 86400 * 7;
+				$this->pConfig->set($uid, 'udp_join_req', 'token', $token);
+				$this->pConfig->set($uid, 'udp_join_req', 'expires_at', $expires);
+				$this->config->set('udp_join_req', $token, json_encode([
+					'uid'        => $uid,
+					'name'       => $user['username'],
+					'nick'       => $user['nickname'],
+					'email'      => $user['email'],
+					'node'       => $this->baseUrl->getHost(),
+					'expires_at' => $expires,
+				]));
+			}
+
+			$join_url = (string)$this->baseUrl . '/udp/join-request/' . $token;
+			$renderer = new ImageRenderer(new RendererStyle(200), new SvgImageBackEnd());
+			$join_qr_svg = str_replace('<?xml version="1.0" encoding="UTF-8"?>', '', (new Writer($renderer))->writeString($join_url));
+		}
+
 		$tpl = Renderer::getMarkupTemplate('settings/server/index.tpl');
 		return Renderer::replaceMacros($tpl, [
 			'$l10n' => [
@@ -96,6 +142,8 @@ class Index extends BaseSettings
 				'delete'        => $this->t('Delete'),
 				'delete_title'  => $this->t('Delete all your settings for the remote server'),
 				'submit'        => $this->t('Save changes'),
+				'join_header'   => $this->t('Join another node'),
+				'join_desc'     => $this->t('Share this QR code with the admin of another UDP Social node to request an invitation. The code is valid for 7 days.'),
 			],
 
 			'$count'      => $total,
@@ -108,7 +156,9 @@ class Index extends BaseSettings
 			'$ignoredCheckboxes' => $ignoredCheckboxes,
 			'$deleteCheckboxes'  => $deleteCheckboxes,
 
-			'$paginate' => $pager->renderFull($total),
+			'$paginate'    => $pager->renderFull($total),
+			'$join_qr_svg' => $join_qr_svg,
+			'$join_url'    => $join_url,
 		]);
 	}
 }

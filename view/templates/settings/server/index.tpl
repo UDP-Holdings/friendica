@@ -7,6 +7,27 @@
 <div id="settings-server" class="generic-page-wrapper">
 	<h1>{{$l10n.title}} ({{$count}})</h1>
 
+	{{if $join_qr_svg}}
+	<div class="well" style="margin-bottom:1.5em;">
+		<h3>{{$l10n.join_header}}</h3>
+		<p>{{$l10n.join_desc}}</p>
+		<div style="display:flex; gap:2em; flex-wrap:wrap; align-items:flex-start;">
+			<div style="background:#fff; padding:12px; display:inline-block; border:1px solid #ccc; border-radius:4px;">
+				{{$join_qr_svg nofilter}}
+			</div>
+			<div style="flex:1; min-width:200px;">
+				<label for="udp-join-url"><strong>Or share this link</strong></label>
+				<input id="udp-join-url" type="text" class="form-control" readonly value="{{$join_url}}"
+					onclick="this.select()" style="font-family:monospace; font-size:12px; margin-top:.5em;">
+				<button class="btn btn-default btn-sm" style="margin-top:.5em;" onclick="
+					navigator.clipboard.writeText(document.getElementById('udp-join-url').value)
+						.then(function(){ this.textContent='Copied!'; }.bind(this));
+					return false;">Copy to clipboard</button>
+			</div>
+		</div>
+	</div>
+	{{/if}}
+
 	<p>{{$l10n.desc1 nofilter}}</p>
 	<p>{{$l10n.desc2}}</p>
 

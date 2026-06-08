@@ -663,8 +663,9 @@ return [
 	// NOTE: '/feed' is in BACKEND_MODULES (Mode.php) — it skips session auth. Use '/timeline' instead.
 	'/timeline' => [Module\Conversation\UdpFeed::class, [R::GET]],
 
-	'/udp/directory' => [Module\Udp\DirectoryEndpoint::class,       [R::GET]],        // UDP: inter-node directory API
-	'/udp/pair'      => [Module\Udp\PairEndpoint::class,           [R::POST]],       // UDP: inter-node pairing handshake
+	'/udp/directory'               => [Module\Udp\DirectoryEndpoint::class, [R::GET]],  // UDP: inter-node directory API
+	'/udp/pair'                    => [Module\Udp\PairEndpoint::class,     [R::POST]], // UDP: inter-node pairing handshake
+	'/udp/join-request/{token}'    => [Module\Udp\JoinRequest::class,      [R::GET]],  // UDP: join request landing page (public)
 	'/udp/media'     => [
 		'/photo/upload' => [Module\Udp\Media\PhotoUpload::class,   [R::POST]],       // UDP: photo upload → udp-media indexed
 		'/list'         => [Module\Udp\Media\MediaList::class,      [R::GET]],        // UDP: media list JSON API for drawer + manager
