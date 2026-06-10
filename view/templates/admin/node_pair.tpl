@@ -75,7 +75,7 @@
 		&nbsp;<a href="{{$baseurl}}/admin/node-pair" class="btn btn-link">&larr; Back</a>
 	</form>
 
-	<script src="https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.min.js" integrity="sha512-+jPMGFSKPBds3RNd0jXM/h4Q0q3RZg9JGPEBZNbHQsJvJGb1H4cInM7y7+cBFyHkikM7GfXDFerGSiG3qqzQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+	<script src="{{$baseurl}}/view/js/jsQR.min.js"></script>
 	<script>
 	(function () {
 		var scanBtn  = document.getElementById('udp-scan-btn');
