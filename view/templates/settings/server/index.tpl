@@ -23,6 +23,22 @@
 					navigator.clipboard.writeText(document.getElementById('udp-join-url').value)
 						.then(function(){ this.textContent='Copied!'; }.bind(this));
 					return false;">Copy to clipboard</button>
+				{{if $join_expires_at}}
+				<p class="text-muted" style="margin-top:.75em; font-size:.85em;">
+					Expires: <span id="udp-join-expires"></span>
+					<script>
+					(function(){
+						var d = new Date({{$join_expires_at}} * 1000);
+						document.getElementById('udp-join-expires').textContent = d.toLocaleDateString(undefined, {month:'short',day:'numeric',year:'numeric'});
+					}());
+					</script>
+				</p>
+				{{/if}}
+				<form method="post" action="" style="margin-top:.5em;" onsubmit="return confirm('Generate a new QR code? The current one will stop working immediately.');">
+					<input type="hidden" name="form_security_token" value="{{$form_security_token}}">
+					<input type="hidden" name="udp_regenerate_join_token" value="1">
+					<button type="submit" class="btn btn-default btn-xs">Regenerate code</button>
+				</form>
 			</div>
 		</div>
 	</div>
