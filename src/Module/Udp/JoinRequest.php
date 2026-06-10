@@ -43,12 +43,17 @@ class JoinRequest extends BaseModule
 			throw new HTTPException\NotFoundException(DI::l10n()->t('This join request link has expired.'));
 		}
 
+		$expiresAt = (int) ($data['expires_at'] ?? 0);
+		$expiresStr = $expiresAt ? date('M j, Y', $expiresAt) : '';
+
 		return Renderer::replaceMacros(Renderer::getMarkupTemplate('udp/join_request.tpl'), [
-			'$name'    => $data['name']  ?? '',
-			'$nick'    => $data['nick']  ?? '',
-			'$email'   => $data['email'] ?? '',
-			'$node'    => $data['node']  ?? '',
-			'$baseurl' => (string)DI::baseUrl(),
+			'$name'       => $data['name']  ?? '',
+			'$nick'       => $data['nick']  ?? '',
+			'$email'      => $data['email'] ?? '',
+			'$node'       => $data['node']  ?? '',
+			'$node_url'   => 'https://' . ($data['node'] ?? ''),
+			'$expires_str'=> $expiresStr,
+			'$baseurl'    => (string)DI::baseUrl(),
 		]);
 	}
 }

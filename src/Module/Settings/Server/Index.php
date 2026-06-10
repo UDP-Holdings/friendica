@@ -53,6 +53,17 @@ class Index extends BaseSettings
 	{
 		self::checkFormSecurityTokenRedirectOnError($this->args->getQueryString(), 'settings-server');
 
+		if (!empty($request['udp_regenerate_join_token'])) {
+			$uid       = $this->session->getLocalUserId();
+			$old_token = $this->pConfig->get($uid, 'udp_join_req', 'token');
+			if ($old_token) {
+				$this->config->delete('udp_join_req', $old_token);
+			}
+			$this->pConfig->set($uid, 'udp_join_req', 'token', '');
+			$this->pConfig->set($uid, 'udp_join_req', 'expires_at', 0);
+			$this->baseUrl->redirect($this->args->getQueryString());
+		}
+
 		foreach ($request['delete'] ?? [] as $gsid => $delete) {
 			if ($delete) {
 				unset($request['ignored'][$gsid]);
@@ -157,8 +168,9 @@ class Index extends BaseSettings
 			'$deleteCheckboxes'  => $deleteCheckboxes,
 
 			'$paginate'    => $pager->renderFull($total),
-			'$join_qr_svg' => $join_qr_svg,
-			'$join_url'    => $join_url,
+			'$join_qr_svg'     => $join_qr_svg,
+			'$join_url'        => $join_url,
+			'$join_expires_at' => $expires ?? 0,
 		]);
 	}
 }
