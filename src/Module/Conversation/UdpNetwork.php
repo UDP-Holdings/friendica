@@ -6,6 +6,8 @@
 
 namespace Friendica\Module\Conversation;
 
+use Friendica\DI;
+
 /**
  * UDP wrapper for the standard /network feed.
  * Prepends the same toggle strip shown on /timeline so users can switch views.
@@ -13,8 +15,21 @@ namespace Friendica\Module\Conversation;
  */
 class UdpNetwork extends Network
 {
+	protected function parseRequest(array $request): void
+	{
+		if (!DI::userSession()->getLocalUserId()) {
+			DI::baseUrl()->redirect('login');
+		}
+
+		parent::parseRequest($request);
+	}
+
 	protected function content(array $request = []): string
 	{
+		if (!$this->session->getLocalUserId()) {
+			$this->baseUrl->redirect('login');
+		}
+
 		$o = parent::content($request);
 
 		$toggle = '<nav class="widget"><ul>'

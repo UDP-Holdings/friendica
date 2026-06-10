@@ -26,6 +26,10 @@ class UdpFeed extends Network
 {
 	protected function parseRequest(array $request): void
 	{
+		if (!$this->session->getLocalUserId()) {
+			$this->baseUrl->redirect('login');
+		}
+
 		parent::parseRequest($request);
 
 		// Channel filters (e.g. "For You") route to getChannelItems() and bypass
@@ -43,6 +47,10 @@ class UdpFeed extends Network
 
 	protected function content(array $request = []): string
 	{
+		if (!$this->session->getLocalUserId()) {
+			$this->baseUrl->redirect('login');
+		}
+
 		$o = parent::content($request);
 
 		// parent::content() calls Nav::setSelected('feed'); override to highlight Network nav item
