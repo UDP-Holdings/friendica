@@ -426,9 +426,12 @@
 	});
 
 	newAlbum.addEventListener('click', function() {
+		if (!Object.keys(selected).length) {
+			alert('Select one or more items first, then click "+ New album" to move them into a new album.');
+			return;
+		}
 		var name = prompt('New album name:');
 		if (!name) return;
-		// Select all current items and move to new album
 		selInput.value = name.trim();
 		selMove.click();
 	});
