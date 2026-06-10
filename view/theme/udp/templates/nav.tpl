@@ -15,8 +15,9 @@
 <header>
 	<div id="site-location" aria-hidden="true">{{$sitelocation}}</div>
 	<div id="banner" class="hidden-sm hidden-xs">
-		<a href="{{$baseurl}}" aria-hidden="true">
+		<a href="{{$baseurl}}" aria-hidden="true" class="udp-banner-brand">
 			<div id="logo-img" aria-label="{{$home}}"></div>
+			<span class="udp-version">UDP v1.1</span>
 		</a>
 	</div>
 </header>
@@ -692,6 +693,7 @@
 				<div id="navbrand-container">
 					<div id="logo-img"></div>
 					<div id="navbar-brand-text">~config.sitename~</div>
+					<span class="udp-version">UDP v1.1</span>
 				</div>
 			</a>
 		</div>
