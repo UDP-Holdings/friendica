@@ -10,12 +10,18 @@
 			<p>
 				<strong>{{$name}}</strong>
 				{{if $nick}} <span class="text-muted">(@{{$nick}})</span>{{/if}}
-				is a member of <strong>{{$node}}</strong> and would like to join your UDP Social node.
+				is a member of <strong><a href="{{$node_url}}" target="_blank" rel="noopener">{{$node}}</a></strong>
+				and would like to join your UDP Social node.
 			</p>
 			<p>To invite them, send a registration link to:</p>
 			<p>
 				<a href="mailto:{{$email}}" class="btn btn-primary">{{$email}}</a>
 			</p>
+			{{if $expires_str}}
+			<p class="text-muted" style="font-size:.9em; margin-top:1em;">
+				This request link is valid until <strong>{{$expires_str}}</strong>.
+			</p>
+			{{/if}}
 			<hr>
 			<p class="text-muted" style="font-size:.9em;">
 				You are seeing this page because you scanned or opened a QR code shared by this person.
