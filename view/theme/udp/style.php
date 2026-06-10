@@ -321,6 +321,61 @@ $udp_nav_icon_color = !empty($nav_icon_color) ? $nav_icon_color : '#ffffff';
 	margin: 4px 0;
 }
 
+/* ---- Fix Friendica logo mask: frio CSS uses a relative path that breaks when
+   served from view/theme/udp/style.php. Pin to the absolute URL. ---- */
+header #banner #logo-img,
+.navbar-brand #logo-img {
+	-webkit-mask-image: url("<?= (string) DI::baseUrl() ?>/view/theme/frio/img/friendica-25.png");
+}
+
+/* ---- Login page — UDP background image override ---- */
+.mod-login {
+	background-image: linear-gradient(to right, rgba(0,0,0,0.6), rgba(0,0,0,0.35)), url("<?= (string) DI::baseUrl() ?>/view/theme/udp/img/login_bg.jpg");
+}
+
+/* ---- UDP version badge ---- */
+.udp-version {
+	display: none; /* hidden everywhere by default; enabled below on desktop only */
+	font-size: 9px;
+	font-weight: 700;
+	letter-spacing: 0.05em;
+	text-transform: uppercase;
+	white-space: nowrap;
+	opacity: 0.6;
+}
+
+/* In #banner (logged-in): flex the <a> so version sits to the right of the logo */
+a.udp-banner-brand {
+	display: flex !important;
+	align-items: flex-end;
+	gap: 5px;
+	text-decoration: none;
+}
+#banner .udp-version {
+	display: block;
+	color: <?= $udp_nav_icon_color ?>;
+	padding-bottom: 3px; /* baseline-align with bottom of 25px logo */
+}
+
+/* In navbar-brand (logged-out): #navbrand-container is already flex */
+#navbrand-container .udp-version {
+	display: block;
+	color: <?= $udp_nav_icon_color ?>;
+	align-self: flex-end;
+	padding-bottom: 1px;
+}
+
+/* ---- Login attribution footer ---- */
+#udp-login-attribution {
+	position: fixed;
+	bottom: 6px;
+	right: 12px;
+	font-size: 10px;
+	color: rgba(255,255,255,0.45);
+	margin: 0;
+	pointer-events: none;
+}
+
 /* ---- Mobile only: touch-friendliness + misc ---- */
 @media (max-width: 767px) {
 	/* Prevent iOS zoom on input focus */
