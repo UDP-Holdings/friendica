@@ -408,7 +408,7 @@ class Receiver
 			$object_data['object_id']  = JsonLD::fetchElement($activity, 'as:object', '@id');
 			$object_data['object_ids'] = JsonLD::fetchElementArray($activity, 'as:object', '@id');
 			$object_data['content']    = JsonLD::fetchElement($activity, 'as:content', '@type');
-		} elseif (in_array($object_type, self::ACCOUNT_TYPES)) {
+		} elseif (in_array($object_type, self::ACCOUNT_TYPES) && $type !== 'as:Move') {
 			$object_data = [];
 
 			$object_data['id']            = JsonLD::fetchElement($activity, '@id');
@@ -454,6 +454,16 @@ class Receiver
 			$object_data['object_id']      = JsonLD::fetchElement($activity, 'as:object', '@id');
 			$object_data['object_type']    = JsonLD::fetchElement($activity['as:object'], '@type');
 			$object_data['object_content'] = JsonLD::fetchElement($activity['as:object'], 'as:content', '@type');
+
+			// Many AP implementations (e.g. Mastodon) send Move with a bare URL object, producing no @type.
+			// Fall back to probing the actor URL so movePerson() can verify the object is an account.
+			// APContact::getByURL stores type without the 'as:' prefix; restore it to match ACCOUNT_TYPES.
+			if ($type === 'as:Move' && empty($object_data['object_type']) && !empty($object_data['object_id'])) {
+				$profile = APContact::getByURL($object_data['object_id'], false);
+				if (!empty($profile['type'])) {
+					$object_data['object_type'] = 'as:' . $profile['type'];
+				}
+			}
 		} elseif (in_array($type, ['quote:QuoteRequest'])) {
 			$object_data = [];
 

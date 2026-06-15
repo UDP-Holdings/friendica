@@ -2263,6 +2263,38 @@ class Transmitter
 	}
 
 	/**
+	 * Sends an AP Move activity to a single inbox, notifying followers that
+	 * this account has relocated to $target_url.
+	 *
+	 * @param array  $owner      Owner data from User::getOwnerDataById()
+	 * @param string $inbox      Recipient inbox URL
+	 * @param string $target_url AP actor URL of the destination account
+	 * @return bool
+	 */
+	public static function sendMove(array $owner, string $inbox, string $target_url): bool
+	{
+		$profile = APContact::getByURL($owner['url']);
+
+		$data = [
+			'@context'   => ActivityPub::CONTEXT,
+			'id'         => DI::baseUrl() . '/activity/' . System::createGUID(),
+			'type'       => 'Move',
+			'actor'      => $owner['url'],
+			'object'     => $owner['url'],
+			'target'     => $target_url,
+			'published'  => DateTimeFormat::utcNow(DateTimeFormat::ATOM),
+			'instrument' => self::getService(),
+			'to'         => [ActivityPub::PUBLIC_COLLECTION],
+			'cc'         => [$profile['followers'] ?? ''],
+		];
+
+		$signed = LDSignature::sign($data, $owner);
+
+		DI::logger()->info('Deliver Move activity for user ' . $owner['uid'] . ' to ' . $inbox . ' via ActivityPub', ['target' => $target_url]);
+		return HTTPSignature::transmit($signed, $inbox, $owner);
+	}
+
+	/**
 	 * Transmits a given activity to a target
 	 *
 	 * @param string  $activity Type name

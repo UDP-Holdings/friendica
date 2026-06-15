@@ -65,6 +65,7 @@ Commands:
 		config                 Edit site config
 		dbstructure            Do database updates
 		maintenance            Set maintenance mode for this node
+		move-account           Broadcast an AP Move activity to all followers of a local user
 		movetoavatarcache      Move cached avatars to the file based avatar cache
 		postupdate             Execute pending post update scripts (can last days)
 		relocate               Update node base URL
@@ -106,6 +107,7 @@ HELP;
 		'lock'                              => Friendica\Console\Lock::class,
 		'maintenance'                       => Friendica\Console\Maintenance::class,
 		'mergecontacts'                     => Friendica\Console\MergeContacts::class,
+		'move-account'                      => Friendica\Console\MoveAccount::class,
 		'movetoavatarcache'                 => Friendica\Console\MoveToAvatarCache::class,
 		'php2po'                            => Friendica\Console\PhpToPo::class,
 		'postupdate'                        => Friendica\Console\PostUpdate::class,

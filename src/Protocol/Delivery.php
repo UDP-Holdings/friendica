@@ -29,6 +29,7 @@ class Delivery
 	const POST          = 'wall-new';
 	const REMOVAL       = 'removeme';
 	const PROFILEUPDATE = 'profileupdate';
+	const MOVE          = 'move';
 
 	/**
 	 * Deliver posts to other systems
