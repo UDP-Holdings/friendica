@@ -67,9 +67,12 @@ var DzFactory = function (max_imagesize) {
 			acceptedFiles: null, // input[accept] gates the OS picker; Dropzone's check breaks empty-type files on mobile
 			clickable: clickableSelector || false,
 			previewsContainer: previewsContainerId || null,
-			// UDP: chunked upload for non-image files (video, audio, attachments)
-			chunking: false,              // toggled on per-file in the processing event
-			forceChunking: false,         // toggled on per-file in the processing event
+			// UDP: always chunked — images are small enough to be a single chunk (50 MB limit),
+			// so the photo endpoint receives them as a normal single-file POST and ignores
+			// the extra Dropzone metadata fields. Toggling chunking per-file in `processing`
+			// caused Dropzone to skip chunk 1 of multi-chunk uploads.
+			chunking: true,
+			forceChunking: true,
 			chunkSize: 50 * 1024 * 1024, // 50 MB per HTTP request
 			retryChunks: true,
 			retryChunksLimit: 3,
@@ -126,16 +129,29 @@ var DzFactory = function (max_imagesize) {
 				}
 			},
 			init: function() {
-				this.on("processing", function(file) {
-					if (effectiveType(file).match(/^image\//)) {
-						// Images: non-chunked, photo endpoint (url function handles routing)
-						this.options.chunking      = false;
-						this.options.forceChunking = false;
-					} else {
-						// Video/audio/attachments: force chunking so dzuuid is always sent
-						this.options.chunking      = true;
-						this.options.forceChunking = true;
-					}
+				console.log('[UDP DZ] init — chunking=' + this.options.chunking + ' forceChunking=' + this.options.forceChunking);
+
+				this.on("sending", function(file, xhr, formData) {
+					var idx   = formData.get ? formData.get('dzchunkindex')      : '?';
+					var total = formData.get ? formData.get('dztotalchunkcount') : '?';
+					var uuid  = formData.get ? formData.get('dzuuid')            : '?';
+					console.log('[UDP DZ] sending chunk idx=' + idx + ' total=' + total + ' uuid=' + uuid + ' type=' + effectiveType(file));
+
+					// Send ACL fields with each chunk so UploadChunk.php can store the
+					// file with the correct permissions before the post is created.
+					var dropzoneEl = document.getElementById('dropzone-' + FORM_ID);
+					var scope = (dropzoneEl && dropzoneEl.closest('form')) || document;
+					var visEl = scope.querySelector('[name="visibility"]:checked');
+					formData.append('visibility', visEl ? visEl.value : 'public');
+					['contact_allow', 'circle_allow', 'contact_deny', 'circle_deny'].forEach(function(field) {
+						var el = scope.querySelector('[name="' + field + '"]');
+						formData.append(field, el ? el.value : '');
+					});
+				});
+
+				this.on("chunksUploaded", function(file, done) {
+					console.log('[UDP DZ] all chunks uploaded for ' + file.name);
+					done();
 				});
 
 				this.on("error", function(file, message, xhr) {

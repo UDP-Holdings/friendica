@@ -120,8 +120,21 @@ class UploadChunk extends BaseModule
 			$thumbResourceId = $this->generateThumbnail($assembledPath, $owner['uid'], (int) $owner['id']);
 		}
 
-		// Store the original file immediately — transcode happens in the background
-		$newId = Attach::storeFile($assembledPath, $owner['uid'], $fileName, $mimeType, '<' . $owner['id'] . '>');
+		// Build attachment ACL from the compose form's visibility selection.
+		// Dropzone sends visibility/contact_allow/circle_allow/contact_deny/circle_deny
+		// with each chunk so we can store the file with the correct permissions
+		// before the post itself is created.
+		$acl = DI::aclFormatter();
+		if (($request['visibility'] ?? '') === 'public') {
+			$allowCid = $allowGid = $denyCid = $denyGid = '';
+		} else {
+			$allowCid = $acl->toString($request['contact_allow'] ?? '');
+			$allowGid = $acl->toString($request['circle_allow']  ?? '');
+			$denyCid  = $acl->toString($request['contact_deny']  ?? '');
+			$denyGid  = $acl->toString($request['circle_deny']   ?? '');
+		}
+
+		$newId = Attach::storeFile($assembledPath, $owner['uid'], $fileName, $mimeType, $allowCid, $allowGid, $denyCid, $denyGid);
 
 		// Clean up temp directory
 		foreach (glob($uploadDir . '/*') as $f) {

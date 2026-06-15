@@ -283,7 +283,7 @@
 		});
 	}, 5000);
 
-	function togglePermissions() {
+	window.togglePermissions = function() {
 		var s = document.getElementById('permissions-section');
 		s.style.display = (s.style.display === 'none' || !s.style.display) ? 'block' : 'none';
 	}

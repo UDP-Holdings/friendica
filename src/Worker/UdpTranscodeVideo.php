@@ -21,6 +21,7 @@ use Friendica\Core\Config\Capability\IManageConfigValues;
 use Friendica\Database\DBA;
 use Friendica\DI;
 use Friendica\Model\Attach;
+use Friendica\Model\Item;
 use Friendica\Util\DateTimeFormat;
 
 class UdpTranscodeVideo
@@ -141,6 +142,18 @@ class UdpTranscodeVideo
 			'src_codec'   => $codec,
 			'new_size'    => strlen($newData),
 		]);
+
+		// Re-federate any origin items that embed this attachment so followers
+		// receive an AP Update with the corrected video/mp4 MIME type.
+		// Item::update() with a new 'edited' timestamp triggers the Notifier,
+		// and since edited > created the AP Transmitter sends Update (not Create).
+		// Item::update() calls Post::select(post-user-view) internally, which
+		// joins post-content — no direct 'item' table query needed.
+		$attachPattern = '%/attach/' . $attachId . '%';
+		Item::update(
+			['edited' => DateTimeFormat::utcNow()],
+			['`body` LIKE ? AND `origin` = 1 AND `deleted` = 0', $attachPattern]
+		);
 	}
 
 	private static function cleanup(string $dir): void
