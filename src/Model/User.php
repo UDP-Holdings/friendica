@@ -1322,7 +1322,7 @@ class User
 		$nickname = $data['nickname'] = strtolower($nickname);
 
 		if (!preg_match('/^[a-z0-9][a-z0-9_]*$/', $nickname)) {
-			throw new Exception(DI::l10n()->t('Your nickname can only contain a-z, 0-9 and _.'));
+			throw new Exception(DI::l10n()->t('Your nickname must start with a letter or number, and can only contain a-z, 0-9 and _.'));
 		}
 
 		// Check existing and deleted accounts for this nickname.
