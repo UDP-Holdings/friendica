@@ -551,6 +551,12 @@
 
 			<li class="divider"></li>
 
+			<li>
+				<a href="{{$baseurl}}/udp/member-invite" title="Invite a friend to this community">
+					<i class="fa fa-user-plus fa-fw" aria-hidden="true"></i> Invite a friend
+				</a>
+			</li>
+
 			{{if $nav.contacts}}
 			<li>
 				<a href="{{$nav.contacts.0}}" title="{{$nav.contacts.3}}">

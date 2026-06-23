@@ -400,6 +400,7 @@ return [
 		'/batch'                      => [Module\Contact::class,                [R::GET, R::POST]],
 		'/blocked'                    => [Module\Contact::class,                [R::GET]],
 		'/follow'                     => [Module\Contact\Follow::class,         [R::GET, R::POST]],
+		'/invite'                     => [Module\Contact\Invite::class,        [R::POST]],        // UDP: email pairing invite (any logged-in user)
 		'/hidden'                     => [Module\Contact::class,                [R::GET]],
 		'/hovercard'                  => [Module\Contact\Hovercard::class,      [R::GET]],
 		'/ignored'                    => [Module\Contact::class,                [R::GET]],
@@ -665,7 +666,11 @@ return [
 
 	'/udp/directory'               => [Module\Udp\DirectoryEndpoint::class, [R::GET]],  // UDP: inter-node directory API
 	'/udp/pair'                    => [Module\Udp\PairEndpoint::class,     [R::POST]], // UDP: inter-node pairing handshake
-	'/udp/join-request/{token}'    => [Module\Udp\JoinRequest::class,      [R::GET]],  // UDP: join request landing page (public)
+	'/udp/pair-invite/{token}'     => [Module\Udp\PairInvite::class,      [R::GET]],           // UDP: public landing page for emailed pairing invitations
+	'/udp/join-request/{token}'    => [Module\Udp\JoinRequest::class,      [R::GET, R::POST]],  // UDP: join request landing page (public)
+	'/udp/member-invite'                   => [Module\Udp\MemberInvite::class,        [R::GET, R::POST]], // UDP: user-initiated friend invite request
+	'/udp/member-invite-approve/{token}'   => [Module\Udp\MemberInviteApprove::class, [R::GET, R::POST]], // UDP: admin approval for member invite
+	'/udp/move-account'            => [Module\Udp\MoveAccount::class,      [R::GET, R::POST]],  // UDP: self-service account move
 	'/udp/media'     => [
 		'/photo/upload' => [Module\Udp\Media\PhotoUpload::class,   [R::POST]],       // UDP: photo upload → udp-media indexed
 		'/list'         => [Module\Udp\Media\MediaList::class,      [R::GET]],        // UDP: media list JSON API for drawer + manager
