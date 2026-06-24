@@ -21,6 +21,6 @@ class UdpHome extends Home
 			DI::baseUrl()->redirect('timeline');
 		}
 
-		return parent::content($request);
+		DI::baseUrl()->redirect('login');
 	}
 }
