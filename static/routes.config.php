@@ -667,9 +667,11 @@ return [
 	'/udp/directory'               => [Module\Udp\DirectoryEndpoint::class, [R::GET]],  // UDP: inter-node directory API
 	'/udp/pair'                    => [Module\Udp\PairEndpoint::class,     [R::POST]], // UDP: inter-node pairing handshake
 	'/udp/pair-invite/{token}'     => [Module\Udp\PairInvite::class,      [R::GET]],           // UDP: public landing page for emailed pairing invitations
+	'/udp/pair-request'            => [Module\Udp\PairRequest::class,      [R::POST]],          // UDP: public endpoint — receives server-to-server pairing requests
 	'/udp/join-request/{token}'    => [Module\Udp\JoinRequest::class,      [R::GET, R::POST]],  // UDP: join request landing page (public)
 	'/udp/member-invite'                   => [Module\Udp\MemberInvite::class,        [R::GET, R::POST]], // UDP: user-initiated friend invite request
 	'/udp/member-invite-approve/{token}'   => [Module\Udp\MemberInviteApprove::class, [R::GET, R::POST]], // UDP: admin approval for member invite
+	'/udp/member-pair-approve/{token}'     => [Module\Udp\MemberPairApprove::class,   [R::GET, R::POST]], // UDP: admin confirmation for Flow B node-pairing request
 	'/udp/move-account'            => [Module\Udp\MoveAccount::class,      [R::GET, R::POST]],  // UDP: self-service account move
 	'/udp/media'     => [
 		'/photo/upload' => [Module\Udp\Media\PhotoUpload::class,   [R::POST]],       // UDP: photo upload → udp-media indexed
