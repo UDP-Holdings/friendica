@@ -14,6 +14,11 @@ echo ob_get_clean();
 // are in our scope. Provide safe fallbacks in case a scheme sets them empty.
 $udp_nav_bg         = !empty($nav_bg)         ? $nav_bg         : '#1565c0';
 $udp_nav_icon_color = !empty($nav_icon_color) ? $nav_icon_color : '#ffffff';
+
+// Pre-compute base URL here (before CSS output mode) to avoid DI::baseUrl()
+// being called inline inside the template, which fatals if DI isn't fully
+// initialized in the theme compilation context.
+$udp_base_url = rtrim((string) \Friendica\DI::baseUrl(), '/');
 ?>
 
 /* ====================================================================
@@ -325,12 +330,39 @@ $udp_nav_icon_color = !empty($nav_icon_color) ? $nav_icon_color : '#ffffff';
    served from view/theme/udp/style.php. Pin to the absolute URL. ---- */
 header #banner #logo-img,
 .navbar-brand #logo-img {
-	-webkit-mask-image: url("<?= (string) DI::baseUrl() ?>/view/theme/frio/img/friendica-25.png");
+	-webkit-mask-image: url("<?= $udp_base_url ?>/view/theme/frio/img/friendica-25.png");
 }
 
-/* ---- Login page — UDP background image override ---- */
+/* ---- Login page — make the background photo fill the visible area.
+   Applies to both /login (mod-login) and / (mod-home, which also renders the
+   login form for unauthenticated visitors on non-single-user instances).
+   Frio sets background-color:#fff on .login-content-wrapper which hides the
+   body background-image in the form column. Clear it here so the semi-
+   transparent .login-panel-content is what the eye sees against the photo. ---- */
+.mod-home,
 .mod-login {
-	background-image: linear-gradient(to right, rgba(0,0,0,0.6), rgba(0,0,0,0.35)), url("<?= (string) DI::baseUrl() ?>/view/theme/udp/img/login_bg.jpg");
+	min-height: 100vh;
+	background-image: linear-gradient(to right, rgba(0,0,0,0.6), rgba(0,0,0,0.35)), url("<?= $udp_base_url ?>/view/theme/udp/img/login_bg.jpg");
+	background-size: cover;
+	background-position: center;
+	background-repeat: no-repeat;
+}
+.mod-home #content > h1 { display: none; }
+.mod-home .login-content-wrapper,
+.mod-login .login-content-wrapper {
+	background-color: transparent;
+}
+.mod-login #login-head h1,
+.mod-login #openid-header,
+.mod-login #login-lost-password-link a,
+.mod-login #login-extra-links,
+.mod-login #new-here {
+	color: #ffffff;
+	text-shadow: 0 1px 3px rgba(0,0,0,0.6);
+}
+.mod-login #content #login-form #div_id_remember label {
+	color: #ffffff;
+	text-shadow: 0 1px 3px rgba(0,0,0,0.6);
 }
 
 /* ---- UDP version badge ---- */

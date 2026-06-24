@@ -9,6 +9,7 @@
 
 use Friendica\AppHelper;
 use Friendica\Core\Hook;
+use Friendica\Core\Renderer;
 use Friendica\DI;
 
 require_once 'view/theme/frio/theme.php';
@@ -19,6 +20,13 @@ function udp_init(AppHelper $appHelper)
 
 	// Override viewport for mobile-first + iOS safe-area support
 	DI::page()['htmlhead'] .= '<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">';
+
+	// Force a cache-bust for the UDP stylesheet on every theme version bump.
+	// Friendica uses App::VERSION (e.g. "2026.01") as the ?v= param for all assets,
+	// which never changes between our deploys. Adding ?udp=1 gives us a distinct URL
+	// that Page::registerStylesheet() won't overwrite (it only merges the 'v' key),
+	// so browsers re-fetch when we increment this string.
+	Renderer::$theme['stylesheet'] = 'view/theme/udp/style.pcss?udp=4';
 
 	// UDP always routes "New post" directly to /compose — no jot modal
 	$uid = DI::userSession()->getLocalUserId();
