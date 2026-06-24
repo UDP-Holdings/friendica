@@ -461,7 +461,7 @@ return [
 	'/home'                       => [Module\UdpHome::class,           [R::GET]], // UDP: redirect logged-in users to /feed
 	'/hcard/{profile}[/{action}]' => [Module\HCard::class,             [R::GET]],
 	'/inbox[/{nickname}]'         => [Module\ActivityPub\Inbox::class, [R::GET, R::POST]],
-	'/invite'                     => [Module\Invite::class,            [R::GET, R::POST]],
+	'/invite'                     => [Module\Udp\MemberInvite::class,  [R::GET, R::POST]], // UDP: replaced with admin-approval invite flow
 
 	'/install' => [
 		'[/]'          => [Module\Install::class, [R::GET, R::POST]],

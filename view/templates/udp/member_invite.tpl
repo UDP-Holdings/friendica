@@ -1,6 +1,3 @@
-{{*
-  * UDP Social — user-initiated friend invite request form
-  *}}
 <div class="generic-page-wrapper" style="max-width:520px; margin:3em auto;">
 	<div class="panel panel-default">
 		<div class="panel-heading">
@@ -8,24 +5,18 @@
 		</div>
 		<div class="panel-body">
 			<p>
-				Know someone who'd be a good fit for this community? Fill out this form and
-				the admin will review your request. If approved, your friend will receive a
-				registration link by email.
+				Want to connect with someone? Enter their email address to invite them to join
+				this community, or their Fediverse handle if they already have an account on
+				another node (e.g. <code>@jane@theirnode.com</code>).
 			</p>
 
 			<form action="{{$baseurl}}/udp/member-invite" method="post">
 				<input type="hidden" name="form_security_token" value="{{$form_security_token}}">
 
 				<div class="form-group">
-					<label for="friend_name">Friend's name</label>
-					<input type="text" id="friend_name" name="friend_name" class="form-control"
-						placeholder="Jane Smith" autocomplete="off">
-				</div>
-
-				<div class="form-group">
-					<label for="friend_email">Friend's email <span class="text-danger">*</span></label>
-					<input type="email" id="friend_email" name="friend_email" class="form-control"
-						placeholder="jane@example.com" required autocomplete="off">
+					<label for="contact">Email or Fediverse handle <span class="text-danger">*</span></label>
+					<input type="text" id="contact" name="contact" class="form-control"
+						placeholder="jane@example.com or @jane@theirnode.com" required autocomplete="off">
 				</div>
 
 				<div class="form-group">
