@@ -92,11 +92,42 @@ class GServer
 	 */
 	public static function add(string $url, bool $only_nodeinfo = false)
 	{
+		// Walled garden: when allowed_sites is set, only track servers that are explicitly
+		// paired with this node. This prevents the Fediverse discovery cascade on private nodes.
+		if (!self::isAllowedByWalledGarden($url)) {
+			return;
+		}
+
 		if (self::getID($url)) {
 			return;
 		}
 
 		UpdateGServer::add(Worker::PRIORITY_LOW, $url, $only_nodeinfo);
+	}
+
+	/**
+	 * Returns false if this node is a walled garden (allowed_sites is non-empty) and the
+	 * given URL's domain is not in the allowlist and is not the local domain.
+	 * Returns true for open nodes (allowed_sites empty) or explicitly paired domains.
+	 */
+	private static function isAllowedByWalledGarden(string $url): bool
+	{
+		$allowed_raw = DI::config()->get('system', 'allowed_sites') ?? '';
+		if (empty($allowed_raw)) {
+			return true;
+		}
+
+		$host = parse_url($url, PHP_URL_HOST) ?: '';
+		if (!$host) {
+			return false;
+		}
+
+		if ($host === DI::baseUrl()->getHost()) {
+			return true;
+		}
+
+		$allowed = array_filter(array_map('trim', explode(',', $allowed_raw)));
+		return in_array($host, $allowed, true);
 	}
 
 	/**

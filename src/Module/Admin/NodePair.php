@@ -108,6 +108,9 @@ class NodePair extends BaseAdmin
 
 			$this->addToAllowedSites($remote_domain);
 
+			// Consume the pending pair request now that the handshake is complete
+			DI::config()->delete('udp_pair_request', $remote_domain);
+
 			// Store the shared secret returned by the remote node for HMAC-signed directory requests
 			$secret = $response['secret'] ?? '';
 			if ($secret && preg_match('/^[0-9a-f]{64}$/', $secret)) {
@@ -115,6 +118,17 @@ class NodePair extends BaseAdmin
 			}
 
 			DI::sysmsg()->addInfo(DI::l10n()->t('Successfully paired with %s! Posts from that node will now appear in your feeds.', $remote_domain));
+			DI::baseUrl()->redirect('admin/node-pair');
+		}
+
+		if ($action === 'reject') {
+			self::checkFormSecurityTokenRedirectOnError('/admin/node-pair', 'admin_node_pair_reject');
+
+			$domain = trim($request['domain'] ?? '');
+			if ($domain) {
+				DI::config()->delete('udp_pair_request', $domain);
+				DI::sysmsg()->addInfo(DI::l10n()->t('Pairing request from %s has been declined.', $domain));
+			}
 			DI::baseUrl()->redirect('admin/node-pair');
 		}
 	}
@@ -149,7 +163,35 @@ class NodePair extends BaseAdmin
 		}
 
 		$allowed_raw  = DI::config()->get('system', 'allowed_sites') ?? '';
-		$paired_nodes = array_values(array_filter(array_map('trim', explode(',', $allowed_raw))));
+		$local_host   = DI::baseUrl()->getHost();
+		$paired_nodes = array_values(array_filter(
+			array_map('trim', explode(',', $allowed_raw)),
+			fn($d) => $d !== '' && $d !== $local_host
+		));
+
+		// Load pending inbound pair requests from other UDP nodes
+		$pending_requests = [];
+		$raw_requests = DI::dba()->selectToArray('config', ['k', 'v'], ['cat' => 'udp_pair_request']);
+		foreach ($raw_requests as $row) {
+			// DI::config()->set() PHP-serializes values; unserialize before JSON-decoding.
+			$json = @unserialize($row['v']);
+			$d    = is_string($json) ? json_decode($json, true) : null;
+			if (!$d) {
+				continue;
+			}
+			$payload         = ['d' => $d['domain'], 't' => $d['pairing_token']];
+			$encoded_payload = rtrim(strtr(base64_encode(json_encode($payload)), '+/', '-_'), '=');
+			$pending_requests[] = [
+				'domain'           => $d['domain'],
+				'requester_handle' => $d['context']['requester_handle'] ?? '',
+				'target_handle'    => $d['context']['target_handle']    ?? '',
+				'received_at'      => $d['received_at'] ? date('M j, Y g:i a', $d['received_at']) : '',
+				'accept_payload'   => $encoded_payload,
+			];
+		}
+
+		// Pre-fill the accept textarea when arriving from a pending-request link
+		$prefill_payload = $action === 'accept' ? ($request['payload'] ?? '') : '';
 
 		return Renderer::replaceMacros(Renderer::getMarkupTemplate('admin/node_pair.tpl'), [
 			'$title'                      => DI::l10n()->t('Administration'),
@@ -158,8 +200,11 @@ class NodePair extends BaseAdmin
 			'$qr_payload'                 => $qr_payload,
 			'$qr_svg'                     => $qr_svg,
 			'$paired_nodes'               => $paired_nodes,
+			'$pending_requests'           => $pending_requests,
+			'$prefill_payload'            => $prefill_payload,
 			'$form_security_token_gen'    => self::getFormSecurityToken('admin_node_pair_generate'),
 			'$form_security_token_accept' => self::getFormSecurityToken('admin_node_pair_accept'),
+			'$form_security_token_reject' => self::getFormSecurityToken('admin_node_pair_reject'),
 			'$baseurl'                    => (string) DI::baseUrl(),
 		]);
 	}

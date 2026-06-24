@@ -86,17 +86,31 @@ class MemberInvite extends BaseModule
 			DI::baseUrl()->redirect('udp/member-invite');
 		}
 
-		$nodePairUrl = (string) DI::baseUrl() . '/admin/node-pair';
-		$subject     = DI::l10n()->t('%s wants to connect with someone on %s', $user['username'] ?? 'A member', $remoteDomain);
-		$body        = DI::l10n()->t(
-			"Hi,\n\n%s (%s) wants to connect with %s on %s, but that node isn't paired with %s yet.%s\n\nTo allow this, pair with that node first:\n%s\n\n— UDP Social",
+		$token   = bin2hex(random_bytes(24));
+		$expires = time() + 86400 * 3;
+
+		DI::config()->set('udp_member_pair', $token, json_encode([
+			'requester_uid'   => $uid,
+			'requester_name'  => $user['username'] ?? '',
+			'requester_nick'  => $user['nickname'] ?? '',
+			'requester_email' => $user['email']    ?? '',
+			'target_handle'   => $contact,
+			'target_domain'   => $remoteDomain,
+			'note'            => $note,
+			'expires_at'      => $expires,
+		]));
+
+		$approveUrl = (string) DI::baseUrl() . '/udp/member-pair-approve/' . $token;
+		$subject    = DI::l10n()->t('%s wants to connect with someone on %s', $user['username'] ?? 'A member', $remoteDomain);
+		$body       = DI::l10n()->t(
+			"Hi,\n\n%s (%s) wants to connect with %s on %s, but that node isn't paired with %s yet.%s\n\nReview and send a pairing request (expires in 3 days):\n%s\n\n— UDP Social",
 			$user['username'] ?? '',
 			$user['email']    ?? '',
 			$contact,
 			$remoteDomain,
 			$sitename,
 			$note ? "\n\nNote from user: " . $note : '',
-			$nodePairUrl
+			$approveUrl
 		);
 
 		$mail = DI::emailer()

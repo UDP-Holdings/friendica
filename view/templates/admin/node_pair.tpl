@@ -10,6 +10,31 @@
 	{{* ── Landing: choose a role ─────────────────────────────────────── *}}
 	<p>Connect this node to another UDP Social node so your communities can follow each other.</p>
 
+	{{if $pending_requests}}
+	<div class="alert alert-info" style="margin-bottom:1.5em;">
+		<h4 style="margin-top:0;">Incoming pairing requests</h4>
+		{{foreach $pending_requests as $req}}
+		<div style="{{if !$req@last}}margin-bottom:.75em; padding-bottom:.75em; border-bottom:1px solid rgba(0,0,0,.15);{{/if}}">
+			<strong>{{$req.domain}}</strong> wants to pair
+			{{if $req.requester_handle}}
+			— <em>{{$req.requester_handle}} wants to connect with {{$req.target_handle}}</em>
+			{{/if}}
+			<br><small class="text-muted">Received {{$req.received_at}}</small>
+			&nbsp;
+			<a href="{{$baseurl}}/admin/node-pair/accept?payload={{$req.accept_payload}}"
+			   class="btn btn-success btn-xs" style="vertical-align:middle;">Accept pairing</a>
+			<form action="{{$baseurl}}/admin/node-pair/reject" method="post"
+			      style="display:inline; margin-left:.25em;">
+				<input type="hidden" name="form_security_token" value="{{$form_security_token_reject}}">
+				<input type="hidden" name="domain" value="{{$req.domain}}">
+				<button type="submit" class="btn btn-default btn-xs"
+				        onclick="return confirm('Decline pairing request from {{$req.domain}}?')">Decline</button>
+			</form>
+		</div>
+		{{/foreach}}
+	</div>
+	{{/if}}
+
 	{{if $paired_nodes}}
 	<div class="well" style="margin-bottom:1.5em;">
 		<h4 style="margin-top:0;">Paired nodes</h4>
@@ -85,9 +110,11 @@
 		<div class="form-group">
 			<label for="udp-payload-input"><strong>Token</strong> (paste here or scan above)</label>
 			<textarea name="payload" id="udp-payload-input" class="form-control" rows="3"
-				placeholder="Paste the token from the other admin…" style="font-family:monospace; font-size:12px;"></textarea>
+				placeholder="Paste the token from the other admin…"
+				style="font-family:monospace; font-size:12px;">{{$prefill_payload}}</textarea>
 		</div>
-		<button type="submit" class="btn btn-primary" id="udp-confirm-btn" disabled>Confirm pairing</button>
+		<button type="submit" class="btn btn-primary" id="udp-confirm-btn"
+			{{if !$prefill_payload}}disabled{{/if}}>Confirm pairing</button>
 		&nbsp;<a href="{{$baseurl}}/admin/node-pair" class="btn btn-link">&larr; Back</a>
 	</form>
 
