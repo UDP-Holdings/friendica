@@ -13,20 +13,23 @@
 				is a member of <strong><a href="{{$node_url}}" target="_blank" rel="noopener">{{$node}}</a></strong>
 				and would like to join your UDP Social node.
 			</p>
-			<p>To invite them, send a registration link to:</p>
-			<p>
-				<a href="mailto:{{$email}}" class="btn btn-primary">{{$email}}</a>
-			</p>
+			<p>Clicking the button below will send a registration invitation to:</p>
+			<p><strong>{{$email}}</strong></p>
+
+			<form action="{{$baseurl}}/udp/join-request/{{$token}}" method="post">
+				<input type="hidden" name="form_security_token" value="{{$form_security_token}}">
+				<button type="submit" class="btn btn-primary">Send invitation to {{$email}}</button>
+			</form>
+
 			{{if $expires_str}}
-			<p class="text-muted" style="font-size:.9em; margin-top:1em;">
+			<p class="text-muted" style="font-size:.9em; margin-top:1.5em;">
 				This request link is valid until <strong>{{$expires_str}}</strong>.
 			</p>
 			{{/if}}
 			<hr>
 			<p class="text-muted" style="font-size:.9em;">
 				You are seeing this page because you scanned or opened a QR code shared by this person.
-				No action has been taken automatically. Only send an invitation if you recognise this person
-				and want them on your node.
+				Only send an invitation if you recognise this person and want them on your node.
 			</p>
 		</div>
 	</div>
