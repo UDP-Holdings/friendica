@@ -1656,46 +1656,10 @@ class User
 		]);
 
 		$user     = $result['user'];
-		$preamble = Strings::deindent(DI::l10n()->t('
-		Dear %1$s,
-			the administrator of %2$s has set up an account for you.'));
-		$body = Strings::deindent(DI::l10n()->t('
-		The login details are as follows:
-
-		Site Location:	%1$s
-		Login Name:		%2$s
-		Password:		%3$s
-
-		You may change your password from your account "Settings" page after logging
-		in.
-
-		Please take a few moments to review the other account settings on that page.
-
-		You may also wish to add some basic information to your default profile
-		(on the "Profiles" page) so that other people can easily find you.
-
-		We recommend adding a profile photo, adding some profile "keywords"
-		(very useful in making new friends) - and perhaps what country you live in;
-		if you do not wish to be more specific than that.
-
-		We fully respect your right to privacy, and none of these items are necessary.
-		If you are new and do not know anybody here, they may help
-		you to make some new and interesting friends.
-
-		If you ever want to delete your account, you can do so at %1$s/settings/removeme
-
-		Thank you and welcome to %4$s.'));
-
-		$preamble = sprintf($preamble, $user['username'], DI::config()->get('config', 'sitename'));
-		$body     = sprintf($body, DI::baseUrl(), $user['nickname'], $result['password'], DI::config()->get('config', 'sitename'));
-
-		$email = DI::emailer()
-			->newSystemMail()
-			->withMessage(DI::l10n()->t('Registration details for %s', DI::config()->get('config', 'sitename')), $preamble, $body)
-			->forUser($user)
-			->withRecipient($user['email'])
-			->build();
-		return DI::emailer()->send($email);
+		// UDP: welcome email is sent by the orchestrator after it sets the real
+		// customer password. Sending here would deliver a stale Friendica-generated
+		// password before the orchestrator overwrites it, confusing the customer.
+		return true;
 	}
 
 	/**
