@@ -11,4 +11,6 @@ FROM friendica:2026.01-apache
 # while leaving vendor/ and the entrypoint scripts untouched. The entrypoint
 # rsyncs /usr/src/friendica → /var/www/html on first boot as usual.
 
+RUN apt-get update && apt-get install -y --no-install-recommends ffmpeg && rm -rf /var/lib/apt/lists/*
+
 COPY --chown=www-data:www-data . /usr/src/friendica/
