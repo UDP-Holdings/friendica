@@ -10,12 +10,28 @@
 	{{* ── Landing: choose a role ─────────────────────────────────────── *}}
 	<p>Connect this node to another UDP Social node so your communities can follow each other.</p>
 
+	{{if $paired_nodes}}
+	<div class="well" style="margin-bottom:1.5em;">
+		<h4 style="margin-top:0;">Paired nodes</h4>
+		<ul style="margin:0; padding-left:1.25em;">
+			{{foreach $paired_nodes as $node}}
+			<li><a href="https://{{$node}}" target="_blank" rel="noopener">{{$node}}</a></li>
+			{{/foreach}}
+		</ul>
+	</div>
+	{{/if}}
+
 	<div style="display:flex; gap:2em; flex-wrap:wrap; margin-top:1.5em;">
 		<div class="well" style="flex:1; min-width:220px;">
 			<h3>Share my node</h3>
 			<p>Generate a pairing token that another admin can scan or paste into their node.</p>
 			<form action="{{$baseurl}}/admin/node-pair/generate" method="post">
 				<input type="hidden" name="form_security_token" value="{{$form_security_token_gen}}">
+				<div class="form-group" style="margin-bottom:.75em;">
+					<label for="udp-pair-email" style="font-weight:normal;">Email to other admin <span class="text-muted">(optional)</span></label>
+					<input type="email" id="udp-pair-email" name="email" class="form-control"
+						placeholder="admin@their-node.example" style="max-width:280px; margin-top:.25em;">
+				</div>
 				<button type="submit" class="btn btn-primary">Generate pairing token</button>
 			</form>
 		</div>

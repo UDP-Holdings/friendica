@@ -41,6 +41,34 @@ class NodePair extends BaseAdmin
 				'expires_at' => time() + 86400,
 			]));
 
+			$recipientEmail = trim($request['email'] ?? '');
+			if ($recipientEmail && filter_var($recipientEmail, FILTER_VALIDATE_EMAIL)) {
+				$payload    = ['d' => DI::baseUrl()->getHost(), 't' => $token];
+				$payloadStr = rtrim(strtr(base64_encode(json_encode($payload)), '+/', '-_'), '=');
+				$inviteUrl  = (string) DI::baseUrl() . '/udp/pair-invite/' . $token;
+				$sitename   = DI::config()->get('config', 'sitename');
+
+				$subject  = DI::l10n()->t('%s wants to pair nodes with you', $sitename);
+				$preamble = DI::l10n()->t(
+					"%s would like to pair their node with yours.\n\nView the pairing QR code here (valid 24 hours):\n%s\n\nOr paste this token at your node's Admin → Node Pairing → Scan / paste token:\n\n%s",
+					$sitename,
+					$inviteUrl,
+					$payloadStr
+				);
+
+				$mail = DI::emailer()
+					->newSystemMail()
+					->withMessage($subject, $preamble)
+					->withRecipient($recipientEmail)
+					->build();
+
+				if (DI::emailer()->send($mail)) {
+					DI::sysmsg()->addInfo(DI::l10n()->t('Pairing invitation emailed to %s.', $recipientEmail));
+				} else {
+					DI::sysmsg()->addNotice(DI::l10n()->t('Token generated but the email to %s could not be sent. Share the token manually.', $recipientEmail));
+				}
+			}
+
 			DI::baseUrl()->redirect('admin/node-pair/generate?token=' . $token);
 		}
 
@@ -120,12 +148,16 @@ class NodePair extends BaseAdmin
 			}
 		}
 
+		$allowed_raw  = DI::config()->get('system', 'allowed_sites') ?? '';
+		$paired_nodes = array_values(array_filter(array_map('trim', explode(',', $allowed_raw))));
+
 		return Renderer::replaceMacros(Renderer::getMarkupTemplate('admin/node_pair.tpl'), [
 			'$title'                      => DI::l10n()->t('Administration'),
 			'$page'                       => DI::l10n()->t('Node Pairing'),
 			'$action'                     => $action,
 			'$qr_payload'                 => $qr_payload,
 			'$qr_svg'                     => $qr_svg,
+			'$paired_nodes'               => $paired_nodes,
 			'$form_security_token_gen'    => self::getFormSecurityToken('admin_node_pair_generate'),
 			'$form_security_token_accept' => self::getFormSecurityToken('admin_node_pair_accept'),
 			'$baseurl'                    => (string) DI::baseUrl(),
