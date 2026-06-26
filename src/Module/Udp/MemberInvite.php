@@ -9,6 +9,7 @@ namespace Friendica\Module\Udp;
 use Friendica\BaseModule;
 use Friendica\Core\Renderer;
 use Friendica\DI;
+use Friendica\Model\Register;
 use Friendica\Network\HTTPException;
 
 /**
@@ -127,7 +128,8 @@ class MemberInvite extends BaseModule
 
 	/**
 	 * Flow A: user typed a plain email address.
-	 * Store an approval token and email the admin to approve and forward an invite.
+	 * Admins skip approval and send the invite directly. Non-admins store a
+	 * pending request and email the admin to approve.
 	 */
 	private function handleFlowA(string $friendEmail, string $note): void
 	{
@@ -139,8 +141,13 @@ class MemberInvite extends BaseModule
 		$uid      = DI::userSession()->getLocalUserId();
 		$user     = \Friendica\Model\User::getById($uid, ['username', 'nickname', 'email']);
 		$sitename = DI::config()->get('config', 'sitename');
-		$adminEmail = DI::config()->get('config', 'admin_email');
 
+		if (DI::userSession()->isSiteAdmin()) {
+			$this->sendInviteDirect($friendEmail, $user['username'] ?? 'Your admin', $sitename);
+			return;
+		}
+
+		$adminEmail = DI::config()->get('config', 'admin_email');
 		if (!$adminEmail) {
 			DI::sysmsg()->addNotice(DI::l10n()->t('Unable to send request — no admin email is configured. Please contact your community admin directly.'));
 			DI::baseUrl()->redirect('udp/member-invite');
@@ -180,6 +187,41 @@ class MemberInvite extends BaseModule
 		DI::emailer()->send($mail);
 
 		DI::sysmsg()->addInfo(DI::l10n()->t('Your request has been sent to the community admin. They\'ll send %s an invitation if approved.', $friendEmail));
+		DI::baseUrl()->redirect('udp/member-invite');
+	}
+
+	/**
+	 * Generate an invite code and email the registration link directly to the friend.
+	 * Used when the admin is the one submitting the invite (no approval step needed).
+	 */
+	private function sendInviteDirect(string $friendEmail, string $requesterName, string $sitename): void
+	{
+		$inviteCode  = Register::createForInvitation();
+		$registerUrl = (string) DI::baseUrl() . '/register?invite=' . $inviteCode;
+
+		$subject = DI::l10n()->t("You've been invited to join %s", $sitename);
+		$body    = DI::l10n()->t(
+			"Hi,\n\n%s has invited you to join their community on %s.\n\nClick the link below to create your account:\n\n%s\n\nThis invitation link expires in 7 days.\n\n— The %s team",
+			$requesterName,
+			$sitename,
+			$registerUrl,
+			$sitename
+		);
+
+		$mail = DI::emailer()
+			->newSystemMail()
+			->withMessage($subject, $body)
+			->withRecipient($friendEmail)
+			->build();
+
+		$sent = DI::emailer()->send($mail);
+
+		if ($sent) {
+			DI::sysmsg()->addInfo(DI::l10n()->t('Invitation sent to %s.', $friendEmail));
+		} else {
+			DI::sysmsg()->addNotice(DI::l10n()->t('Could not send the invitation email. Registration link (share manually): %s', $registerUrl));
+		}
+
 		DI::baseUrl()->redirect('udp/member-invite');
 	}
 
