@@ -45,6 +45,7 @@
 </div>
 </form>
 
+{{* FIXME: suppress register link entirely on UDP — /register is invite-only; this link should never be visible to the public *}}
 {{if $register}}
 <div id="login-extra-links">
 	<h3 id="login-head" class="sr-only">{{$register.title}}</h3>
