@@ -44,7 +44,7 @@
 					</a>
 				</li>
 				{{if $acl}}
-				<li>
+				<li class="active">
 					<a href="#profile-jot-acl-wrapper" class="jot-perms-lnk jot-nav-lnk" id="jot-perms-lnk" role="tab" aria-controls="profile-jot-acl-wrapper">
 						<i class="fa fa-shield" aria-hidden="true"></i>
 						{{$shortpermset}}
@@ -154,7 +154,7 @@
 
 				</div>
 
-				<div id="profile-jot-acl-wrapper" class="minimize" aria-labelledby="jot-perms-lnk" role="tabpanel" aria-hidden="true">
+				<div id="profile-jot-acl-wrapper" aria-labelledby="jot-perms-lnk" role="tabpanel" aria-hidden="false">
 					{{$acl nofilter}}
 					{{include file="field_checkbox.tpl" field=$sensitive}}
 					{{if $scheduled_at}}{{$scheduled_at nofilter}}{{/if}}

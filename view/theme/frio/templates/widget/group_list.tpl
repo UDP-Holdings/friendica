@@ -1,5 +1,5 @@
 {{*
-  * UDP Social override: rename "Groups" sidebar widget to "Rooms"
+  * UDP Social override: rename "Groups" sidebar widget to "Circles"
   * Base template: view/templates/widget/group_list.tpl
   *}}
 <script>
@@ -18,16 +18,16 @@
 	<span id="group-list-sidebar-inflated" class="widget inflated fakelink">
 		<button class="fakelink" onclick="openCloseWidget('group-list-sidebar', 'group-list-sidebar-inflated');"
 			aria-expanded="false">
-			<h3>Rooms</h3>
+			<h3>Circles</h3>
 		</button>
 	</span>
 	<div id="group-list-sidebar" class="widget">
 		<div id="sidebar-group-header" class="sidebar-widget-header">
 			<button class="fakelink" onclick="openCloseWidget('group-list-sidebar', 'group-list-sidebar-inflated');" aria-expanded="true">
-				<h3>Rooms</h3>
+				<h3>Circles</h3>
 			</button>
 			<a class="pull-right widget-action widget-action-top faded-icon" id="sidebar-new-group"
-				href="{{$new_group_page}}" data-toggle="tooltip" title="Join a Room">
+				href="{{$new_group_page}}" data-toggle="tooltip" title="New Circle">
 				<i class="fa fa-plus" aria-hidden="true"></i>
 			</a>
 			{{if $addon_group_directory_enabled}}
