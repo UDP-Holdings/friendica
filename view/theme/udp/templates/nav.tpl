@@ -502,11 +502,11 @@
 	</a>
 	{{/if}}
 
-	<a href="{{$baseurl}}/compose" class="udp-bottom-nav-item udp-bottom-nav-compose"
-		aria-label="New post">
+	<button type="button" id="udp-compose-btn" class="udp-bottom-nav-item udp-bottom-nav-compose"
+		aria-label="Compose" aria-haspopup="dialog" aria-controls="udp-compose-sheet">
 		<i class="fa fa-plus-circle" aria-hidden="true"></i>
 		<span class="udp-nav-label">Post</span>
-	</a>
+	</button>
 
 	{{if $nav.messages}}
 	<a href="{{$nav.messages.0}}" class="udp-bottom-nav-item {{$sel.messages}}"
@@ -637,6 +637,35 @@
 	</div>
 </div>
 
+<div id="udp-compose-sheet" aria-hidden="true" aria-modal="true" role="dialog"
+	aria-label="What would you like to share?">
+	<div class="udp-compose-sheet-backdrop"></div>
+	<div class="udp-compose-sheet-panel">
+		<div class="udp-compose-sheet-header">What would you like to share?</div>
+		<a href="{{$baseurl}}/compose" class="udp-compose-option">
+			<span class="udp-compose-option-icon"><i class="fa fa-globe" aria-hidden="true"></i></span>
+			<div class="udp-compose-option-text">
+				<strong>Post to Timeline</strong>
+				<small>Visible to followers on connected nodes.</small>
+			</div>
+		</a>
+		<a href="{{$baseurl}}/compose?udp_mode=conversation" class="udp-compose-option">
+			<span class="udp-compose-option-icon"><i class="fa fa-comments" aria-hidden="true"></i></span>
+			<div class="udp-compose-option-text">
+				<strong>Start a Conversation</strong>
+				<small>Private thread with specific people.</small>
+			</div>
+		</a>
+		<a href="{{$baseurl}}/message/new" class="udp-compose-option">
+			<span class="udp-compose-option-icon"><i class="fa fa-envelope" aria-hidden="true"></i></span>
+			<div class="udp-compose-option-text">
+				<strong>Message</strong>
+				<small>Direct message to one person.</small>
+			</div>
+		</a>
+	</div>
+</div>
+
 <script>
 (function () {
 	var menu   = document.getElementById('udp-user-menu');
@@ -674,6 +703,26 @@
 			}
 		});
 	}
+
+	var composeSheet = document.getElementById('udp-compose-sheet');
+	var composeBtn   = document.getElementById('udp-compose-btn');
+
+	function openCompose() {
+		if (!composeSheet) return;
+		composeSheet.classList.add('open');
+		composeSheet.setAttribute('aria-hidden', 'false');
+		document.body.style.overflow = 'hidden';
+	}
+	function closeCompose() {
+		if (!composeSheet) return;
+		composeSheet.classList.remove('open');
+		composeSheet.setAttribute('aria-hidden', 'true');
+		document.body.style.overflow = '';
+	}
+
+	if (composeBtn)   composeBtn.addEventListener('click', openCompose);
+	var composeBg = composeSheet && composeSheet.querySelector('.udp-compose-sheet-backdrop');
+	if (composeBg)    composeBg.addEventListener('click', closeCompose);
 }());
 </script>
 

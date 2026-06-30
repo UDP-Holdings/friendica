@@ -173,7 +173,8 @@ $udp_base_url = rtrim((string) \Friendica\DI::baseUrl(), '/');
 	#udp-topbar,
 	#udp-bottom-nav,
 	#udp-search-bar,
-	#udp-user-menu {
+	#udp-user-menu,
+	#udp-compose-sheet {
 		display: none !important;
 	}
 }
@@ -324,6 +325,91 @@ $udp_base_url = rtrim((string) \Friendica\DI::baseUrl(), '/');
 .udp-menu-list li.divider {
 	border-top: 1px solid #eee;
 	margin: 4px 0;
+}
+
+/* ---- Compose chooser sheet (slides up from bottom, mobile only) ---- */
+#udp-compose-sheet {
+	position: fixed;
+	inset: 0;
+	z-index: 2000;
+	display: none;
+}
+
+#udp-compose-sheet.open { display: block; }
+
+.udp-compose-sheet-backdrop {
+	position: absolute;
+	inset: 0;
+	background: rgba(0,0,0,0.5);
+}
+
+.udp-compose-sheet-panel {
+	position: absolute;
+	bottom: 0;
+	left: 0;
+	right: 0;
+	background: #fff;
+	border-radius: 16px 16px 0 0;
+	padding-bottom: env(safe-area-inset-bottom, 0);
+	transform: translateY(100%);
+	transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+#udp-compose-sheet.open .udp-compose-sheet-panel { transform: translateY(0); }
+
+.udp-compose-sheet-header {
+	padding: 16px 20px 12px;
+	font-size: 12px;
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: 0.07em;
+	color: #999;
+	border-bottom: 1px solid #eee;
+}
+
+.udp-compose-option {
+	display: flex;
+	align-items: center;
+	gap: 16px;
+	padding: 14px 20px;
+	text-decoration: none;
+	color: #222;
+	border-bottom: 1px solid #f0f0f0;
+}
+
+.udp-compose-option:last-child {
+	border-bottom: none;
+	padding-bottom: calc(18px + env(safe-area-inset-bottom, 0));
+}
+
+.udp-compose-option:active { background: #f5f5f5; }
+.udp-compose-option:hover  { text-decoration: none; color: #222; }
+
+.udp-compose-option-icon {
+	width: 40px;
+	height: 40px;
+	border-radius: 50%;
+	background: #f0f0f0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-size: 17px;
+	color: #555;
+	flex-shrink: 0;
+}
+
+.udp-compose-option-text strong {
+	display: block;
+	font-size: 15px;
+	font-weight: 600;
+	line-height: 1.2;
+	margin-bottom: 3px;
+}
+
+.udp-compose-option-text small {
+	font-size: 12px;
+	color: #888;
+	line-height: 1.35;
 }
 
 /* ---- Fix Friendica logo mask: frio CSS uses a relative path that breaks when

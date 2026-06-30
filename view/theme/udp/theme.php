@@ -26,13 +26,17 @@ function udp_init(AppHelper $appHelper)
 	// which never changes between our deploys. Adding ?udp=1 gives us a distinct URL
 	// that Page::registerStylesheet() won't overwrite (it only merges the 'v' key),
 	// so browsers re-fetch when we increment this string.
-	Renderer::$theme['stylesheet'] = 'view/theme/udp/style.pcss?udp=4';
+	Renderer::$theme['stylesheet'] = 'view/theme/udp/style.pcss?udp=5';
 
 	// UDP always routes "New post" directly to /compose — no jot modal
 	$uid = DI::userSession()->getLocalUserId();
 	if ($uid) {
 		DI::pConfig()->set($uid, 'frio', 'always_open_compose', true);
 	}
+
+	// Pass compose mode to client so the template can adapt without a PHP fork
+	$udp_mode = htmlspecialchars($_REQUEST['udp_mode'] ?? '', ENT_QUOTES, 'UTF-8');
+	DI::page()['htmlhead'] .= '<script>window.UDP_MODE=' . json_encode($udp_mode) . ';</script>';
 }
 
 function udp_install()
