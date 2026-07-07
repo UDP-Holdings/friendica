@@ -328,8 +328,7 @@
 				</span>
 			</p>
 
-			<div id="permissions-section" style="display: none;">
-			<script>(function(){if(window.UDP_MODE==='conversation'){document.getElementById('permissions-section').style.display='block';}}());</script>
+			<div id="permissions-section">
 				{{if $type == 'post'}}
 				<h3>{{$l10n.visibility_title}}</h3>
 				{{$acl_selector nofilter}}

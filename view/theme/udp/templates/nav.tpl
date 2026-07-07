@@ -17,7 +17,7 @@
 	<div id="banner" class="hidden-sm hidden-xs">
 		<a href="{{$baseurl}}" aria-hidden="true" class="udp-banner-brand">
 			<div id="logo-img" aria-label="{{$home}}"></div>
-			<span class="udp-version">UDP v1.1</span>
+			<span class="udp-version" id="udp-ver-banner">UDP v1.1</span>
 		</a>
 	</div>
 </header>
@@ -742,7 +742,7 @@
 				<div id="navbrand-container">
 					<div id="logo-img"></div>
 					<div id="navbar-brand-text">~config.sitename~</div>
-					<span class="udp-version">UDP v1.1</span>
+					<span class="udp-version" id="udp-ver-public">UDP v1.1</span>
 				</div>
 			</a>
 		</div>
@@ -779,5 +779,7 @@
 <div id="topbar-second" aria-hidden="true" style="display:none;">
 	<div id="tabmenu"></div>
 </div>
+
+<script>(function(){var b=window.UDP_BUILD;if(!b)return;['udp-ver-banner','udp-ver-public'].forEach(function(id){var el=document.getElementById(id);if(el)el.textContent='UDP v1.1 '+b;});}());</script>
 
 {{/if}}
