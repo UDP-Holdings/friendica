@@ -64,6 +64,7 @@ class PairEndpoint extends BaseModule
 
 		// Add the requesting node to this node's allowlist
 		$this->addToAllowedSites($requesting_domain);
+		DI::federationGateway()->allow($requesting_domain, 'peer');
 
 		// Generate a shared secret for HMAC-signed inter-node requests
 		$secret = bin2hex(random_bytes(32));

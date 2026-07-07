@@ -107,6 +107,7 @@ class NodePair extends BaseAdmin
 			}
 
 			$this->addToAllowedSites($remote_domain);
+			DI::federationGateway()->allow($remote_domain, 'peer');
 
 			// Consume the pending pair request now that the handshake is complete
 			DI::config()->delete('udp_pair_request', $remote_domain);

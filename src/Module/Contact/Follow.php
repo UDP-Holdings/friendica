@@ -15,6 +15,7 @@ use Friendica\Core\L10n;
 use Friendica\Core\Protocol;
 use Friendica\Core\Renderer;
 use Friendica\Core\Session\Capability\IHandleUserSessions;
+use Friendica\DI;
 use Friendica\Model\Contact;
 use Friendica\Model\Item;
 use Friendica\Model\Post;
@@ -129,6 +130,15 @@ class Follow extends BaseModule
 			$submit = '';
 		}
 
+		$targetDomain = parse_url($contact['url'], PHP_URL_HOST) ?? '';
+		if (!empty($targetDomain) && !DI::federationGateway()->isAllowedOutbound($targetDomain)) {
+			$this->sysMessages->addNotice($this->t(
+				'%s is on a server that isn\'t connected to your network. Ask your admin to add it.',
+				$contact['name']
+			));
+			$submit = '';
+		}
+
 		if ($protocol == Protocol::MAIL) {
 			$contact['url'] = $contact['addr'];
 		}
@@ -188,6 +198,14 @@ class Follow extends BaseModule
 	protected function process(string $url)
 	{
 		$returnPath = 'contact/follow?binurl=' . bin2hex($url);
+
+		$targetDomain = parse_url($url, PHP_URL_HOST) ?? '';
+		if (!empty($targetDomain) && !DI::federationGateway()->isAllowedOutbound($targetDomain)) {
+			$this->sysMessages->addNotice($this->t(
+				'This server isn\'t connected to your network. Ask your admin to add it.'
+			));
+			$this->baseUrl->redirect($returnPath);
+		}
 
 		$result = Contact::createFromProbeForUser($this->session->getLocalUserId(), $url);
 
