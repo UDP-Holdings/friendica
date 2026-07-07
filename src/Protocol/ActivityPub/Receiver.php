@@ -92,6 +92,11 @@ class Receiver
 
 		$actor = JsonLD::fetchElement($ldactivity, 'as:actor', '@id') ?? '';
 
+		$actorDomain = parse_url($actor, PHP_URL_HOST);
+		if (!empty($actorDomain)) {
+			DI::federationGateway()->checkInbound($actorDomain);
+		}
+
 		$apcontact = APContact::getByURL($actor);
 
 		if (empty($apcontact)) {

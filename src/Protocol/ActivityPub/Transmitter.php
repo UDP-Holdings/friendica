@@ -1094,7 +1094,14 @@ class Transmitter
 				}
 
 				if ($item_profile && ($receiver == $item_profile['followers']) && ($uid == $profile_uid)) {
-					$inboxes = array_merge_recursive($inboxes, self::fetchTargetInboxesforUser($uid));
+					$gateway = DI::federationGateway();
+					$followerInboxes = self::fetchTargetInboxesforUser($uid);
+					$followerInboxes = array_filter(
+						$followerInboxes,
+						fn(string $inbox) => $gateway->isAllowedOutbound(parse_url($inbox, PHP_URL_HOST) ?? ''),
+						ARRAY_FILTER_USE_KEY
+					);
+					$inboxes = array_merge_recursive($inboxes, $followerInboxes);
 				} else {
 					$profile = APContact::getByURL($receiver, false);
 					if (!empty($profile)) {
@@ -1105,7 +1112,8 @@ class Transmitter
 						} else {
 							$target = $profile['sharedinbox'];
 						}
-						if (!self::archivedInbox($target) && !in_array($contact['id'], $inboxes[$target] ?? [])) {
+						$targetDomain = parse_url($target, PHP_URL_HOST) ?? '';
+						if (!self::archivedInbox($target) && !in_array($contact['id'], $inboxes[$target] ?? []) && DI::federationGateway()->isAllowedOutbound($targetDomain)) {
 							$inboxes[$target][] = $contact['id'] ?? 0;
 						}
 					}

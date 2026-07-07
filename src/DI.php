@@ -395,6 +395,11 @@ abstract class DI
 		return self::$dice->create(Model\Log\ParsedLogIterator::class);
 	}
 
+	public static function federationGateway(): UDP\Federation\Gateway
+	{
+		return self::$dice->create(UDP\Federation\Gateway::class);
+	}
+
 	//
 	// "Module" namespace
 	//
