@@ -53,6 +53,13 @@ function udp_init(AppHelper $appHelper)
 		$_udp_build = trim((string)file_get_contents(__DIR__ . '/.build-hash'));
 	}
 	DI::page()['htmlhead'] .= '<script>window.UDP_BUILD=' . json_encode($_udp_build) . ';</script>';
+	if ($_udp_build) {
+		$_udp_build_esc = htmlspecialchars($_udp_build, ENT_QUOTES, 'UTF-8');
+		DI::page()['htmlhead'] .= '<style>'
+			. '#udp-ver-banner::after,#udp-ver-public::after{content:" ' . $_udp_build_esc . '"}'
+			. '#udp-ver-admin::after{content:"+UDPv1.1-' . $_udp_build_esc . '"}'
+			. '</style>';
+	}
 
 	// Default compose visibility based on current URL context.
 	// /network/circle/{id}  → restrict to that circle

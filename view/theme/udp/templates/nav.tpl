@@ -642,7 +642,8 @@
 	<div class="udp-compose-sheet-backdrop"></div>
 	<div class="udp-compose-sheet-panel">
 		<div class="udp-compose-sheet-header">What would you like to share?</div>
-		<a href="{{$baseurl}}/compose" class="udp-compose-option">
+		{{* UDP: circle_allow=~ defaults to Followers Only, matching the desktop jot.tpl IIFE default *}}
+		<a href="{{$baseurl}}/compose?circle_allow=~" class="udp-compose-option">
 			<span class="udp-compose-option-icon"><i class="fa fa-globe" aria-hidden="true"></i></span>
 			<div class="udp-compose-option-text">
 				<strong>Post to Timeline</strong>
@@ -779,7 +780,5 @@
 <div id="topbar-second" aria-hidden="true" style="display:none;">
 	<div id="tabmenu"></div>
 </div>
-
-<script>(function(){var b=window.UDP_BUILD;if(!b)return;['udp-ver-banner','udp-ver-public'].forEach(function(id){var el=document.getElementById(id);if(el)el.textContent='UDP v1.1 '+b;});}());</script>
 
 {{/if}}

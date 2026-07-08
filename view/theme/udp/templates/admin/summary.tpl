@@ -24,10 +24,10 @@
 	</div>
 	{{/if}}
 
-	{{* Version — useful for confirming the UDP fork is current *}}
+	{{* Version — #udp-ver-admin::after is populated by theme.php with "+UDPv1.1-{hash}" *}}
 	<dl>
 		<dt>{{$version_label}}</dt>
-		<dd>{{$platform}} {{$codename}} {{$VERSION}}</dd>
+		<dd>{{$platform}} {{$codename}} {{$VERSION}}<span id="udp-ver-admin"></span></dd>
 	</dl>
 
 	{{* Active addons *}}
