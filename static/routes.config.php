@@ -22,8 +22,7 @@ $profileRoutes = [
 	''                                                => [Module\Profile\Index::class,         [R::GET]],
 	'/contacts/common'                                => [Module\Profile\Common::class,        [R::GET]],
 	'/contacts[/{type}]'                              => [Module\Profile\Contacts::class,      [R::GET]],
-	'/media'                                          => [Module\Profile\Media::class,         [R::GET]],
-	'/photos'                                         => [Module\Profile\Photos::class,        [R::GET, R::POST]],
+	'/media'                                          => [Module\Profile\UdpMedia::class,       [R::GET]],
 	'/profile'                                        => [Module\Profile\Profile::class,       [R::GET]],
 	'/remote_follow'                                  => [Module\Profile\RemoteFollow::class,  [R::GET, R::POST]],
 	'/restricted'                                     => [Module\Profile\Restricted::class,    [R::GET         ]],
@@ -457,7 +456,7 @@ return [
 		'/{circle:\d+}/{command:add|remove}/{contact:\d+}' => [Module\Circle::class, [R::GET, R::POST]],
 	],
 	'/hashtag'                    => [Module\Hashtag::class,           [R::GET]],
-	'/help[/{doc:.+}]'            => [Module\Help::class,              [R::GET]],
+	'/help[/{doc:.+}]'            => [Module\UdpHelp::class,           [R::GET]],
 	'/home'                       => [Module\UdpHome::class,           [R::GET]], // UDP: redirect logged-in users to /feed
 	'/hcard/{profile}[/{action}]' => [Module\HCard::class,             [R::GET]],
 	'/inbox[/{nickname}]'         => [Module\ActivityPub\Inbox::class, [R::GET, R::POST]],
@@ -681,7 +680,7 @@ return [
 	],
 
 	'/network' => [
-		'[/{content}]'                => [Module\Conversation\UdpNetwork::class, [R::GET]], // UDP: adds feed toggle
+		'[/{content}]'                => [Module\Conversation\Network::class, [R::GET]],
 		'/archive/{from:\d\d\d\d-\d\d-\d\d}[/{to:\d\d\d\d-\d\d-\d\d}]' => [Module\Conversation\Network::class, [R::GET]],
 		'/circle/{circle_id:\d+}'     => [Module\Conversation\Network::class, [R::GET]],
 	],
