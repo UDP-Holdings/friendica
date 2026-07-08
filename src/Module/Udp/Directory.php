@@ -11,6 +11,7 @@ use Friendica\Content\Nav;
 use Friendica\Content\Pager;
 use Friendica\Content\Widget;
 use Friendica\Core\Renderer;
+use Friendica\Database\DBA;
 use Friendica\DI;
 use Friendica\Model;
 use Friendica\Module\Contact as ContactModule;
@@ -45,11 +46,28 @@ class Directory extends BaseModule
 		$pager  = new Pager(DI::l10n(), DI::args()->getQueryString(), 60);
 
 		// ── Local users ───────────────────────────────────────────────────
-		$profiles  = Model\Profile::searchProfiles($pager->getStart(), $pager->getItemsPerPage(), $search ?: null);
-		$entries   = [];
-		$seenUrls  = [];
+		// UDP: show ALL node members to authenticated users, regardless of their
+		// 'publish' (global directory opt-in) flag. Profile::searchProfiles() filters
+		// by publish=true which is an external-directory concept irrelevant here.
+		$condition = [
+			'verified'        => true,
+			'blocked'         => false,
+			'account_removed' => false,
+			'account_expired' => false,
+		];
+		if ($search) {
+			$term      = '%' . $search . '%';
+			$condition = DBA::mergeConditions($condition, [
+				'(`name` LIKE ? OR `nickname` LIKE ? OR `about` LIKE ? OR `pub_keywords` LIKE ?)',
+				$term, $term, $term, $term,
+			]);
+		}
+		$localProfiles = DBA::selectToArray('owner-view', [], $condition, ['order' => ['name']]);
 
-		foreach ($profiles['entries'] as $entry) {
+		$entries  = [];
+		$seenUrls = [];
+
+		foreach ($localProfiles as $entry) {
 			$contact = Model\Contact::getByURLForUser($entry['url'], $uid);
 			if (!empty($contact)) {
 				$entries[$entry['url']] = ContactModule::getContactTemplateVars($contact);

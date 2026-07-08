@@ -38,6 +38,9 @@ class Gateway
 	 */
 	public function checkInbound(string $domain): void
 	{
+		if (!$this->config->get('udp', 'gateway_enabled', true)) {
+			return;
+		}
 		if (!$this->isAllowed($domain)) {
 			$this->logger->notice('UDP gateway blocked inbound', ['domain' => $domain, 'slot' => $this->slotDomain]);
 			throw new ForbiddenException();
@@ -50,6 +53,9 @@ class Gateway
 	 */
 	public function isAllowedOutbound(string $domain): bool
 	{
+		if (!$this->config->get('udp', 'gateway_enabled', true)) {
+			return true;
+		}
 		$allowed = $this->isAllowed($domain);
 		if (!$allowed) {
 			$this->logger->notice('UDP gateway blocked outbound', ['domain' => $domain, 'slot' => $this->slotDomain]);

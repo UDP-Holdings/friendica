@@ -1361,6 +1361,7 @@ class User
 			'timezone'         => 'UTC',
 			'register_date'    => DateTimeFormat::utcNow(),
 			'default-location' => '',
+			'hidewall'         => true, // UDP: high-privacy default; users change in Settings → Privacy
 		]);
 
 		if ($insert_result) {
@@ -1655,7 +1656,7 @@ class User
 			'photo'          => $avatar,
 		]);
 
-		$user     = $result['user'];
+		$user = $result['user'];
 		// UDP: welcome email is sent by the orchestrator after it sets the real
 		// customer password. Sending here would deliver a stale Friendica-generated
 		// password before the orchestrator overwrites it, confusing the customer.
