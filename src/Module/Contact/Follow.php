@@ -131,7 +131,10 @@ class Follow extends BaseModule
 		}
 
 		$targetDomain = parse_url($contact['url'], PHP_URL_HOST) ?? '';
-		if (!empty($targetDomain) && !DI::federationGateway()->isAllowedOutbound($targetDomain)) {
+		if (!empty($targetDomain)
+			&& in_array($protocol, [Protocol::ACTIVITYPUB, Protocol::DFRN])
+			&& !DI::federationGateway()->isAllowedOutbound($targetDomain)
+		) {
 			$this->sysMessages->addNotice($this->t(
 				'%s is on a server that isn\'t connected to your network. Ask your admin to add it.',
 				$contact['name']
@@ -200,7 +203,14 @@ class Follow extends BaseModule
 		$returnPath = 'contact/follow?binurl=' . bin2hex($url);
 
 		$targetDomain = parse_url($url, PHP_URL_HOST) ?? '';
-		if (!empty($targetDomain) && !DI::federationGateway()->isAllowedOutbound($targetDomain)) {
+		$cachedContact = Contact::getByURL($url, false);
+		$cachedProtocol = !empty($cachedContact)
+			? Contact::getProtocol($cachedContact['url'], $cachedContact['network'])
+			: Protocol::ACTIVITYPUB;
+		if (!empty($targetDomain)
+			&& in_array($cachedProtocol, [Protocol::ACTIVITYPUB, Protocol::DFRN])
+			&& !DI::federationGateway()->isAllowedOutbound($targetDomain)
+		) {
 			$this->sysMessages->addNotice($this->t(
 				'This server isn\'t connected to your network. Ask your admin to add it.'
 			));
