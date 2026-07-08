@@ -139,7 +139,7 @@ var DzFactory = function (max_imagesize) {
 
 					// Send ACL fields with each chunk so UploadChunk.php can store the
 					// file with the correct permissions before the post is created.
-					var dropzoneEl = document.getElementById('dropzone-' + FORM_ID);
+					var dropzoneEl = document.querySelector(dropSelector);
 					var scope = (dropzoneEl && dropzoneEl.closest('form')) || document;
 					var visEl = scope.querySelector('[name="visibility"]:checked');
 					formData.append('visibility', visEl ? visEl.value : 'public');
