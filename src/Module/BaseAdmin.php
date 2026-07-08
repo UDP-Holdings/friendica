@@ -73,40 +73,12 @@ abstract class BaseAdmin extends BaseModule
 			]],
 			'configuration' => [DI::l10n()->t('Configuration'), [
 				'site'      => ['admin/site'        , DI::l10n()->t('Site')                    , 'site'],
-				'storage'   => ['admin/storage'     , DI::l10n()->t('Storage')                 , 'storage'],
-				'addons'    => ['admin/addons'      , DI::l10n()->t('Addons')                  , 'addons'],
-				'themes'    => ['admin/themes'      , DI::l10n()->t('Themes')                  , 'themes'],
-				'features'  => ['admin/features'    , DI::l10n()->t('Additional features')     , 'features'],
 				'tos'       => ['admin/tos'         , DI::l10n()->t('Terms of Service')        , 'tos'],
 				'node-pair' => ['admin/node-pair'   , DI::l10n()->t('Node Pairing')            , 'node-pair'],
-			]],
-			'database' => [DI::l10n()->t('Database'), [
-				'dbsync'      => ['admin/dbsync'      , DI::l10n()->t('DB updates')              , 'dbsync'],
-				'deferred'    => ['admin/queue/deferred', DI::l10n()->t('Inspect Deferred Workers'), 'deferred'],
-				'workerqueue' => ['admin/queue'       , DI::l10n()->t('Inspect worker Queue')    , 'workerqueue'],
-			]],
-			'logs' => [DI::l10n()->t('Logs'), [
-				'logsconfig' => ['admin/logs/', DI::l10n()->t('Settings')                           , 'logs'],
-				'logsview'   => ['admin/logs/view'    , DI::l10n()->t('View')              , 'viewlogs'],
-			]],
-			'diagnostics' => [DI::l10n()->t('Diagnostics'), [
-				'phpinfo'   => ['admin/phpinfo?t=' . self::getFormSecurityToken('phpinfo'), DI::l10n()->t('PHP Info')                , 'phpinfo'],
-				'probe'     => ['probe'             , DI::l10n()->t('probe address')           , 'probe'],
-				'webfinger' => ['webfinger'         , DI::l10n()->t('check webfinger')         , 'webfinger'],
-				'babel'     => ['babel'             , DI::l10n()->t('Babel')                   , 'babel'],
-				'debug/ap'  => ['debug/ap'          , DI::l10n()->t('ActivityPub Conversion')  , 'debug/ap'],
 			]],
 		];
 
 		$addons_admin = [];
-
-		foreach (DI::addonHelper()->getEnabledAddonsWithAdminSettings() as $addonId) {
-			$addons_admin[$addonId] = [
-				'url'   => 'admin/addons/' . $addonId,
-				'name'  => $addonId,
-				'class' => 'addon',
-			];
-		}
 
 		$t = Renderer::getMarkupTemplate('admin/aside.tpl');
 		DI::page()['aside'] .= Renderer::replaceMacros($t, [
