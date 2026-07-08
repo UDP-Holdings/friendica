@@ -117,8 +117,7 @@ class Feature
 			// Item tools
 			'tools' => [
 				$l10n->t('Post/Comment Tools'),
-				[self::CATEGORIES, $l10n->t('Post Categories'),         $l10n->t('Add categories to your posts'), false, $config->get('feature_lock', self::CATEGORIES, false)],
-				[self::SUMMARY,    $l10n->t('Summary'),                 $l10n->t('Add a summary, abstract or spoiler text to your posts'), false, $config->get('feature_lock', self::SUMMARY, false)],
+				[self::CATEGORIES, $l10n->t('Post Categories'),         $l10n->t('Add categories to your posts'), true, $config->get('feature_lock', self::CATEGORIES, false)],
 			],
 
 			// Widget visibility on the network stream
@@ -127,11 +126,11 @@ class Feature
 				[self::CIRCLES, $l10n->t('Circles'), $l10n->t('Display posts that have been created by accounts of the selected circle.'), true, $config->get('feature_lock', self::CIRCLES, false)],
 				[self::GROUPS, $l10n->t('Groups'), $l10n->t('Display posts that have been distributed by the selected group.'), true, $config->get('feature_lock', self::GROUPS, false)],
 				[self::ARCHIVE, $l10n->t('Archives'), $l10n->t('Display an archive where posts can be selected by month and year.'), true, $config->get('feature_lock', self::ARCHIVE, false)],
-				[self::NETWORKS, $l10n->t('Protocols'), $l10n->t('Display posts with the selected protocols.'), true, $config->get('feature_lock', self::NETWORKS, false)],
-				[self::ACCOUNTS, $l10n->t('Account Types'), $l10n->t('Display posts done by accounts with the selected account type.'), true, $config->get('feature_lock', self::ACCOUNTS, false)],
+				[self::NETWORKS, $l10n->t('Protocols'), $l10n->t('Display posts with the selected protocols.'), false, $config->get('feature_lock', self::NETWORKS, false)],
+				[self::ACCOUNTS, $l10n->t('Account Types'), $l10n->t('Display posts done by accounts with the selected account type.'), false, $config->get('feature_lock', self::ACCOUNTS, false)],
 				[self::CHANNELS, $l10n->t('Channels'), $l10n->t('Display posts in the system channels and user defined channels.'), true, $config->get('feature_lock', self::CHANNELS, false)],
 				[self::SEARCHES, $l10n->t('Saved Searches'), $l10n->t('Display posts that contain subscribed hashtags.'), true, $config->get('feature_lock', self::SEARCHES, false)],
-				[self::FOLDERS, $l10n->t('Saved Folders'), $l10n->t('Display a list of folders in which posts are stored.'), true, $config->get('feature_lock', self::FOLDERS, false)],
+				[self::FOLDERS, $l10n->t('Saved Folders'), $l10n->t('Display a list of folders in which posts are stored.'), false, $config->get('feature_lock', self::FOLDERS, false)],
 				[self::NOSHARER, $l10n->t('Own Contacts'), $l10n->t('Include or exclude posts from subscribed accounts. This widget is not visible on all channels.'), true, $config->get('feature_lock', self::NOSHARER, false)],
 				[self::TRENDING_TAGS,  $l10n->t('Trending Tags'), $l10n->t('Display a list of the most popular tags in recent public posts.'), false, $config->get('feature_lock', self::TRENDING_TAGS, false)],
 			],

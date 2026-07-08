@@ -191,7 +191,7 @@ class Network extends Timeline
 			if (Feature::isEnabled($this->session->getLocalUserId(), $widget)) {
 				switch ($widget) {
 					case Feature::CIRCLES:
-						$this->page['aside'] .= Circle::sidebarWidget($module, $module . '/circle', 'standard', $this->circleId);
+						$this->page['aside'] .= Circle::sidebarWidget('timeline', $module . '/circle', 'standard', $this->circleId);
 						break;
 					case Feature::GROUPS:
 						$this->page['aside'] .= GroupManager::widget($this->session->getLocalUserId());

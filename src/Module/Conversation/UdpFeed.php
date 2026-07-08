@@ -53,15 +53,7 @@ class UdpFeed extends Network
 
 		$o = parent::content($request);
 
-		// parent::content() calls Nav::setSelected('feed'); override to highlight Network nav item
 		Nav::setSelected('network');
-
-		$toggle = '<nav class="widget"><ul>'
-			. '<li class="selected"><a href="/timeline">Unified Feed</a></li>'
-			. '<li><a href="/network">Following Only</a></li>'
-			. '</ul></nav>';
-
-		$this->page['aside'] = $toggle . $this->page['aside'];
 
 		return $o;
 	}

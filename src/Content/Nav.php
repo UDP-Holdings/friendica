@@ -226,9 +226,8 @@ class Nav
 		if ($this->session->isAuthenticated()) {
 			// user menu
 			$nav['usermenu'][] = ['profile/' . $this->session->getLocalUserNickname() . '/profile', $this->l10n->t('Profile'), '', $this->l10n->t('Your profile page'), 'fa-user'];
-			$nav['usermenu'][] = ['profile/' . $this->session->getLocalUserNickname(), $this->l10n->t('Conversations'), '', $this->l10n->t('Conversations you started'), 'fa-commenting'];
-			$nav['usermenu'][] = ['profile/' . $this->session->getLocalUserNickname() . '/photos', $this->l10n->t('Photos'), '', $this->l10n->t('Your photos'), 'fa-picture-o'];
-			$nav['usermenu'][] = ['calendar/', $this->l10n->t('Calendar'), '', $this->l10n->t('Your calendar'), 'fa-calendar'];
+			$nav['usermenu'][] = ['profile/' . $this->session->getLocalUserNickname() . '/media', $this->l10n->t('Media'), '', $this->l10n->t('Your photos and videos'), 'fa-picture-o'];
+
 			$nav['usermenu'][] = ['notes/', $this->l10n->t('Personal notes'), '', $this->l10n->t('Your personal notes'), 'fa-book'];
 
 			// user info
@@ -287,10 +286,6 @@ class Nav
 			$nav['community'] = ['community', $this->l10n->t('Community'), '', $this->l10n->t('Conversations on this and other servers')];
 		}
 
-		if ($this->session->getLocalUserId()) {
-			$nav['calendar'] = ['calendar', $this->l10n->t('Calendar'), '', $this->l10n->t('Calendar')];
-		}
-
 		$nav['directory'] = [$gdirpath, $this->l10n->t('Directory'), '', $this->l10n->t('People directory')];
 
 		$nav['about'] = ['friendica', $this->l10n->t('Information'), '', $this->l10n->t('Information about this friendica instance')];
@@ -301,7 +296,7 @@ class Nav
 
 		// The following nav links are only show to logged-in users
 		if ($this->session->getLocalUserNickname()) {
-			$nav['network'] = ['network', $this->l10n->t('Network'), '', $this->l10n->t('Conversations from your friends')];
+			$nav['network'] = ['timeline', $this->l10n->t('Feed'), '', $this->l10n->t('Conversations from your friends')];
 
 			$nav['home'] = ['profile/' . $this->session->getLocalUserNickname(), $this->l10n->t('Home'), '', $this->l10n->t('Your posts and conversations')];
 
