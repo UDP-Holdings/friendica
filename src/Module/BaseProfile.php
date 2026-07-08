@@ -47,46 +47,14 @@ class BaseProfile extends BaseModule
 				'accesskey' => 'm',
 			],
 			[
-				'label'     => DI::l10n()->t('Photos'),
-				'url'       => $baseProfileUrl . '/photos',
-				'sel'       => $current == 'photos' ? 'active' : '',
-				'title'     => DI::l10n()->t('Photo Albums'),
-				'id'        => 'photo-tab',
-				'accesskey' => 'h',
-			],
-			[
 				'label'     => DI::l10n()->t('Media'),
 				'url'       => $baseProfileUrl . '/media',
 				'sel'       => $current == 'media' ? 'active' : '',
-				'title'     => DI::l10n()->t('Media'),
+				'title'     => DI::l10n()->t('Photos and videos'),
 				'id'        => 'media-tab',
-				'accesskey' => 'd',
+				'accesskey' => 'h',
 			],
 		];
-
-		// the calendar link for the full-featured events calendar
-		if ($is_owner) {
-			$tabs[] = [
-				'label'     => DI::l10n()->t('Calendar'),
-				'url'       => DI::baseUrl() . '/calendar',
-				'sel'       => $current == 'calendar' ? 'active' : '',
-				'title'     => DI::l10n()->t('Calendar'),
-				'id'        => 'calendar-tab',
-				'accesskey' => 'c',
-			];
-		} else {
-			$owner = User::getByNickname($nickname, ['uid']);
-			if (DI::userSession()->isAuthenticated() || $owner && Feature::isEnabled($owner['uid'], Feature::PUBLIC_CALENDAR)) {
-				$tabs[] = [
-					'label'     => DI::l10n()->t('Calendar'),
-					'url'       => DI::baseUrl() . '/calendar/show/' . $nickname,
-					'sel'       => $current == 'calendar' ? 'active' : '',
-					'title'     => DI::l10n()->t('Calendar'),
-					'id'        => 'calendar-tab',
-					'accesskey' => 'c',
-				];
-			}
-		}
 
 		if ($is_owner) {
 			$tabs[] = [

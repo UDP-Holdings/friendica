@@ -298,7 +298,7 @@ class Index extends BaseSettings
 			'$form_security_token'       => self::getFormSecurityToken('settings_profile'),
 			'$form_security_token_photo' => self::getFormSecurityToken('settings_profile_photo'),
 
-			'$profpiclink' => '/profile/' . $owner['nickname'] . '/photos',
+			'$profpiclink' => '/profile/' . $owner['nickname'] . '/media',
 
 			'$nickname'      => $owner['nickname'],
 			'$username'      => ['username', $this->t('Display name:'), $owner['name']],
