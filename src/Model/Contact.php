@@ -3285,6 +3285,21 @@ class Contact
 			Circle::addMember(User::getDefaultCircle($uid), $contact_id);
 		}
 
+		// RSS/Atom feeds go to channel-only by default so they don't pollute the main "Everybody" feed.
+		// They also get a dedicated "RSS Feeds" circle so they're discoverable and not lost in the contact list.
+		if ($contact['network'] === Protocol::FEED) {
+			Contact\User::setChannelOnly($contact_id, $uid, true);
+
+			$rssFeedsCircleId = Circle::getIdByName($uid, 'RSS Feeds');
+			if (!$rssFeedsCircleId) {
+				Circle::create($uid, 'RSS Feeds');
+				$rssFeedsCircleId = Circle::getIdByName($uid, 'RSS Feeds');
+			}
+			if ($rssFeedsCircleId) {
+				Circle::addMember($rssFeedsCircleId, $contact_id);
+			}
+		}
+
 		// Update the avatar
 		self::updateAvatar($contact_id, $ret['photo']);
 

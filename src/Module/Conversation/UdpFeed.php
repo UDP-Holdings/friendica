@@ -68,7 +68,8 @@ class UdpFeed extends Network
 		$networkItems       = parent::getItems();
 		$this->itemsPerPage = $savedLimit;
 
-		// Index by uri-id; network items take precedence (they carry the full row from network-thread-view)
+		// Index by uri-id; network items take precedence (they carry the full row from network-thread-view).
+		// RSS feeds are excluded from network items automatically via their channel-only flag.
 		$merged = [];
 		foreach ($networkItems as $item) {
 			$merged[$item['uri-id']] = $item;
