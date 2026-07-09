@@ -607,7 +607,7 @@ class Network extends Timeline
 			return $items;
 		}
 
-		$this->setItemsSeenForUser($this->session->getLocalUserId());
+		$this->setItemsSeenForUser($this->session->getLocalUserId(), array_column($items, 'uri-id'));
 
 		return $items;
 	}

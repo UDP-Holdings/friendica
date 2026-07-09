@@ -23,7 +23,6 @@ use Friendica\Core\L10n;
 use Friendica\Core\PConfig\Capability\IManagePersonalConfigValues;
 use Friendica\Core\Renderer;
 use Friendica\Core\Session\Capability\IHandleUserSessions;
-use Friendica\Core\Worker;
 use Friendica\Model\Contact;
 use Friendica\Model\User;
 use Friendica\Database\Database;
@@ -298,7 +297,7 @@ class Timeline extends BaseModule
 			$selected_items = $items;
 		}
 
-		$this->setItemsSeenForUser($uid);
+		$this->setItemsSeenForUser($uid, array_column($selected_items, 'uri-id'));
 
 		return $selected_items;
 	}
@@ -483,7 +482,7 @@ class Timeline extends BaseModule
 			$items = array_reverse($items, true);
 		}
 
-		$this->setItemsSeenForUser($uid);
+		$this->setItemsSeenForUser($uid, array_keys($items));
 
 		return $items;
 	}
@@ -636,18 +635,15 @@ class Timeline extends BaseModule
 	}
 
 	/**
-	 * Sets all unseen items for a user as seen
-	 * @param int $uid User ID
+	 * Sets the given rendered items as seen for a user
+	 * @param int   $uid    User ID
+	 * @param array $uriIds URI IDs of the items that were actually rendered
 	 */
-	protected function setItemsSeenForUser(int $uid)
+	protected function setItemsSeenForUser(int $uid, array $uriIds)
 	{
-		$posts = Post::getUnseenPosts($uid);
-		if (!empty($posts)) {
-			Item::update(['unseen' => false], ['unseen' => true, 'uid' => $uid, 'uri-id' => $posts]);
+		if (empty($uriIds)) {
+			return;
 		}
-
-		if (count($posts) == 100) {
-			Worker::add(Worker::PRIORITY_MEDIUM, 'SetSeen', $uid);
-		}
+		Item::update(['unseen' => false], ['unseen' => true, 'uid' => $uid, 'uri-id' => $uriIds]);
 	}
 }
