@@ -204,6 +204,11 @@
 	font-size: 0.88em;
 }
 
+/* Toolbar icon sizing */
+.comment-icon-list .fa {
+	font-size: 1.33em;
+}
+
 @media (max-width: 767px) {
 	#udp-media-drawer-{{$id}}.is-open {
 		position: fixed;
@@ -240,17 +245,17 @@
 
 			<p class="comment-edit-bb-{{$id}} comment-icon-list">
 				<span>
-					<button type="button" class="btn btn-sm template-icon bb-img" aria-label="{{$l10n.edimg}}" title="{{$l10n.edimg}}" data-role="insert-formatting" data-bbcode="img" data-id="{{$id}}" tabindex="6">
-						<i class="fa fa-picture-o"></i>
-					</button>
-					<label class="btn btn-sm template-icon" aria-label="{{$l10n.uploadmedia}}" title="{{$l10n.uploadmedia}}" tabindex="7" style="cursor:pointer;position:relative;overflow:hidden;margin:0;">
+					<label class="btn btn-sm template-icon" aria-label="{{$l10n.uploadmedia}}" title="{{$l10n.uploadmedia}}" tabindex="6" style="cursor:pointer;position:relative;overflow:hidden;margin:0;">
 						<i class="fa fa-camera"></i>
 						<input type="file" id="profile-upload-media-{{$id}}" accept="image/*,video/*,audio/*,application/*" multiple style="position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;">
 					</label>
-					<button type="button" class="btn btn-sm template-icon" id="udp-media-drawer-btn-{{$id}}" aria-label="Media library" title="Media library" tabindex="7">
+					<button type="button" class="btn btn-sm template-icon bb-img" aria-label="{{$l10n.edimg}}" title="{{$l10n.edimg}}" data-role="insert-formatting" data-bbcode="img" data-id="{{$id}}" tabindex="7">
+						<i class="fa fa-picture-o"></i>
+					</button>
+					<button type="button" class="btn btn-sm template-icon" id="udp-media-drawer-btn-{{$id}}" aria-label="Media library" title="Media library" tabindex="8">
 						<i class="fa fa-th"></i>
 					</button>
-					<button type="button" class="btn btn-sm template-icon bb-attach" aria-label="{{$l10n.edattach}}" title="{{$l10n.edattach}}" ondragenter="return commentLinkDrop(event, {{$id}});" ondragover="return commentLinkDrop(event, {{$id}});" ondrop="commentLinkDropper(event);" onclick="commentGetLink({{$id}}, '{{$l10n.prompttext}}');" tabindex="8">
+					<button type="button" class="btn btn-sm template-icon bb-attach" aria-label="{{$l10n.edattach}}" title="{{$l10n.edattach}}" ondragenter="return commentLinkDrop(event, {{$id}});" ondragover="return commentLinkDrop(event, {{$id}});" ondrop="commentLinkDropper(event);" onclick="commentGetLink({{$id}}, '{{$l10n.prompttext}}');" tabindex="9">
 						<i class="fa fa-paperclip"></i>
 					</button>
 				</span>
