@@ -643,6 +643,14 @@ function getUpdateUrl(src)
 	if (match.length > 0) {
 		update_url += '&first_uriid=' + match[0].innerHTML;
 	}
+
+	// When viewing a circle page (/network/circle/N), pass the circle_id so update_network
+	// knows to filter items to that circle before marking them as seen.
+	var circleMatch = window.location.pathname.match(/\/network\/circle\/(\d+)/);
+	if (circleMatch) {
+		update_url += '&circle_id=' + circleMatch[1];
+	}
+
 	return update_url;
 }
 

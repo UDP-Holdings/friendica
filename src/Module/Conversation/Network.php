@@ -386,7 +386,10 @@ class Network extends Timeline
 	{
 		parent::parseRequest($request);
 
-		$this->circleId = (int) ($this->parameters['circle_id'] ?? 0);
+		// parameters[] comes from path segments (/network/circle/N); request[] is used by
+		// update_network AJAX calls which pass circle_id as a query param because they hit
+		// /update_network not /network/circle/N.
+		$this->circleId = (int)($this->parameters['circle_id'] ?? $request['circle_id'] ?? 0);
 
 		if (!$this->selectedTab) {
 			$this->selectedTab = $this->getTimelineOrderBySession();
