@@ -17,6 +17,7 @@ use Friendica\Core\Config\Capability\IManageConfigValues;
 use Friendica\Core\L10n;
 use Friendica\Core\Session\Model\UserSession;
 use Friendica\Core\Worker;
+use Friendica\DI;
 use Friendica\Model\Attach;
 use Friendica\Model\Photo;
 use Friendica\Model\UdpMedia;
@@ -89,15 +90,24 @@ class UploadChunk extends BaseModule
 			$this->jsonExit(['ok' => true, 'partial' => true]);
 		}
 
-		// Last chunk received — assemble into a single temp file
+		// Last chunk received — stream-assemble into a single temp file.
+		// Use fopen/stream_copy_to_stream to avoid loading each chunk into memory.
 		$assembledPath = $uploadDir . '/assembled';
+		$out = fopen($assembledPath, 'wb');
+		if ($out === false) {
+			$this->jsonError(500, ['error' => 'Could not open assembly file for writing.']);
+		}
 		foreach (range(0, $totalChunks - 1) as $i) {
 			$part = $uploadDir . '/chunk_' . sprintf('%06d', $i);
 			if (!file_exists($part)) {
+				fclose($out);
 				$this->jsonError(500, ['error' => 'Missing chunk ' . $i . ' during assembly.']);
 			}
-			file_put_contents($assembledPath, file_get_contents($part), FILE_APPEND);
+			$in = fopen($part, 'rb');
+			stream_copy_to_stream($in, $out);
+			fclose($in);
 		}
+		fclose($out);
 
 		// Probe to determine whether this is a video and what codec it uses.
 		// Empty/octet-stream MIME from Android is treated as unknown and probed.
