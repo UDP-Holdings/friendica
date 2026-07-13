@@ -62,14 +62,11 @@ function udp_init(AppHelper $appHelper)
 	}
 
 	// Default compose visibility based on current URL context.
-	// /network/circle/{id}  → restrict to that circle
-	// /timeline or /network → restrict to followers (~)
+	// /network/circle/{id}  → restrict to that circle; all other pages → no default (Public)
 	$_udp_uri  = parse_url($_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH);
 	$_udp_compose_defaults = null;
 	if (preg_match('#/network/circle/(\d+)$#', (string)$_udp_uri, $_m)) {
 		$_udp_compose_defaults = ['circle_allow' => $_m[1]];
-	} elseif (preg_match('#^/(timeline|network)(/|$)#', (string)$_udp_uri)) {
-		$_udp_compose_defaults = ['circle_allow' => '~'];
 	}
 	if ($_udp_compose_defaults !== null) {
 		DI::page()['htmlhead'] .= '<script>window.UDP_COMPOSE_DEFAULTS=' . json_encode($_udp_compose_defaults) . ';</script>';

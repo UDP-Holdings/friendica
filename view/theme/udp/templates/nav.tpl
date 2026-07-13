@@ -642,12 +642,11 @@
 	<div class="udp-compose-sheet-backdrop"></div>
 	<div class="udp-compose-sheet-panel">
 		<div class="udp-compose-sheet-header">What would you like to share?</div>
-		{{* UDP: circle_allow=~ defaults to Followers Only, matching the desktop jot.tpl IIFE default *}}
-		<a href="{{$baseurl}}/compose?circle_allow=~" class="udp-compose-option">
+		<a href="{{$baseurl}}/compose" class="udp-compose-option">
 			<span class="udp-compose-option-icon"><i class="fa fa-globe" aria-hidden="true"></i></span>
 			<div class="udp-compose-option-text">
 				<strong>Post to Timeline</strong>
-				<small>Visible to followers on connected nodes.</small>
+				<small>Visible to everyone on this node.</small>
 			</div>
 		</a>
 		<a href="{{$baseurl}}/compose?udp_mode=conversation" class="udp-compose-option">
