@@ -42,6 +42,12 @@ class Feature
 	 */
 	public static function isEnabled(int $uid, $feature): bool
 	{
+		// Channels are a fediverse-discovery feature (Discover, Trending, For You…)
+		// that has no value on UDP's walled-garden instances.
+		if ($feature === self::CHANNELS) {
+			return false;
+		}
+
 		$config          = DI::config();
 		$pConfig         = DI::pConfig();
 		$eventDispatcher = DI::eventDispatcher();
