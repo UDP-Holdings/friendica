@@ -159,6 +159,7 @@ class Introduction extends BaseFactory
 						'network'        => $intro['network'],
 						'knowyou'        => $intro['knowyou'],
 						'note'           => $intro['note'],
+						'preferFriend'   => !empty($intro['duplex']),
 					]);
 				}
 			}

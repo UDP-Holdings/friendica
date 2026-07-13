@@ -15,6 +15,7 @@ use Friendica\Core\L10n;
 use Friendica\Core\Protocol;
 use Friendica\Core\Renderer;
 use Friendica\Core\Session\Capability\IHandleUserSessions;
+use Friendica\Database\DBA;
 use Friendica\DI;
 use Friendica\Model\Contact;
 use Friendica\Model\Item;
@@ -67,7 +68,8 @@ class Follow extends BaseModule
 			$this->baseUrl->redirect('contact');
 		}
 
-		$this->process($url);
+		$preferFriend = ($request['prefer_friend'] ?? '1') !== '0';
+		$this->process($url, $preferFriend);
 	}
 
 	protected function content(array $request = []): string
@@ -161,6 +163,8 @@ class Follow extends BaseModule
 
 		$myaddr = $owner['url'];
 
+		$showConnectionType = !in_array($protocol, [Protocol::PHANTOM, Protocol::MAIL, Protocol::FEED]);
+
 		$output = Renderer::replaceMacros($tpl, [
 			'$header'         => $this->t('Connect/Follow'),
 			'$pls_answer'     => $this->t('Please answer the following:'),
@@ -179,6 +183,10 @@ class Follow extends BaseModule
 
 			'$does_know_you' => ['knowyou', $this->t('%s knows you', $contact['name'])],
 			'$addnote_field' => ['dfrn-request-message', $this->t('Add a personal note:')],
+
+			'$lbl_connection_type' => $showConnectionType ? $this->t('How would you like to connect?') : '',
+			'$prefer_friend'       => ['prefer_friend', $this->t('Connect as friends'), '1', $this->t('You\'ll both follow each other and see each other\'s posts.'), true],
+			'$prefer_follower'     => ['prefer_friend', $this->t('Follow only'), '0', $this->t('You\'ll see their posts. They won\'t automatically follow you back.'), false],
 		]);
 
 		$this->page['aside'] = '';
@@ -198,7 +206,7 @@ class Follow extends BaseModule
 		return $output;
 	}
 
-	protected function process(string $url)
+	protected function process(string $url, bool $preferFriend = true)
 	{
 		$returnPath = 'contact/follow?binurl=' . bin2hex($url);
 
@@ -229,11 +237,36 @@ class Follow extends BaseModule
 
 			$this->baseUrl->redirect($returnPath);
 		} elseif (!empty($result['cid'])) {
+			$this->storePendingDuplex($url, $preferFriend);
 			$this->baseUrl->redirect('contact/' . Contact::getPublicContactId($result['cid'], $this->session->getLocalUserId()));
 		}
 
 		$this->sysMessages->addNotice($this->t('The contact could not be added.'));
 		$this->baseUrl->redirect($returnPath);
+	}
+
+	/**
+	 * Store the requester's preferred relationship type on the intro record.
+	 * Only works for same-instance contacts where delivery is synchronous.
+	 */
+	private function storePendingDuplex(string $url, bool $preferFriend): void
+	{
+		$bUid = User::getIdForURL($url);
+		if (!$bUid) {
+			return;
+		}
+
+		$owner = User::getOwnerDataById($this->session->getLocalUserId());
+		if (empty($owner)) {
+			return;
+		}
+
+		$aContactId = Contact::getIdForURL($owner['url'], $bUid);
+		if (!$aContactId) {
+			return;
+		}
+
+		DBA::update('intro', ['duplex' => $preferFriend ? 1 : 0], ['uid' => $bUid, 'contact-id' => $aContactId, 'ignore' => false]);
 	}
 
 	protected function followRemoteItem(string $url)

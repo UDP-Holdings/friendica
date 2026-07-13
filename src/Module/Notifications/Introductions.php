@@ -150,8 +150,9 @@ class Introductions extends BaseNotifications
 					$helptext3 = $this->t('You will also follow them and receive their posts.');
 					$helptext4 = $this->t('You won\'t follow them and won\'t receive their posts.');
 
-					$friend   = ['duplex', $this->t('Friend (Follow them back)'), '1', $helptext2 . '<br/>' . $helptext3, true];
-					$follower = ['duplex', $this->t('Follower'), '0', $helptext2 . '<br/>' . $helptext4, false];
+					$preferFriend = $Introduction->getPreferFriend();
+					$friend   = ['duplex', $this->t('Friend (Follow them back)'), '1', $helptext2 . '<br/>' . $helptext3, $preferFriend];
+					$follower = ['duplex', $this->t('Follower'), '0', $helptext2 . '<br/>' . $helptext4, !$preferFriend];
 
 					$action = 'follow_confirm';
 

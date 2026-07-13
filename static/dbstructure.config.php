@@ -938,7 +938,7 @@ return [
 			"contact-id"  => ["type" => "int unsigned", "not null" => "1", "default" => "0", "foreign" => ["contact" => "id"], "comment" => ""],
 			"suggest-cid" => ["type" => "int unsigned", "foreign" => ["contact" => "id"], "comment" => "Suggested contact"],
 			"knowyou"     => ["type" => "boolean", "not null" => "1", "default" => "0", "comment" => ""],
-			"duplex"      => ["type" => "boolean", "not null" => "1", "default" => "0", "comment" => "deprecated"],
+			"duplex"      => ["type" => "boolean", "not null" => "1", "default" => "1", "comment" => "requester's preferred relationship: 1=friend (mutual), 0=follow only"],
 			"note"        => ["type" => "text", "comment" => ""],
 			"hash"        => ["type" => "varbinary(255)", "not null" => "1", "default" => "", "comment" => ""],
 			"datetime"    => ["type" => "datetime", "not null" => "1", "default" => DBA::NULL_DATETIME, "comment" => ""],

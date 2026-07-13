@@ -60,6 +60,8 @@ class Introduction implements \JsonSerializable
 	private $location;
 	/** @var string */
 	private $about;
+	/** @var bool */
+	private $preferFriend;
 
 	public function __construct(array $data = [])
 	{
@@ -81,12 +83,13 @@ class Introduction implements \JsonSerializable
 		$this->note          = $data['note']          ?? '';
 		$this->request       = $data['request']       ?? '';
 		$this->dfrnId        = -1;
-		$this->addr          = $data['addr']     ?? '';
-		$this->network       = $data['network']  ?? '';
-		$this->uid           = $data['uid']      ?? -1;
-		$this->keywords      = $data['keywords'] ?? '';
-		$this->location      = $data['location'] ?? '';
-		$this->about         = $data['about']    ?? '';
+		$this->addr          = $data['addr']         ?? '';
+		$this->network       = $data['network']      ?? '';
+		$this->uid           = $data['uid']          ?? -1;
+		$this->keywords      = $data['keywords']     ?? '';
+		$this->location      = $data['location']     ?? '';
+		$this->about         = $data['about']        ?? '';
+		$this->preferFriend  = $data['preferFriend'] ?? true;
 	}
 
 	public function getLabel(): string
@@ -207,6 +210,11 @@ class Introduction implements \JsonSerializable
 	public function getAbout(): string
 	{
 		return $this->about;
+	}
+
+	public function getPreferFriend(): bool
+	{
+		return $this->preferFriend;
 	}
 
 	/**

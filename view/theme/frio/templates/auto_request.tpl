@@ -41,6 +41,14 @@
 			<div id="dfrn-request-url-end"></div>
 		</div>
 
+{{if $lbl_connection_type}}
+		<div id="dfrn-request-connection-type" role="radiogroup" aria-labelledby="connection_type_label">
+			<label id="connection_type_label">{{$lbl_connection_type}}</label>
+			{{include file="field_radio.tpl" field=$prefer_friend}}
+			{{include file="field_radio.tpl" field=$prefer_follower}}
+		</div>
+{{/if}}
+
 		<div id="dfrn-request-submit-wrapper">
 {{if $submit}}
 			<input class="btn btn-primary" type="submit" name="submit" id="dfrn-request-submit-button" value="{{$submit}}">
