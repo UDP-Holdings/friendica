@@ -30,12 +30,5 @@
 		<dd>{{$platform}} {{$codename}} {{$VERSION}}<span id="udp-ver-admin"></span></dd>
 	</dl>
 
-	{{* Active addons *}}
-	<dl>
-		<dt>{{$addons.0}}</dt>
-		{{foreach $addons.1 as $p}}
-			<dd><a href="{{$baseurl}}/admin/addons/{{$p}}/">{{$p}}</a></dd>
-		{{/foreach}}
-	</dl>
 
 </div>
