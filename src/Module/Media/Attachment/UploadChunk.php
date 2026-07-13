@@ -109,13 +109,19 @@ class UploadChunk extends BaseModule
 		}
 		fclose($out);
 
+		$dbgLog = '/tmp/udp_chunk_debug.log';
+		$dbg = fn(string $msg) => file_put_contents($dbgLog, date('H:i:s') . " $msg\n", FILE_APPEND);
+		$dbg("assembled OK size=" . filesize($assembledPath) . " mime=$mimeType");
+
 		// Probe to determine whether this is a video and what codec it uses.
 		// Empty/octet-stream MIME from Android is treated as unknown and probed.
 		$codec    = '';
 		$isVideo  = false;
 		if ($this->config->get('system', 'ffmpeg_installed')) {
+			$dbg("probing codec...");
 			$codec   = $this->probeVideoCodec($assembledPath, $mimeType);
 			$isVideo = ($codec !== '');
+			$dbg("codec=$codec isVideo=" . ($isVideo ? 'y' : 'n'));
 		}
 
 		// Normalise MIME for videos where the browser didn't report a type
@@ -127,13 +133,16 @@ class UploadChunk extends BaseModule
 		// immediately, before the async transcode completes.
 		$thumbResourceId = '';
 		if ($isVideo) {
-			$thumbResourceId = $this->generateThumbnail($assembledPath, $owner['uid'], (int) $owner['id']);
+			$dbg("generating thumbnail...");
+			$thumbResourceId = $this->generateThumbnail($assembledPath, $owner['uid'], (int) $owner['id'], $dbg);
+			$dbg("thumbnail rid=$thumbResourceId");
 		}
 
 		// Build attachment ACL from the compose form's visibility selection.
 		// Dropzone sends visibility/contact_allow/circle_allow/contact_deny/circle_deny
 		// with each chunk so we can store the file with the correct permissions
 		// before the post itself is created.
+		$dbg("building ACL...");
 		$acl = DI::aclFormatter();
 		if (($request['visibility'] ?? '') === 'public') {
 			$allowCid = $allowGid = $denyCid = $denyGid = '';
@@ -143,8 +152,10 @@ class UploadChunk extends BaseModule
 			$denyCid  = $acl->toString($request['contact_deny']  ?? '');
 			$denyGid  = $acl->toString($request['circle_deny']   ?? '');
 		}
+		$dbg("ACL done. calling Attach::storeFile...");
 
 		$newId = Attach::storeFile($assembledPath, $owner['uid'], $fileName, $mimeType, $allowCid, $allowGid, $denyCid, $denyGid);
+		$dbg("storeFile returned id=$newId");
 
 		// Clean up temp directory
 		foreach (glob($uploadDir . '/*') as $f) {
@@ -205,14 +216,18 @@ class UploadChunk extends BaseModule
 	 * The thumbnail is generated from the assembled original so it is always
 	 * available immediately, even before the async transcode completes.
 	 */
-	private function generateThumbnail(string $videoPath, int $uid, int $ownerContactId): string
+	private function generateThumbnail(string $videoPath, int $uid, int $ownerContactId, callable $dbg = null): string
 	{
+		$dbg ??= fn(string $msg) => null;
+
 		$ffmpeg = trim((string) shell_exec('which ffmpeg'));
 		if (empty($ffmpeg)) {
+			$dbg("thumb: no ffmpeg");
 			return '';
 		}
 
 		$thumbPath = $videoPath . '_thumb.jpg';
+		$dbg("thumb: running ffmpeg on $videoPath");
 
 		exec(
 			escapeshellarg($ffmpeg)
@@ -224,39 +239,52 @@ class UploadChunk extends BaseModule
 			$exitCode
 		);
 
+		$dbg("thumb: exec done exit=$exitCode exists=" . (file_exists($thumbPath) ? filesize($thumbPath) : 'no'));
+
 		if ($exitCode !== 0 || !file_exists($thumbPath) || filesize($thumbPath) === 0) {
 			$this->logger->warning('UDP: thumbnail extraction failed', ['exit' => $exitCode]);
 			@unlink($thumbPath);
 			return '';
 		}
 
+		$dbg("thumb: reading jpeg data");
 		$data  = @file_get_contents($thumbPath);
 		@unlink($thumbPath);
 
 		if (empty($data)) {
+			$dbg("thumb: empty data after file_get_contents");
 			return '';
 		}
 
+		$dbg("thumb: new Image len=" . strlen($data));
 		$image = new Image($data, 'image/jpeg');
 		if (!$image->isValid()) {
+			$dbg("thumb: Image invalid");
 			return '';
 		}
 
 		$resourceId = Strings::getRandomHex();
+		$dbg("thumb: calling Photo::storeWithPreview rid=$resourceId");
 
-		Photo::storeWithPreview(
-			$image,
-			$uid,
-			$resourceId,
-			'video-thumb-' . $resourceId . '.jpg',
-			strlen($data),
-			'Video Thumbnails',
-			'',
-			'<' . $ownerContactId . '>',
-			'',
-			'',
-			''
-		);
+		try {
+			Photo::storeWithPreview(
+				$image,
+				$uid,
+				$resourceId,
+				'video-thumb-' . $resourceId . '.jpg',
+				strlen($data),
+				'Video Thumbnails',
+				'',
+				'<' . $ownerContactId . '>',
+				'',
+				'',
+				''
+			);
+			$dbg("thumb: storeWithPreview done");
+		} catch (\Throwable $e) {
+			$dbg("thumb: storeWithPreview THREW " . get_class($e) . ": " . $e->getMessage() . " in " . $e->getFile() . ":" . $e->getLine());
+			return '';
+		}
 
 		return $resourceId;
 	}
