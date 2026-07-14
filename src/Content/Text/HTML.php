@@ -868,7 +868,7 @@ class HTML
 			'$id'           => $id,
 			'$search_label' => DI::l10n()->t('Search'),
 			'$action_text'  => $action_text,
-			'$search_hint'  => DI::l10n()->t('@name, !group, #tags, content'),
+			'$search_hint'  => DI::l10n()->t('@name, #tags, content'),
 			'$mode'         => $mode,
 			'$return_url'   => bin2hex(Search::getSearchPath($s)),
 		];
