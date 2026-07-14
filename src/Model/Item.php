@@ -255,6 +255,10 @@ class Item
 				$searchtext = Post\Engagement::getSearchTextForUriId($item['uri-id'], true);
 				DBA::update('post-engagement', ['searchtext' => $searchtext], ['uri-id' => $item['uri-id']]);
 				Post\SearchIndex::update($item['uri-id']);
+
+				// Re-index hashtags: edits may add or remove tags, so wipe and re-store.
+				DBA::delete('post-tag', ['uri-id' => $item['uri-id'], 'type' => Tag::HASHTAG]);
+				Tag::storeFromBody($item['uri-id'], $fields['body']);
 			}
 
 			if (!empty($fields['file'])) {
