@@ -1411,7 +1411,7 @@ class User
 		if (!$def_gid) {
 			DBA::delete('user', ['uid' => $uid]);
 
-			throw new Exception(DI::l10n()->t('An error occurred creating your default contact circle. Please try again.'));
+			throw new Exception(DI::l10n()->t('An error occurred creating your default contact list. Please try again.'));
 		}
 
 		$fields = ['def_gid' => $def_gid];

@@ -271,11 +271,11 @@ class Network extends Timeline
 			if ($this->circleId) {
 				$circle = $this->database->selectFirst('group', ['name'], ['id' => $this->circleId, 'uid' => $this->session->getLocalUserId()]);
 				if (!$this->database->isResult($circle)) {
-					$this->systemMessages->addNotice($this->l10n->t('No such circle'));
+					$this->systemMessages->addNotice($this->l10n->t('No such list'));
 				}
 
 				$o = Renderer::replaceMacros(Renderer::getMarkupTemplate('section_title.tpl'), [
-					'$title' => $this->l10n->t('Circle: %s', $circle['name']),
+					'$title' => $this->l10n->t('List: %s', $circle['name']),
 				]) . $o;
 			} elseif (Profile::shouldDisplayEventList($this->session->getLocalUserId(), $this->mode)) {
 				$o .= Profile::getBirthdays($this->session->getLocalUserId());

@@ -88,7 +88,7 @@ class Circle
 				$circle = DBA::selectFirst('group', ['deleted'], ['id' => $gid]);
 				if (DBA::isResult($circle) && $circle['deleted']) {
 					DBA::update('group', ['deleted' => 0], ['id' => $gid]);
-					DI::sysmsg()->addNotice(DI::l10n()->t('A deleted circle with this name was revived. Existing item permissions <strong>may</strong> apply to this circle and any future members. If this is not what you intended, please create another circle with a different name.'));
+					DI::sysmsg()->addNotice(DI::l10n()->t('A deleted list with this name was revived. Existing item permissions <strong>may</strong> apply to this list and any future members. If this is not what you intended, please create another list with a different name.'));
 				}
 				return true;
 			}
@@ -584,16 +584,16 @@ class Circle
 		$tpl = Renderer::getMarkupTemplate('circle_side.tpl');
 		$o   = Renderer::replaceMacros($tpl, [
 			'$add'                 => DI::l10n()->t('add'),
-			'$title'               => DI::l10n()->t('Circles'),
+			'$title'               => DI::l10n()->t('Lists'),
 			'$circles'             => $display_circles,
 			'$new_circle'          => $editmode == 'extended' || $editmode == 'full' ? 1 : '',
 			'$circle_page'         => 'circle/',
-			'$edittext'            => DI::l10n()->t('Edit circle'),
-			'$uncircled'           => $every === 'contact' ? DI::l10n()->t('Contacts not in any circle') : '',
+			'$edittext'            => DI::l10n()->t('Edit list'),
+			'$uncircled'           => $every === 'contact' ? DI::l10n()->t('Contacts not in any list') : '',
 			'$uncircled_selected'  => (($circle_id === 'none') ? 'circle-selected' : ''),
-			'$createtext'          => DI::l10n()->t('Create a new circle'),
-			'$create_circle'       => DI::l10n()->t('Circle Name: '),
-			'$edit_circles_text'   => DI::l10n()->t('Edit circles'),
+			'$createtext'          => DI::l10n()->t('Create a new list'),
+			'$create_circle'       => DI::l10n()->t('List Name: '),
+			'$edit_circles_text'   => DI::l10n()->t('Edit lists'),
 			'$form_security_token' => BaseModule::getFormSecurityToken('circle_edit'),
 		]);
 

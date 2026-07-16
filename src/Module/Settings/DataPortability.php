@@ -151,7 +151,7 @@ class DataPortability extends BaseSettings
 			'$export_title'      => $this->l10n->t('Export Your Data'),
 			'$export_intro'      => $this->l10n->t('Download copies of your Friendica data for backup or migration purposes.'),
 			'$export_data_label' => $this->l10n->t('Export data (JSON)'),
-			'$export_data_desc'  => $this->l10n->t('Profile, posts, contacts, circles, and settings as a JSON file. Does not include media files.'),
+			'$export_data_desc'  => $this->l10n->t('Profile, posts, contacts, lists, and settings as a JSON file. Does not include media files.'),
 			'$export_data_url'   => 'settings/data-portability/data?t=' . $t,
 			'$export_media_label'=> $this->l10n->t('Export media (ZIP)'),
 			'$export_media_desc' => $this->l10n->t('All your photos and photo albums as a ZIP archive (%d photos across %d album(s)).', $photoCount, count($albums)),

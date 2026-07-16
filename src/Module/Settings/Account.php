@@ -537,8 +537,8 @@ class Account extends BaseSettings
 			'$accessiblephotos'    => ['accessible-photos', DI::l10n()->t('Make all posted pictures accessible'), DI::pConfig()->get(DI::userSession()->getLocalUserId(), 'system', 'accessible-photos'), DI::l10n()->t("This option makes every posted picture accessible via the direct link. This is a workaround for the problem that most other networks can't handle permissions on pictures. Non public pictures still won't be visible for the public on your photo albums though.")],
 			'$blockwall'           => ['blockwall', DI::l10n()->t('Allow friends to post to your profile page?'), (intval($user['blockwall']) ? '0' : '1'), DI::l10n()->t('Your contacts may write posts on your profile wall. These posts will be distributed to your contacts')],
 			'$blocktags'           => ['blocktags', DI::l10n()->t('Allow friends to tag your posts?'), (intval($user['blocktags']) ? '0' : '1'), DI::l10n()->t('Your contacts can add additional tags to your posts.')],
-			'$circle_select'       => Circle::getSelectorHTML(DI::userSession()->getLocalUserId(), $user['def_gid'], 'circle-selection', DI::l10n()->t('Default privacy circle for new contacts')),
-			'$circle_select_group' => Circle::getSelectorHTML(DI::userSession()->getLocalUserId(), DI::pConfig()->get(DI::userSession()->getLocalUserId(), 'system', 'default-group-gid', $user['def_gid']), 'circle-selection-group', DI::l10n()->t('Default privacy circle for new group contacts')),
+			'$circle_select'       => Circle::getSelectorHTML(DI::userSession()->getLocalUserId(), $user['def_gid'], 'circle-selection', DI::l10n()->t('Default privacy list for new contacts')),
+			'$circle_select_group' => Circle::getSelectorHTML(DI::userSession()->getLocalUserId(), DI::pConfig()->get(DI::userSession()->getLocalUserId(), 'system', 'default-group-gid', $user['def_gid']), 'circle-selection-group', DI::l10n()->t('Default privacy list for new group contacts')),
 			'$permissions'         => DI::l10n()->t('Default Post Permissions'),
 			'$aclselect'           => ACL::getFullSelectorHTML(DI::page(), $this->session->getLocalUserId()),
 
