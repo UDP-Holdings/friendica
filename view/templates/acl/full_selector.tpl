@@ -13,8 +13,8 @@
 			</label>
 			<fieldset id="visibility-public-panel-{{$input_group_id}}" class="panel-collapse collapse{{if $visibility == 'public'}} in{{/if}}" role="tabpanel" aria-labelledby="visibility-public-heading-{{$input_group_id}}" {{if $visibility != 'public'}}disabled{{/if}}>
 				<div class="panel-body">
-					<div class="alert alert-warning" style="margin-bottom: 10px; padding: 8px 12px; font-size: 0.9em;">
-						<strong>Heads up:</strong> Public posts leave your neighborhood and are visible to anyone on the fediverse — including people who are not members of this community.
+					<div class="alert alert-info" style="margin-bottom: 10px; padding: 8px 12px; font-size: 0.9em;">
+						<strong>Neighborhood post:</strong> Visible to members of this community and connected communities you've joined. People outside your neighborhood cannot see this.
 					</div>
 					<p>{{$public_desc}}</p>
 	                {{if $for_federation}}

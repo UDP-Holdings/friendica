@@ -224,7 +224,7 @@
 
 <div class="generic-page-wrapper">
 	<h2 id="udp-compose-heading">{{$l10n.compose_title}}</h2>
-	<script>(function(){if(window.UDP_MODE==='conversation'){document.getElementById('udp-compose-heading').textContent='Start a Conversation';}}());</script>
+	<script>(function(){if(window.UDP_MODE==='conversation'){document.getElementById('udp-compose-heading').textContent='Direct message';}}());</script>
 	{{if $l10n.always_open_compose}}
 	<p>{{$l10n.always_open_compose nofilter}}</p>
 	{{/if}}
@@ -329,7 +329,7 @@
 					</span>
 					<span role="presentation" id="character-counter" class="grey text-info"></span>
 					<button type="submit" class="btn btn-primary" id="comment-edit-submit-{{$id}}" name="submit" tabindex="18"><i class="fa fa-envelope"></i> {{$l10n.submit}}</button>
-					<script>(function(){if(window.UDP_MODE==='conversation'){var b=document.getElementById('comment-edit-submit-{{$id}}');if(b)b.innerHTML='<i class="fa fa-comments fa-fw" aria-hidden="true"></i> Start Conversation';}}());</script>
+					<script>(function(){if(window.UDP_MODE==='conversation'){var b=document.getElementById('comment-edit-submit-{{$id}}');if(b)b.innerHTML='<i class="fa fa-comments fa-fw" aria-hidden="true"></i> Direct message';}}());</script>
 				</span>
 			</p>
 
