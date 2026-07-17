@@ -260,12 +260,14 @@ class Acl extends BaseModule
 					if ($search !== '' && stripos($gc['name'], $search) === false && stripos($actorSelf['nick'], $search) === false) {
 						continue;
 					}
-					$gcAddr = $actorSelf['addr'] ?: ($actorSelf['nick'] . '@' . parse_url((string) DI::baseUrl(), PHP_URL_HOST));
+					$gcAddr    = $actorSelf['addr'] ?: ($actorSelf['nick'] . '@' . parse_url((string) DI::baseUrl(), PHP_URL_HOST));
+					$perUserCt = Contact::selectFirst(['id'], ['uid' => $this->session->getLocalUserId(), 'url' => $actorSelf['url'], 'self' => false]);
+					$cid       = DBA::isResult($perUserCt) ? intval($perUserCt['id']) : 0;
 					$groups[] = [
 						'type'    => self::TYPE_MENTION_CONTACT,
 						'photo'   => $actorSelf['micro'] ?: '',
 						'name'    => htmlspecialchars($gc['name']),
-						'id'      => 0,
+						'id'      => $cid,
 						'network' => Protocol::ACTIVITYPUB,
 						'link'    => $actorSelf['url'],
 						'nick'    => htmlentities($actorSelf['nick']),

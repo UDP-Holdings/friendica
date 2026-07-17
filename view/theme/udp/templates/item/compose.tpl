@@ -822,24 +822,37 @@
 	// Listens for udp:group-mention from autocomplete.js editor_replace(),
 	// shows a banner when a Group Circle is @mentioned, hides the ACL selector.
 	(function () {
-		var groupMentions = {};
+		var groupMentions        = {};
+		var $contactAllowInput   = $('input[name="contact_allow"]');
+		var originalContactAllow = $contactAllowInput.val() || '';
+		var originalVisibility   = $('input[name="visibility"]:checked').val() || '';
 
 		function updateGroupBanner() {
-			var names    = Object.keys(groupMentions).map(function (a) { return groupMentions[a]; });
+			var addrs    = Object.keys(groupMentions);
+			var names    = addrs.map(function (a) { return groupMentions[a].name; });
+			var cids     = addrs.map(function (a) { return groupMentions[a].cid; }).filter(Boolean);
 			var $section = $('#permissions-section');
 			var $banner  = $('#udp-group-post-banner');
 			if (names.length === 0) {
+				$contactAllowInput.val(originalContactAllow);
+				if (originalVisibility) {
+					$('input[name="visibility"][value="' + originalVisibility + '"]').prop('checked', true);
+				}
 				$banner.remove();
 				$section.show();
 				return;
+			}
+			if (cids.length) {
+				$('input[name="visibility"][value="custom"]').prop('checked', true);
+				$contactAllowInput.val(cids.join(','));
 			}
 			var label = names.length === 1
 				? names[0]
 				: names.slice(0, -1).join(', ') + ' & ' + names[names.length - 1];
 			if ($banner.length === 0) {
-				$banner = $('<div id="udp-group-post-banner" class="alert alert-info" style="margin:4px 0 8px;">' +
-					'<strong>Group post</strong> — Shared with members of <span id="udp-group-names"></span>. ' +
-					'Visibility controls are managed by the group.</div>');
+				$banner = $('<div id="udp-group-post-banner" class="alert alert-info" style="margin:4px 0 8px;">'
+					+ '<strong>Group post</strong> — Shared with members of <span id="udp-group-names"></span>. '
+					+ 'Visibility controls are managed by the group.</div>');
 				$section.before($banner);
 			}
 			$('#udp-group-names').text(label);
@@ -848,7 +861,7 @@
 
 		$(document).on('udp:group-mention', function (e, item) {
 			if (item.addr) {
-				groupMentions[item.addr] = item.name;
+				groupMentions[item.addr] = { name: item.name, cid: item.id };
 				updateGroupBanner();
 			}
 		});
