@@ -11,6 +11,7 @@ use Friendica\DI;
 use Friendica\Model\Post\UserNotification;
 use Friendica\Protocol\Activity;
 use Friendica\Util\DateTimeFormat;
+use Friendica\Util\UdpDebug;
 
 /**
  * Manages UDP Group Circles: private invite-only groups backed by AP Group actors.
@@ -75,23 +76,39 @@ class UdpGroupCircle
 	{
 		$baseUrl  = (string) DI::baseUrl();
 		$domain   = parse_url($baseUrl, PHP_URL_HOST) ?? 'udp.social';
-		$nickname = 'udp-gc-' . bin2hex(random_bytes(5));
+		$slug     = strtolower(preg_replace('/[^a-z0-9]+/i', '_', $name));
+		$slug     = trim($slug, '_');
+		$slug     = $slug ?: 'group';
+		$slug     = substr($slug, 0, 28);
+		$nickname = $slug;
+		$n        = 1;
+		while (DBA::exists('user', ['nickname' => $nickname]) || DBA::exists('userd', ['username' => $nickname])) {
+			$nickname = $slug . '_' . $n++;
+		}
 		$password = bin2hex(random_bytes(32));
 		$email    = $nickname . '@' . $domain;
 
+		UdpDebug::log('[UdpGC] create() start', ['name' => $name, 'nick' => $nickname, 'email' => $email]);
 		// Bypass Friendica's "First Last" full-name requirement for internal actor accounts
 		$prevNoRegFullname = DI::config()->get('system', 'no_regfullname');
+		UdpDebug::log('[UdpGC] no_regfullname before', ['value' => $prevNoRegFullname]);
 		DI::config()->set('system', 'no_regfullname', true);
 		try {
+			UdpDebug::log('[UdpGC] calling User::create()');
 			$result = User::create([
 				'username'       => $name,
 				'nickname'       => $nickname,
 				'email'          => $email,
 				'password'       => $password,
+				'password1'      => $password,
 				'confirm'        => $password,
 				'verified'       => true,
 				'ignore_invites' => true,
 			]);
+			UdpDebug::log('[UdpGC] User::create() OK', ['uid' => $result['user']['uid'] ?? null]);
+		} catch (\Exception $e) {
+			UdpDebug::log('[UdpGC] User::create() threw', ['msg' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
+			throw $e;
 		} finally {
 			DI::config()->set('system', 'no_regfullname', $prevNoRegFullname);
 		}
@@ -424,6 +441,14 @@ class UdpGroupCircle
 	public static function close(int $circleId): void
 	{
 		DBA::update('udp-group-circle', ['closed' => DateTimeFormat::utcNow()], ['id' => $circleId]);
+
+		// Free the slug so it can be reused. The actor user row stays for AP tombstone
+		// purposes but the nickname is no longer occupying the original slug.
+		$circle = self::getById($circleId);
+		if ($circle) {
+			DBA::update('user', ['nickname' => '_deleted_' . $circleId], ['uid' => $circle['actor-uid']]);
+		}
+
 		// TODO: send "this group has been closed" system notification to all members
 	}
 }
