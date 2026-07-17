@@ -7,7 +7,7 @@ namespace Friendica\Util;
 
 class UdpDebug
 {
-	const ENABLED  = true;
+	const ENABLED  = false;
 	const LOG_FILE = '/var/log/friendica/udp_debug.log';
 
 	public static function log(string $msg, array $context = []): void
