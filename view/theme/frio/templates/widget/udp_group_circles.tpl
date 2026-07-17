@@ -19,6 +19,8 @@
 					<li class="sidebar-circle-li">
 						<a id="sidebar-udp-group-{{$circle.id}}" class="sidebar-circle-element" href="{{$circle.href}}">{{$circle.name}}</a>
 					</li>
+				{{foreachelse}}
+					<li class="sidebar-circle-li faded-text">{{$empty_txt}}</li>
 				{{/foreach}}
 			</ul>
 		</div>

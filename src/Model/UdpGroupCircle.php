@@ -79,15 +79,22 @@ class UdpGroupCircle
 		$password = bin2hex(random_bytes(32));
 		$email    = $nickname . '@' . $domain;
 
-		$result = User::create([
-			'username'       => $name,
-			'nickname'       => $nickname,
-			'email'          => $email,
-			'password'       => $password,
-			'confirm'        => $password,
-			'verified'       => true,
-			'ignore_invites' => true,
-		]);
+		// Bypass Friendica's "First Last" full-name requirement for internal actor accounts
+		$prevNoRegFullname = DI::config()->get('system', 'no_regfullname');
+		DI::config()->set('system', 'no_regfullname', true);
+		try {
+			$result = User::create([
+				'username'       => $name,
+				'nickname'       => $nickname,
+				'email'          => $email,
+				'password'       => $password,
+				'confirm'        => $password,
+				'verified'       => true,
+				'ignore_invites' => true,
+			]);
+		} finally {
+			DI::config()->set('system', 'no_regfullname', $prevNoRegFullname);
+		}
 
 		$actorUid = $result['user']['uid'] ?? 0;
 		if (!$actorUid) {
