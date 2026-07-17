@@ -11,6 +11,7 @@ use Friendica\BaseRepository;
 use Friendica\Core\Worker\Entity\Process as ProcessEntity;
 use Friendica\Core\Worker\Exception\ProcessPersistenceException;
 use Friendica\Core\Worker\Factory\Process as ProcessFactory;
+use Friendica\Database\DBA;
 use Friendica\Database\Database;
 use Friendica\Util\DateTimeFormat;
 use Psr\Log\LoggerInterface;
@@ -97,6 +98,7 @@ class Process extends BaseRepository
 			while ($process = $this->db->fetch($processes)) {
 				if (!\posix_kill($process['pid'], 0)) {
 					$this->db->delete(static::$table_name, ['pid' => $process['pid']]);
+					$this->db->update('workerqueue', ['executed' => DBA::NULL_DATETIME, 'pid' => 0], ['pid' => $process['pid'], 'done' => false]);
 				}
 			}
 			$this->db->close($processes);
