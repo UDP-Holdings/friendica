@@ -15,10 +15,10 @@
 				{{if $m.contact.addr}}<span class="text-muted"> @{{$m.contact.addr}}</span>{{/if}}
 				{{if $m.role == 1}}<span class="label label-primary" style="margin-left:6px;">co-owner</span>{{/if}}
 			</div>
-			{{if $is_co_owner && $m.contact_id != $self_contact_id}}
+			{{if $is_co_owner && $m['contact-id'] != $self_contact_id}}
 			<form method="post" action="/udp/group/{{$circle.id}}/members" style="display:inline;">
 				<input type="hidden" name="form_security_token" value="{{$form_security_token}}">
-				<input type="hidden" name="contact_id" value="{{$m.contact-id}}">
+				<input type="hidden" name="contact_id" value="{{$m['contact-id']}}">
 				{{if $m.role == 0}}
 					<button type="submit" name="action" value="promote" class="btn btn-xs btn-default">Make co-owner</button>
 				{{/if}}

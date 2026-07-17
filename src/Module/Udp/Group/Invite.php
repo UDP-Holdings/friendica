@@ -7,9 +7,11 @@
 namespace Friendica\Module\Udp\Group;
 
 use Friendica\BaseModule;
+use Friendica\Database\DBA;
 use Friendica\DI;
 use Friendica\Model\Contact;
 use Friendica\Model\UdpGroupCircle;
+use Friendica\Model\User;
 use Friendica\Network\HTTPException;
 
 /**
@@ -44,6 +46,15 @@ class Invite extends BaseModule
 			DI::baseUrl()->redirect('udp/group/' . $circleId . '/members');
 		}
 
+		// Normalise: strip leading @ so both "@user@host" and "user@host" work.
+		// If no domain is present (bare "@user" or "user"), append the local domain.
+		if (!str_starts_with($handle, 'http')) {
+			$handle = ltrim($handle, '@');
+			if (!str_contains($handle, '@')) {
+				$handle .= '@' . DI::baseUrl()->getHost();
+			}
+		}
+
 		// Resolve the handle to a contact
 		$targetContact = Contact::getByURL($handle, true); // fetch from network if needed
 		if (!$targetContact) {
@@ -51,8 +62,15 @@ class Invite extends BaseModule
 			DI::baseUrl()->redirect('udp/group/' . $circleId . '/members');
 		}
 
-		// Ensure we have a contact row for this person on this node
-		$localTargetCid = Contact::getIdForURL($targetContact['url'], 0, true);
+		// For local users use their self-contact so membership checks in View/Members match.
+		// For remote users fall back to the global (uid=0) contact.
+		$targetLocalUid = User::getIdForURL($targetContact['url']);
+		if ($targetLocalUid) {
+			$selfRow = Contact::selectFirst(['id'], ['uid' => $targetLocalUid, 'self' => true]);
+			$localTargetCid = DBA::isResult($selfRow) ? $selfRow['id'] : 0;
+		} else {
+			$localTargetCid = Contact::getIdForURL($targetContact['url'], 0, true);
+		}
 		if (!$localTargetCid) {
 			DI::sysmsg()->addNotice(DI::l10n()->t('Could not resolve contact. Please try again.'));
 			DI::baseUrl()->redirect('udp/group/' . $circleId . '/members');
