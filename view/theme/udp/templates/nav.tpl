@@ -106,6 +106,15 @@
 						</a>
 					</li>
 					{{/if}}
+					{{if $userinfo}}
+					<li class="nav-segment hidden-xs">
+						<a href="{{$baseurl}}/udp/group" class="nav-menu"
+							data-toggle="tooltip" data-viewport="#topbar-first"
+							aria-label="Groups" title="Groups">
+							<i class="fa fa-object-group fa-lg fa-fw" aria-hidden="true"></i>
+						</a>
+					</li>
+					{{/if}}
 					{{if $nav.notifications}}
 					<li id="nav-notification" class="nav-segment dropdown">
 						<button id="nav-notifications-menu-btn" class="btn-link dropdown-toggle" data-toggle="dropdown"
@@ -550,6 +559,12 @@
 				</a>
 			</li>
 			{{/if}}
+
+			<li>
+				<a href="{{$baseurl}}/udp/group" title="Groups">
+					<i class="fa fa-object-group fa-fw" aria-hidden="true"></i> Groups
+				</a>
+			</li>
 
 			{{if $nav.messages}}
 			<li>
