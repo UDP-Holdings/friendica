@@ -672,6 +672,15 @@ return [
 	'/udp/member-invite-approve/{token}'   => [Module\Udp\MemberInviteApprove::class, [R::GET, R::POST]], // UDP: admin approval for member invite
 	'/udp/member-pair-approve/{token}'     => [Module\Udp\MemberPairApprove::class,   [R::GET, R::POST]], // UDP: admin confirmation for Flow B node-pairing request
 	'/udp/move-account'            => [Module\Udp\MoveAccount::class,      [R::GET, R::POST]],  // UDP: self-service account move
+	'/udp/group' => [
+		''                                    => [Module\Udp\Group\Index::class,   [R::GET]],          // list my Group Circles
+		'/create'                             => [Module\Udp\Group\Create::class,  [R::GET, R::POST]], // create a new circle
+		'/{id:\d+}'                           => [Module\Udp\Group\View::class,    [R::GET]],          // group feed
+		'/{id:\d+}/members'                   => [Module\Udp\Group\Members::class, [R::GET, R::POST]], // membership management
+		'/{id:\d+}/invite'                    => [Module\Udp\Group\Invite::class,  [R::POST]],         // propose adding someone
+		'/{id:\d+}/invite/{iid:\d+}/vote'     => [Module\Udp\Group\Vote::class,    [R::POST]],         // co-owner votes accept/reject
+		'/{id:\d+}/leave'                     => [Module\Udp\Group\Leave::class,   [R::POST]],         // leave the group
+	],
 	'/udp/media'     => [
 		'/photo/upload' => [Module\Udp\Media\PhotoUpload::class,   [R::POST]],       // UDP: photo upload → udp-media indexed
 		'/list'         => [Module\Udp\Media\MediaList::class,      [R::GET]],        // UDP: media list JSON API for drawer + manager

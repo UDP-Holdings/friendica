@@ -44,6 +44,9 @@ use Friendica\Database\DBA;
 
 // This file is required several times during the test in DbaDefinition which justifies this condition
 if (!defined('DB_UPDATE_VERSION')) {
+	// Updating to 1596 for UDP-centric updates. Conflict with upstream expected. 
+	// TODO - See `DbaDefinition::load()` to fire `ArrayFilterEvent::DB_STRUCTURE_DEFINITION`
+	// to cleanly implement this hook later
 	define('DB_UPDATE_VERSION', 1595);
 }
 
@@ -2106,6 +2109,59 @@ return [
 			"PRIMARY" => ["object-id"],
 		],
 		"engine" => "MEMORY",
+	],
+	// UDP Social: Group Circle — private shared posting spaces with AP Group actors
+	"udp-group-circle" => [
+		"comment" => "UDP Group Circle — private invite-only group with an AP Group actor",
+		"fields" => [
+			"id"          => ["type" => "int unsigned", "not null" => "1", "extra" => "auto_increment", "primary" => "1", "comment" => ""],
+			"actor-uid"   => ["type" => "mediumint unsigned", "not null" => "1", "foreign" => ["user" => "uid"], "comment" => "Friendica user serving as the AP Group actor"],
+			"creator-uid" => ["type" => "mediumint unsigned", "not null" => "1", "foreign" => ["user" => "uid"], "comment" => "Local user who created this circle"],
+			"name"        => ["type" => "varchar(255)", "not null" => "1", "default" => "", "comment" => "Display name"],
+			"description" => ["type" => "text", "comment" => "Optional description"],
+			"created"     => ["type" => "datetime", "not null" => "1", "default" => DBA::NULL_DATETIME, "comment" => ""],
+			"closed"      => ["type" => "datetime", "comment" => "Set when circle is closed; null = open"],
+		],
+		"indexes" => [
+			"PRIMARY"    => ["id"],
+			"actor-uid"  => ["UNIQUE", "actor-uid"],
+			"creator-uid" => ["creator-uid"],
+		],
+	],
+	"udp-group-circle-member" => [
+		"comment" => "UDP Group Circle membership roster",
+		"fields" => [
+			"id"         => ["type" => "int unsigned", "not null" => "1", "extra" => "auto_increment", "primary" => "1", "comment" => ""],
+			"circle-id"  => ["type" => "int unsigned", "not null" => "1", "foreign" => ["udp-group-circle" => "id"], "comment" => ""],
+			"contact-id" => ["type" => "int unsigned", "not null" => "1", "foreign" => ["contact" => "id"], "comment" => "Contact record for the member (local or remote)"],
+			"uid"        => ["type" => "mediumint unsigned", "comment" => "Local user UID if the member is on this node; null = remote"],
+			"role"       => ["type" => "tinyint unsigned", "not null" => "1", "default" => "0", "comment" => "0=member, 1=co-owner"],
+			"joined"     => ["type" => "datetime", "not null" => "1", "default" => DBA::NULL_DATETIME, "comment" => ""],
+		],
+		"indexes" => [
+			"PRIMARY"              => ["id"],
+			"circle-id-contact-id" => ["UNIQUE", "circle-id", "contact-id"],
+			"circle-id"            => ["circle-id"],
+			"uid"                  => ["uid"],
+		],
+	],
+	"udp-group-circle-invite" => [
+		"comment" => "UDP Group Circle pending invites — unanimous co-owner consent tracked here",
+		"fields" => [
+			"id"          => ["type" => "int unsigned", "not null" => "1", "extra" => "auto_increment", "primary" => "1", "comment" => ""],
+			"circle-id"   => ["type" => "int unsigned", "not null" => "1", "foreign" => ["udp-group-circle" => "id"], "comment" => ""],
+			"proposed-by" => ["type" => "int unsigned", "not null" => "1", "foreign" => ["contact" => "id"], "comment" => "Contact who proposed this invite"],
+			"target-cid"  => ["type" => "int unsigned", "not null" => "1", "foreign" => ["contact" => "id"], "comment" => "Contact being invited"],
+			"votes"       => ["type" => "text", "comment" => "JSON map: co-owner contact-id → true/false/null(pending)"],
+			"status"      => ["type" => "tinyint unsigned", "not null" => "1", "default" => "0", "comment" => "0=pending, 1=accepted, 2=rejected"],
+			"created"     => ["type" => "datetime", "not null" => "1", "default" => DBA::NULL_DATETIME, "comment" => ""],
+			"expires"     => ["type" => "datetime", "comment" => "Expiry; null = no expiry"],
+		],
+		"indexes" => [
+			"PRIMARY"              => ["id"],
+			"circle-id"            => ["circle-id"],
+			"circle-id-target-cid" => ["circle-id", "target-cid", "status"],
+		],
 	],
 	// UDP Social: unified media index (Cat3 minimal — new table only, no upstream fields changed)
 	"udp-media" => [
