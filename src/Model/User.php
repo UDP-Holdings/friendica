@@ -1421,10 +1421,7 @@ class User
 
 		DBA::update('user', $fields, ['uid' => $uid]);
 
-		$def_gid_groups = Circle::create($uid, DI::l10n()->t('Groups'));
-		if ($def_gid_groups) {
-			DI::pConfig()->set($uid, 'system', 'default-group-gid', $def_gid_groups);
-		}
+		// UDP: "Groups" list removed — Group Circles widget replaces this concept
 
 		// if we have no OpenID photo try to look up an avatar
 		if (!strlen($photo)) {

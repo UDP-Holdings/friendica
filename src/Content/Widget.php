@@ -16,6 +16,7 @@ use Friendica\DI;
 use Friendica\Model\Contact;
 use Friendica\Model\Circle;
 use Friendica\Model\Item;
+use Friendica\Model\UdpGroupCircle;
 use Friendica\Model\Post;
 use Friendica\Security\OpenWebAuth;
 use Friendica\Util\DateTimeFormat;
@@ -243,6 +244,34 @@ class Widget
 			$options,
 			$selected,
 		);
+	}
+
+	/**
+	 * Return the UDP Group Circles sidebar widget.
+	 * Shows all circles the current user belongs to, with a create link.
+	 */
+	public static function groupCircles(): string
+	{
+		$uid = DI::userSession()->getLocalUserId();
+		if (!$uid) {
+			return '';
+		}
+
+		$circles = UdpGroupCircle::getMembershipsForUser($uid);
+		if (empty($circles)) {
+			return '';
+		}
+
+		return Renderer::replaceMacros(Renderer::getMarkupTemplate('widget/udp_group_circles.tpl'), [
+			'$title'      => DI::l10n()->t('Groups'),
+			'$create_url' => DI::baseUrl() . '/udp/group/create',
+			'$create_txt' => DI::l10n()->t('Create group'),
+			'$circles'    => array_map(fn($c) => [
+				'id'   => $c['id'],
+				'name' => $c['name'],
+				'href' => DI::baseUrl() . '/udp/group/' . $c['id'],
+			], $circles),
+		]);
 	}
 
 	/**

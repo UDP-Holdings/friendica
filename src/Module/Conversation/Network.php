@@ -225,6 +225,8 @@ class Network extends Timeline
 						break;
 				}
 			}
+
+			$this->page['aside'] .= Widget::groupCircles();
 		}
 
 		if (!$this->raw) {
