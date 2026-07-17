@@ -245,6 +245,37 @@ class Acl extends BaseModule
 			}
 		}
 
+		// UDP: Surface Group Circle actors the user belongs to. Members don't have a
+		// follow/contact row for the group actor yet, so this bypasses that gap.
+		if ($type === self::TYPE_MENTION_CONTACT || $type === self::TYPE_MENTION_CONTACT_CIRCLE) {
+			$memberRows = DBA::selectToArray('udp-group-circle-member', ['circle-id'], ['uid' => $this->session->getLocalUserId()]);
+			if (!empty($memberRows)) {
+				$circleIds = array_column($memberRows, 'circle-id');
+				$gcRows    = DBA::selectToArray('udp-group-circle', ['actor-uid', 'name'], ['id' => $circleIds, 'closed' => null]);
+				foreach ($gcRows as $gc) {
+					$actorSelf = Contact::selectFirst(['url', 'nick', 'addr', 'micro'], ['uid' => $gc['actor-uid'], 'self' => true]);
+					if (!DBA::isResult($actorSelf)) {
+						continue;
+					}
+					if ($search !== '' && stripos($gc['name'], $search) === false && stripos($actorSelf['nick'], $search) === false) {
+						continue;
+					}
+					$gcAddr = $actorSelf['addr'] ?: ($actorSelf['nick'] . '@' . parse_url((string) DI::baseUrl(), PHP_URL_HOST));
+					$groups[] = [
+						'type'    => self::TYPE_MENTION_CONTACT,
+						'photo'   => $actorSelf['micro'] ?: '',
+						'name'    => htmlspecialchars($gc['name']),
+						'id'      => 0,
+						'network' => Protocol::ACTIVITYPUB,
+						'link'    => $actorSelf['url'],
+						'nick'    => htmlentities($actorSelf['nick']),
+						'addr'    => htmlentities($gcAddr),
+						'group'   => true,
+					];
+				}
+			}
+		}
+
 		if ($groups) {
 			if ($search == '') {
 				$groups[] = ['separator' => true];

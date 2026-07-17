@@ -6,11 +6,14 @@
 
 namespace Friendica\Model;
 
+use Friendica\Core\Protocol;
 use Friendica\Database\DBA;
 use Friendica\DI;
-use Friendica\Model\Post\UserNotification;
+use Friendica\Model\Notification\ObjectType as NotificationObjectType;
+use Friendica\Model\Notification\Type as NotificationType;
 use Friendica\Protocol\Activity;
 use Friendica\Util\DateTimeFormat;
+use Friendica\Util\Strings;
 use Friendica\Util\UdpDebug;
 
 /**
@@ -145,6 +148,9 @@ class UdpGroupCircle
 		if (DBA::isResult($creatorContact)) {
 			self::addMember($circleId, $creatorContact['id'], $creatorUid, self::ROLE_CO_OWNER);
 		}
+
+		// Wire up contact relationships so @mention autocomplete and post rendering work
+		self::ensureGroupContactForUser($actorUid, $creatorUid);
 
 		return $circleId;
 	}
@@ -331,7 +337,17 @@ class UdpGroupCircle
 			'expires'     => DateTimeFormat::utc('+7 days'),
 		]);
 
-		return DBA::lastInsertId();
+		$inviteId = DBA::lastInsertId();
+
+		// If the proposer is the only co-owner their vote is already true — resolve immediately.
+		$allAccepted = !in_array(null, $votes, true) && !in_array(false, $votes, true);
+		if ($allAccepted) {
+			DBA::update('udp-group-circle-invite', ['status' => self::INVITE_ACCEPTED], ['id' => $inviteId]);
+			self::addMember($circleId, $targetCid);
+			self::notifyInviteTarget($circleId, $targetCid);
+		}
+
+		return $inviteId;
 	}
 
 	/**
@@ -389,30 +405,49 @@ class UdpGroupCircle
 	{
 		$circle = self::getById($circleId);
 		if (!$circle) {
+			UdpDebug::log('[UdpGC] notifyInviteTarget: circle not found', ['circleId' => $circleId]);
 			return;
 		}
 
-		// Find the target's local uid
 		$targetContact = Contact::selectFirst(['url'], ['id' => $targetCid]);
 		if (!DBA::isResult($targetContact)) {
+			UdpDebug::log('[UdpGC] notifyInviteTarget: target contact not found', ['targetCid' => $targetCid]);
 			return;
 		}
 		$targetUid = User::getIdForURL($targetContact['url']);
 		if (!$targetUid) {
-			return; // remote user — AP activity delivery handles this case
+			UdpDebug::log('[UdpGC] notifyInviteTarget: remote user, skipping', ['url' => $targetContact['url']]);
+			return;
 		}
 
-		// Get the group actor's global (uid=0) contact-id so the notification links to it
 		$actorOwner = User::getOwnerDataById($circle['actor-uid']);
 		if (!$actorOwner) {
+			UdpDebug::log('[UdpGC] notifyInviteTarget: actor owner not found', ['actorUid' => $circle['actor-uid']]);
 			return;
 		}
 		$actorCid = Contact::getIdForURL($actorOwner['url'], 0);
 		if (!$actorCid) {
+			UdpDebug::log('[UdpGC] notifyInviteTarget: actor global contact not found', ['url' => $actorOwner['url']]);
 			return;
 		}
 
-		UserNotification::insertNotification($actorCid, Activity::FOLLOW, $targetUid);
+		// Ensure the invited member has a contact row for the group actor
+		self::ensureGroupContactForUser($circle['actor-uid'], $targetUid);
+
+		// Look up the contact as seen from the target's account (for notification cid)
+		$actorCidForTarget = Contact::getIdForURL($actorOwner['url'], $targetUid, false);
+		UdpDebug::log('[UdpGC] notifyInviteTarget: firing', ['actorCidGlobal' => $actorCid, 'actorCidForTarget' => $actorCidForTarget, 'targetUid' => $targetUid]);
+
+		// Write to the notify table so it shows in the nav bell.
+		DI::notify()->createFromArray([
+			'type'  => NotificationType::INTRO,
+			'otype' => NotificationObjectType::INTRO,
+			'verb'  => Activity::FOLLOW,
+			'uid'   => $targetUid,
+			'cid'   => $actorCidForTarget ?: $actorCid,
+			'link'  => (string) DI::baseUrl() . '/udp/group/' . $circleId,
+		]);
+		UdpDebug::log('[UdpGC] notifyInviteTarget: done');
 	}
 
 	/** Returns pending invites for a circle (for the members management page). */
@@ -433,6 +468,59 @@ class UdpGroupCircle
 	}
 
 	// ── Lifecycle ─────────────────────────────────────────────────────────────
+
+	// ── Internal helpers ──────────────────────────────────────────────────────
+
+	/**
+	 * Ensures the uid=0 global contact exists for the group actor (needed for
+	 * @addr mention rendering in posts) and creates an active per-user contact
+	 * for $memberUid (needed for autocomplete and @nick+id mention format).
+	 * Inserts directly — no AP Follow activity is sent.
+	 */
+	private static function ensureGroupContactForUser(int $actorUid, int $memberUid): void
+	{
+		$actorSelf = Contact::selectFirst(
+			['url', 'nurl', 'name', 'nick', 'addr', 'photo', 'thumb', 'micro', 'uri-id'],
+			['uid' => $actorUid, 'self' => true]
+		);
+		if (!DBA::isResult($actorSelf)) {
+			UdpDebug::log('[UdpGC] ensureGroupContactForUser: actor self-contact not found', ['actorUid' => $actorUid]);
+			return;
+		}
+
+		// Ensure uid=0 global contact exists so @addr resolves to display name in post rendering
+		Contact::getIdForURL($actorSelf['url'], 0, true);
+
+		// Check if per-user contact already exists
+		$nurl = $actorSelf['nurl'] ?: Strings::normaliseLink($actorSelf['url']);
+		if (DBA::exists('contact', ['uid' => $memberUid, 'nurl' => $nurl, 'deleted' => false])) {
+			return;
+		}
+
+		DBA::insert('contact', [
+			'uid'              => $memberUid,
+			'created'          => DateTimeFormat::utcNow(),
+			'network'          => Protocol::ACTIVITYPUB,
+			'name'             => $actorSelf['name'],
+			'nick'             => $actorSelf['nick'],
+			'addr'             => $actorSelf['addr'],
+			'url'              => $actorSelf['url'],
+			'nurl'             => $nurl,
+			'uri-id'           => $actorSelf['uri-id'],
+			'photo'            => $actorSelf['photo'],
+			'thumb'            => $actorSelf['thumb'],
+			'micro'            => $actorSelf['micro'],
+			'contact-type'     => Contact::TYPE_COMMUNITY,
+			'rel'              => Contact::SHARING,
+			'pending'          => false,
+			'archive'          => false,
+			'blocked'          => false,
+			'deleted'          => false,
+			'manually-approve' => false,
+		]);
+
+		UdpDebug::log('[UdpGC] ensureGroupContactForUser: contact created', ['actorUid' => $actorUid, 'memberUid' => $memberUid]);
+	}
 
 	/**
 	 * Closes a circle: stamps the closed datetime and notifies remaining members.

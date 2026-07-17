@@ -87,27 +87,34 @@ function tag_format(item) {
 }
 
 function editor_replace(item) {
+	var result;
+
 	if (typeof item.replace !== 'undefined') {
-		return '$1$2' + item.replace;
+		result = '$1$2' + item.replace;
+	} else if (typeof item.addr !== 'undefined') {
+		result = '$1$2' + item.addr + ' ';
+	} else {
+		// $2 ensures that prefix (@,@!) is preserved
+		var id = item.id;
+		// don't add the id if it is empty (the id empty eg. if there are unknow contacts in thread)
+		if (id.length < 1) {
+			result = '$1$2' + item.nick.replace(' ', '') + ' ';
+		} else {
+			// 16 chars of hash should be enough. Full hash could be used if it can be done in a visually appealing way.
+			// 16 chars is also the minimum length in the backend (otherwise it's interpreted as a local id).
+			if (id.length > 16) {
+				id = item.id.substring(0, 16);
+			}
+			result = '$1$2' + item.nick.replace(' ', '') + '+' + id + ' ';
+		}
 	}
 
-	if (typeof item.addr !== 'undefined') {
-		return '$1$2' + item.addr + ' ';
+	// UDP: signal when a community/group actor is selected via @mention
+	if (item.group) {
+		$(document).trigger('udp:group-mention', [item]);
 	}
 
-	// $2 ensures that prefix (@,@!) is preserved
-	var id = item.id;
-
-	// don't add the id if it is empty (the id empty eg. if there are unknow contacts in thread)
-	if (id.length < 1) {
-		return '$1$2' + item.nick.replace(' ', '') + ' ';
-	}
-	// 16 chars of hash should be enough. Full hash could be used if it can be done in a visually appealing way.
-	// 16 chars is also the minimum length in the backend (otherwise it's interpreted as a local id).
-	if (id.length > 16) {
-		id = item.id.substring(0,16);
-	}
-	return '$1$2' + item.nick.replace(' ', '') + '+' + id + ' ';
+	return result;
 }
 
 function basic_replace(item) {
