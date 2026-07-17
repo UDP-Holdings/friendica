@@ -541,6 +541,11 @@ class Circle
 
 		$stmt = DBA::select('group', [], ['deleted' => false, 'uid' => DI::userSession()->getLocalUserId(), 'cid' => null], ['order' => ['name']]);
 		while ($circle = DBA::fetch($stmt)) {
+			// UDP: "Groups" is auto-created for all accounts but is superseded by the Group Circles widget
+			if ($circle['name'] === DI::l10n()->t('Groups')) {
+				continue;
+			}
+
 			$selected = (($circle_id == $circle['id']) ? ' circle-selected' : '');
 
 			if ($editmode == 'full') {
