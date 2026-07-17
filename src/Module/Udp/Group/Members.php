@@ -83,7 +83,13 @@ class Members extends BaseModule
 
 		$isCoOwner      = UdpGroupCircle::isCoOwner($circleId, $selfContact['id']);
 		$members        = UdpGroupCircle::getMembers($circleId);
-		$pendingInvites = $isCoOwner ? UdpGroupCircle::getPendingInvites($circleId) : [];
+		$pendingInvites = [];
+		if ($isCoOwner) {
+			foreach (UdpGroupCircle::getPendingInvites($circleId) as $inv) {
+				$inv['vote_token'] = self::getFormSecurityToken('udp_group_vote_' . $inv['id']);
+				$pendingInvites[]  = $inv;
+			}
+		}
 
 		return Renderer::replaceMacros(Renderer::getMarkupTemplate('udp/group/members.tpl'), [
 			'$circle'              => $circle,

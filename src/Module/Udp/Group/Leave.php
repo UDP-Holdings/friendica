@@ -35,13 +35,19 @@ class Leave extends BaseModule
 
 		$selfContact = Contact::selectFirst(['id'], ['uid' => $uid, 'self' => true]);
 		if (!$selfContact || !UdpGroupCircle::isMember($circleId, $selfContact['id'])) {
-			// Not a member — silently redirect
+			DI::baseUrl()->redirect('udp/group');
+		}
+
+		// Co-owner can delete the group entirely
+		if (($request['action'] ?? '') === 'close' && UdpGroupCircle::isCoOwner($circleId, $selfContact['id'])) {
+			UdpGroupCircle::close($circleId);
+			DI::sysmsg()->addInfo(DI::l10n()->t('The group has been deleted.'));
 			DI::baseUrl()->redirect('udp/group');
 		}
 
 		if (!UdpGroupCircle::removeMember($circleId, $selfContact['id'])) {
 			DI::sysmsg()->addNotice(DI::l10n()->t(
-				'You are the only co-owner. Promote another member to co-owner before leaving, or close the group.'
+				'You are the only co-owner. Promote another member to co-owner before leaving, or delete the group.'
 			));
 			DI::baseUrl()->redirect('udp/group/' . $circleId . '/members');
 		}

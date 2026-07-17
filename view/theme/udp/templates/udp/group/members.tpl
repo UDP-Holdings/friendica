@@ -60,7 +60,7 @@
 				</div>
 			</div>
 			<form method="post" action="/udp/group/{{$circle.id}}/invite/{{$inv.id}}/vote" style="display:inline;">
-				<input type="hidden" name="form_security_token" value="{{self::getFormSecurityToken('udp_group_vote_' ~ $inv.id)}}">
+				<input type="hidden" name="form_security_token" value="{{$inv.vote_token}}">
 				<button type="submit" name="vote" value="accept" class="btn btn-xs btn-success">Accept</button>
 				<button type="submit" name="vote" value="reject" class="btn btn-xs btn-danger">Reject</button>
 			</form>

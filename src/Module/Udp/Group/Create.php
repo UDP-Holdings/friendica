@@ -11,6 +11,7 @@ use Friendica\Core\Renderer;
 use Friendica\DI;
 use Friendica\Model\UdpGroupCircle;
 use Friendica\Network\HTTPException;
+use Friendica\Util\UdpDebug;
 
 /**
  * GET  /udp/group/create — show the creation form
@@ -41,10 +42,12 @@ class Create extends BaseModule
 
 		$uid = DI::userSession()->getLocalUserId();
 
+		UdpDebug::log('[Create] post() reached', ['uid' => $uid, 'name' => $name]);
 		try {
 			$circleId = UdpGroupCircle::create($uid, $name, $description);
+			UdpDebug::log('[Create] success', ['circleId' => $circleId]);
 		} catch (\Exception $e) {
-			DI::logger()->error('Group Circle creation failed', ['uid' => $uid, 'name' => $name, 'error' => $e->getMessage()]);
+			UdpDebug::log('[Create] caught exception', ['msg' => $e->getMessage()]);
 			DI::sysmsg()->addNotice(DI::l10n()->t('Could not create the Group Circle. Please try again.'));
 			DI::baseUrl()->redirect('udp/group/create');
 		}
