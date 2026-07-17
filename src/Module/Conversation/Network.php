@@ -626,7 +626,7 @@ class Network extends Timeline
 	{
 		return $this->session->get('network-tab')
 			?? $this->pConfig->get($this->session->getLocalUserId(), 'network.view', 'selected_tab')
-			?? '';
+			?? NetworkEntity::CREATED;
 	}
 
 	/**
