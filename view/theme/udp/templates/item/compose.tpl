@@ -811,5 +811,58 @@
 			}
 		});
 	}());
+
+	// Wire up @mention and BBcode autocomplete for the compose textarea
+	$(function() {
+		$('#comment-edit-text-' + FORM_ID).editor_autocomplete(baseurl + '/search/acl');
+		$('#comment-edit-text-' + FORM_ID).bbco_autocomplete('bbcode');
+	});
+
+	// ── Group mention banner ──────────────────────────────────────────────────
+	// Listens for udp:group-mention from autocomplete.js editor_replace(),
+	// shows a banner when a Group Circle is @mentioned, hides the ACL selector.
+	(function () {
+		var groupMentions = {};
+
+		function updateGroupBanner() {
+			var names    = Object.keys(groupMentions).map(function (a) { return groupMentions[a]; });
+			var $section = $('#permissions-section');
+			var $banner  = $('#udp-group-post-banner');
+			if (names.length === 0) {
+				$banner.remove();
+				$section.show();
+				return;
+			}
+			var label = names.length === 1
+				? names[0]
+				: names.slice(0, -1).join(', ') + ' & ' + names[names.length - 1];
+			if ($banner.length === 0) {
+				$banner = $('<div id="udp-group-post-banner" class="alert alert-info" style="margin:4px 0 8px;">' +
+					'<strong>Group post</strong> — Shared with members of <span id="udp-group-names"></span>. ' +
+					'Visibility controls are managed by the group.</div>');
+				$section.before($banner);
+			}
+			$('#udp-group-names').text(label);
+			$section.hide();
+		}
+
+		$(document).on('udp:group-mention', function (e, item) {
+			if (item.addr) {
+				groupMentions[item.addr] = item.name;
+				updateGroupBanner();
+			}
+		});
+
+		$(document).on('input', '#comment-edit-text-' + FORM_ID, function () {
+			var text = $(this).val();
+			Object.keys(groupMentions).forEach(function (addr) {
+				var nick = addr.split('@')[0];
+				if (text.indexOf('@' + nick) === -1) {
+					delete groupMentions[addr];
+				}
+			});
+			updateGroupBanner();
+		});
+	}());
 }());
 </script>

@@ -197,6 +197,55 @@
 
 			{{if $content}}<script type="text/javascript">initEditor();</script>{{/if}}
 		</div>
+
+<script>
+(function () {
+	'use strict';
+	var groupMentions = {}; // addr -> display name
+
+	function updateGroupBanner() {
+		var names   = Object.keys(groupMentions).map(function (a) { return groupMentions[a]; });
+		var $wrapper = $('#profile-jot-acl-wrapper');
+		var $banner  = $('#udp-group-post-banner');
+		if (names.length === 0) {
+			$banner.remove();
+			$wrapper.show();
+			return;
+		}
+		var label = names.length === 1
+			? names[0]
+			: names.slice(0, -1).join(', ') + ' & ' + names[names.length - 1];
+		if ($banner.length === 0) {
+			$banner = $('<div id="udp-group-post-banner" class="alert alert-info" style="margin:4px 0 8px;">' +
+				'<strong>Group post</strong> — Shared with members of <span id="udp-group-names"></span>. ' +
+				'Visibility controls are managed by the group.</div>');
+			$wrapper.before($banner);
+		}
+		$('#udp-group-names').text(label);
+		$wrapper.hide();
+	}
+
+	// Fired from editor_replace when a community actor is @mentioned via autocomplete
+	$(document).on('udp:group-mention', function (e, item) {
+		if (item.addr) {
+			groupMentions[item.addr] = item.name;
+			updateGroupBanner();
+		}
+	});
+
+	// Re-check on every keystroke — handles manual deletion of the @mention
+	$(document).on('input', '#profile-jot-text', function () {
+		var text = $(this).val();
+		Object.keys(groupMentions).forEach(function (addr) {
+			var nick = addr.split('@')[0];
+			if (text.indexOf('@' + nick) === -1) {
+				delete groupMentions[addr];
+			}
+		});
+		updateGroupBanner();
+	});
+}());
+</script>
 	</div>
 </div>
 
