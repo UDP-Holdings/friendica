@@ -2256,6 +2256,25 @@ class Processor
 		$result = Contact::addRelationship($owner, [], $item, false, $activity['content'] ?? '');
 		if ($result === true) {
 			ActivityPub\Transmitter::sendContactAccept($item['author-link'], $activity['id'], $owner['uid']);
+		} elseif ($result === null && \Friendica\Model\UdpGroupCircle::isGroupCircleActor($uid)) {
+			// UDP Group Circle: auto-approve follows from members who were pre-approved via
+			// the unanimous-consent invite flow.  addRelationship leaves PRVGROUP follows
+			// pending (returns null); we clear that and send Accept if the follower is already
+			// in the circle's member table (added when all co-owners voted yes).
+			$circle = \Friendica\Model\UdpGroupCircle::getByActorUid($uid);
+			if ($circle) {
+				$publicCid = Contact::getIdForURL($item['author-link'], 0, false);
+				if ($publicCid && \Friendica\Model\UdpGroupCircle::isMember($circle['id'], $publicCid)) {
+					$localCid = Contact::getIdForURL($item['author-link'], $uid);
+					if ($localCid) {
+						Contact::update(['pending' => false], ['id' => $localCid]);
+					}
+					ActivityPub\Transmitter::sendContactAccept($item['author-link'], $activity['id'], $uid);
+					DI::logger()->info('Group Circle: auto-accepted Follow from pre-invited member.', [
+						'circle' => $circle['id'], 'actor' => $item['author-link'],
+					]);
+				}
+			}
 		}
 
 		$cid = Contact::getIdForURL($activity['actor'], $uid);
@@ -2662,6 +2681,15 @@ class Processor
 
 		Contact::removeFollower($contact);
 		DI::logger()->info('Undo following request', ['contact' => $cid, 'user' => $uid]);
+
+		if (\Friendica\Model\UdpGroupCircle::isGroupCircleActor($uid)) {
+			$circle = \Friendica\Model\UdpGroupCircle::getByActorUid($uid);
+			if ($circle) {
+				\Friendica\Model\UdpGroupCircle::removeMember($circle['id'], $cid);
+				DI::logger()->info('UDP: removed Group Circle member on unfollow', ['circle' => $circle['id'], 'contact' => $cid]);
+			}
+		}
+
 		Queue::remove($activity);
 	}
 

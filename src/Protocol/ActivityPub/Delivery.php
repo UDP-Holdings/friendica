@@ -113,7 +113,11 @@ class Delivery
 		} elseif ($cmd == ProtocolDelivery::PROFILEUPDATE) {
 			$success = ActivityPub\Transmitter::sendProfileUpdate($owner, $inbox);
 		} else {
-			$data = ActivityPub\Transmitter::createCachedActivityFromItem($item_id);
+			// UDP Group Circle: embed the full Create(Note) in Announces so recipients see
+			// the original author rather than a boost.  Friendica already unwraps this format
+			// (Lemmy-style Announce(Create(Note))) on the receiving side.
+			$announceActivity = \Friendica\Model\UdpGroupCircle::isGroupCircleActor($uid);
+			$data = ActivityPub\Transmitter::createCachedActivityFromItem($item_id, false, false, $announceActivity);
 			if (!empty($data)) {
 				$timestamp = microtime(true);
 				try {

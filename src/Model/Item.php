@@ -2153,6 +2153,16 @@ class Item
 		DI::logger()->info('Community post will be distributed', ['uri' => $item['uri'], 'uid' => $uid, 'id' => $item_id, 'uri-id' => $item['uri-id'], 'guid' => $item['guid']]);
 
 		if ($owner['page-flags'] == User::PAGE_FLAGS_PRVGROUP) {
+			// UDP Group Circle: only forward posts from members; delivery uses Announce(Create(Note))
+			// so recipients see the original author rather than a boost (see ActivityPub\Delivery).
+			if (\Friendica\Model\UdpGroupCircle::isGroupCircleActor($uid)) {
+				$circle = \Friendica\Model\UdpGroupCircle::getByActorUid($uid);
+				if ($circle && !\Friendica\Model\UdpGroupCircle::isMemberByAuthorLink($circle['id'], $item['author-link'])) {
+					DI::logger()->info('Group Circle: post from non-member dropped.', ['uri' => $item['uri'], 'author' => $item['author-link']]);
+					Post\User::delete(['uri-id' => $item['uri-id'], 'uid' => $item['uid']]);
+					return true;
+				}
+			}
 			$allow_cid = '';
 			$allow_gid = '<' . Circle::FOLLOWERS . '>';
 			$deny_cid  = '';
