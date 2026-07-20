@@ -836,14 +836,14 @@
 			if (names.length === 0) {
 				$contactAllowInput.val(originalContactAllow);
 				if (originalVisibility) {
-					$('input[name="visibility"][value="' + originalVisibility + '"]').prop('checked', true);
+					$('input[name="visibility"][value="' + originalVisibility + '"]').prop('checked', true).trigger('change');
 				}
 				$banner.remove();
 				$section.show();
 				return;
 			}
 			if (cids.length) {
-				$('input[name="visibility"][value="custom"]').prop('checked', true);
+				$('input[name="visibility"][value="custom"]').prop('checked', true).trigger('change');
 				$contactAllowInput.val(cids.join(','));
 			}
 			var label = names.length === 1
