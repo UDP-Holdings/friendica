@@ -265,9 +265,9 @@ class Widget
 			'$create_txt' => DI::l10n()->t('Create group'),
 			'$empty_txt'  => DI::l10n()->t('No groups yet'),
 			'$circles'    => array_map(fn($c) => [
-				'id'          => $c['id'],
-				'name'        => $c['name'],
-				'href'        => DI::baseUrl() . '/udp/group/' . $c['id'],
+				'id'           => $c['id'],
+				'name'         => $c['name'],
+				'href'         => DI::baseUrl() . '/network/group/' . $c['id'],
 				'members_href' => DI::baseUrl() . '/udp/group/' . $c['id'] . '/members',
 			], $circles),
 		]);

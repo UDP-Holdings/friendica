@@ -42,6 +42,9 @@ use Friendica\Event\ArrayFilterEvent;
 use Friendica\Model\Contact;
 use Friendica\Model\Circle;
 use Friendica\Model\Profile;
+use Friendica\Model\UdpGroupCircle;
+use Friendica\Model\User;
+use Friendica\Util\Strings;
 use Friendica\Module\Response;
 use Friendica\Module\Security\Login;
 use Friendica\Network\HTTPException;
@@ -55,6 +58,14 @@ class Network extends Timeline
 {
 	/** @var int */
 	protected $circleId;
+	/** @var int Group Circle ID (udp-group-circle.id), 0 if not on a group page */
+	protected $groupCircleId = 0;
+	/** @var int The viewer's per-user contact-id for the group actor, used in owner-id filter */
+	protected $groupActorContactId = 0;
+	/** @var string Display name of the group */
+	protected $groupName = '';
+	/** @var string Full @handle of the group actor, pre-filled in compose box */
+	protected $groupHandle = '';
 	/** @var string */
 	protected $dateFrom;
 	/** @var string */
@@ -262,10 +273,10 @@ class Network extends Timeline
 			}
 
 			$x = [
-				'lockstate' => $this->circleId || $this->network || ACL::getLockstateForUserId($this->session->getLocalUserId()) ? 'lock' : 'unlock',
+				'lockstate' => $this->circleId || $this->groupCircleId || $this->network || ACL::getLockstateForUserId($this->session->getLocalUserId()) ? 'lock' : 'unlock',
 				'acl'       => ACL::getFullSelectorHTML($this->page, $this->session->getLocalUserId(), true, $default_permissions),
-				'bang'      => (($this->circleId || $this->network) ? '!' : ''),
-				'content'   => '',
+				'bang'      => (($this->circleId || $this->groupCircleId || $this->network) ? '!' : ''),
+				'content'   => $this->groupHandle,
 			];
 
 			$o .= $this->conversation->statusEditor($x);
@@ -278,6 +289,10 @@ class Network extends Timeline
 
 				$o = Renderer::replaceMacros(Renderer::getMarkupTemplate('section_title.tpl'), [
 					'$title' => $this->l10n->t('List: %s', $circle['name']),
+				]) . $o;
+			} elseif ($this->groupCircleId) {
+				$o = Renderer::replaceMacros(Renderer::getMarkupTemplate('section_title.tpl'), [
+					'$title' => $this->groupName,
 				]) . $o;
 			} elseif (Profile::shouldDisplayEventList($this->session->getLocalUserId(), $this->mode)) {
 				$o .= Profile::getBirthdays($this->session->getLocalUserId());
@@ -389,9 +404,31 @@ class Network extends Timeline
 		parent::parseRequest($request);
 
 		// parameters[] comes from path segments (/network/circle/N); request[] is used by
-		// update_network AJAX calls which pass circle_id as a query param because they hit
-		// /update_network not /network/circle/N.
+		// update_network AJAX calls which pass circle_id/group_circle_id as query params because
+		// they hit /update_network not /network/circle/N or /network/group/N.
 		$this->circleId = (int)($this->parameters['circle_id'] ?? $request['circle_id'] ?? 0);
+
+		$groupCircleId = (int)($this->parameters['group_circle_id'] ?? $request['group_circle_id'] ?? 0);
+		if ($groupCircleId) {
+			$uid    = $this->session->getLocalUserId();
+			$circle = UdpGroupCircle::getById($groupCircleId);
+			if ($circle) {
+				$selfContact = Contact::selectFirst(['id'], ['uid' => $uid, 'self' => true]);
+				if ($selfContact && UdpGroupCircle::isMember($groupCircleId, $selfContact['id'])) {
+					$actorOwner   = User::getOwnerDataById($circle['actor-uid']);
+					$actorContact = $actorOwner ? Contact::selectFirst(
+						['id'],
+						['uid' => $uid, 'nurl' => Strings::normaliseLink($actorOwner['url']), 'archive' => false, 'deleted' => false]
+					) : null;
+					if ($actorContact) {
+						$this->groupCircleId      = $groupCircleId;
+						$this->groupActorContactId = $actorContact['id'];
+						$this->groupName           = $circle['name'];
+						$this->groupHandle         = '@' . $actorOwner['nickname'] . '@' . parse_url((string) DI::baseUrl(), PHP_URL_HOST);
+					}
+				}
+			}
+		}
 
 		if (!$this->selectedTab) {
 			$this->selectedTab = $this->getTimelineOrderBySession();
@@ -497,6 +534,16 @@ class Network extends Timeline
 
 		if ($this->circleId) {
 			$commonCondition = DBA::mergeConditions($commonCondition, ["`contact-id` IN (SELECT `contact-id` FROM `group_member` WHERE `gid` = ?)", $this->circleId]);
+		}
+
+		if ($this->groupCircleId) {
+			// Filter to posts owned by the group actor. owner-id is not projected by
+			// network-thread-view, so we use a correlated subquery on post-thread-user.
+			$commonCondition = DBA::mergeConditions($commonCondition, [
+				"`uri-id` IN (SELECT `uri-id` FROM `post-thread-user` WHERE `owner-id` = ? AND `uid` = ?)",
+				$this->groupActorContactId,
+				$this->session->getLocalUserId(),
+			]);
 		}
 
 		// Currently only the order modes "received" and "commented" are in use

@@ -689,9 +689,10 @@ return [
 	],
 
 	'/network' => [
-		'[/{content}]'                => [Module\Conversation\Network::class, [R::GET]],
+		'[/{content}]'                              => [Module\Conversation\Network::class, [R::GET]],
 		'/archive/{from:\d\d\d\d-\d\d-\d\d}[/{to:\d\d\d\d-\d\d-\d\d}]' => [Module\Conversation\Network::class, [R::GET]],
-		'/circle/{circle_id:\d+}'     => [Module\Conversation\Network::class, [R::GET]],
+		'/circle/{circle_id:\d+}'                   => [Module\Conversation\Network::class, [R::GET]],
+		'/group/{group_circle_id:\d+}'              => [Module\Conversation\Network::class, [R::GET]],
 	],
 
 	'/randprof'        => [Module\RandomProfile::class,         [R::GET]],

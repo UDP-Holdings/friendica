@@ -11,14 +11,12 @@ use Friendica\DI;
 use Friendica\Model\Contact;
 use Friendica\Model\UdpGroupCircle;
 use Friendica\Network\HTTPException;
-use Friendica\Util\Strings;
 
 /**
- * GET /udp/group/{id} — redirects to the group's conversation timeline.
+ * GET /udp/group/{id} — auth-gate redirect to /network/group/{id}.
  *
- * /contact/{contactId}/conversations is the correct scoped view: it shows only
- * posts involving this contact (the group actor) with full Friendica rendering.
- * Falls back to the members page if the viewer's per-user contact row is missing.
+ * Validates session and membership before handing off to the network timeline,
+ * so direct links to the old URL still work correctly.
  */
 class View extends BaseModule
 {
@@ -40,19 +38,7 @@ class View extends BaseModule
 			throw new HTTPException\ForbiddenException();
 		}
 
-		$actorOwner   = \Friendica\Model\User::getOwnerDataById($circle['actor-uid']);
-		$actorContact = $actorOwner
-			? Contact::selectFirst(
-				['id'],
-				['uid' => $uid, 'nurl' => Strings::normaliseLink($actorOwner['url']), 'archive' => false, 'deleted' => false]
-			)
-			: null;
-
-		if ($actorContact) {
-			DI::baseUrl()->redirect('contact/' . $actorContact['id'] . '/conversations');
-		}
-
-		DI::baseUrl()->redirect('udp/group/' . $circleId . '/members');
+		DI::baseUrl()->redirect('network/group/' . $circleId);
 		return '';
 	}
 }
