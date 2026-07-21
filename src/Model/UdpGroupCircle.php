@@ -343,9 +343,7 @@ class UdpGroupCircle
 		$allAccepted = !in_array(null, $votes, true) && !in_array(false, $votes, true);
 		if ($allAccepted) {
 			DBA::update('udp-group-circle-invite', ['status' => self::INVITE_ACCEPTED], ['id' => $inviteId]);
-			$targetUidRow = Contact::selectFirst(['uid'], ['id' => $targetCid, 'self' => true]);
-			$resolvedUid  = DBA::isResult($targetUidRow) ? (int)$targetUidRow['uid'] : null;
-			self::addMember($circleId, $targetCid, $resolvedUid);
+			self::addMember($circleId, $targetCid);
 			self::notifyInviteTarget($circleId, $targetCid);
 		}
 
@@ -392,10 +390,8 @@ class UdpGroupCircle
 
 		if ($allAccepted) {
 			DBA::update('udp-group-circle-invite', ['status' => self::INVITE_ACCEPTED], ['id' => $inviteId]);
-			$invite          = DBA::selectFirst('udp-group-circle-invite', [], ['id' => $inviteId]);
-			$targetUidRow    = Contact::selectFirst(['uid'], ['id' => $invite['target-cid'], 'self' => true]);
-			$resolvedUid     = DBA::isResult($targetUidRow) ? (int)$targetUidRow['uid'] : null;
-			self::addMember($invite['circle-id'], $invite['target-cid'], $resolvedUid);
+			$invite = DBA::selectFirst('udp-group-circle-invite', [], ['id' => $inviteId]);
+			self::addMember($invite['circle-id'], $invite['target-cid']);
 			self::notifyInviteTarget($invite['circle-id'], $invite['target-cid']);
 		}
 	}
@@ -495,75 +491,35 @@ class UdpGroupCircle
 		// Ensure uid=0 global contact exists so @addr resolves to display name in post rendering
 		Contact::getIdForURL($actorSelf['url'], 0, true);
 
-		// Check if a live (non-archived, non-deleted) per-user contact already exists.
-		// The archive check is critical: close() archives old contacts before freeing the slug,
-		// so an archived row for a previous group with the same nickname must not block this.
+		// Check if per-user contact already exists
 		$nurl = $actorSelf['nurl'] ?: Strings::normaliseLink($actorSelf['url']);
-		if (DBA::exists('contact', ['uid' => $memberUid, 'nurl' => $nurl, 'deleted' => false, 'archive' => false])) {
+		if (DBA::exists('contact', ['uid' => $memberUid, 'nurl' => $nurl, 'deleted' => false])) {
 			return;
 		}
 
 		DBA::insert('contact', [
-			'uid'               => $memberUid,
-			'created'           => DateTimeFormat::utcNow(),
-			'network'           => Protocol::ACTIVITYPUB,
-			'name'              => $actorSelf['name'],
-			'nick'              => $actorSelf['nick'],
-			'addr'              => $actorSelf['addr'],
-			'url'               => $actorSelf['url'],
-			'nurl'              => $nurl,
-			'uri-id'            => $actorSelf['uri-id'],
-			'photo'             => $actorSelf['photo'],
-			'thumb'             => $actorSelf['thumb'],
-			'micro'             => $actorSelf['micro'],
-			'contact-type'      => Contact::TYPE_COMMUNITY,
-			'rel'               => Contact::SHARING,
-			'notify_new_posts'  => true,
-			'pending'           => false,
-			'archive'           => false,
-			'blocked'           => false,
-			'deleted'           => false,
-			'manually-approve'  => false,
+			'uid'              => $memberUid,
+			'created'          => DateTimeFormat::utcNow(),
+			'network'          => Protocol::ACTIVITYPUB,
+			'name'             => $actorSelf['name'],
+			'nick'             => $actorSelf['nick'],
+			'addr'             => $actorSelf['addr'],
+			'url'              => $actorSelf['url'],
+			'nurl'             => $nurl,
+			'uri-id'           => $actorSelf['uri-id'],
+			'photo'            => $actorSelf['photo'],
+			'thumb'            => $actorSelf['thumb'],
+			'micro'            => $actorSelf['micro'],
+			'contact-type'     => Contact::TYPE_COMMUNITY,
+			'rel'              => Contact::SHARING,
+			'pending'          => false,
+			'archive'          => false,
+			'blocked'          => false,
+			'deleted'          => false,
+			'manually-approve' => false,
 		]);
 
-		UdpDebug::log('[UdpGC] ensureGroupContactForUser: member→actor contact created', ['actorUid' => $actorUid, 'memberUid' => $memberUid]);
-
-		// Also create the reverse contact: group actor → member with rel=FOLLOWER.
-		// Without this, the group actor's Followers circle is empty and the Announce
-		// fan-out in tagDeliver delivers to nobody.
-		$memberSelf = Contact::selectFirst(
-			['url', 'nurl', 'name', 'nick', 'addr', 'photo', 'thumb', 'micro', 'uri-id'],
-			['uid' => $memberUid, 'self' => true]
-		);
-		if (!DBA::isResult($memberSelf)) {
-			return;
-		}
-
-		$memberNurl = $memberSelf['nurl'] ?: Strings::normaliseLink($memberSelf['url']);
-		if (!DBA::exists('contact', ['uid' => $actorUid, 'nurl' => $memberNurl, 'deleted' => false, 'archive' => false])) {
-			DBA::insert('contact', [
-				'uid'              => $actorUid,
-				'created'          => DateTimeFormat::utcNow(),
-				'network'          => Protocol::ACTIVITYPUB,
-				'name'             => $memberSelf['name'],
-				'nick'             => $memberSelf['nick'],
-				'addr'             => $memberSelf['addr'],
-				'url'              => $memberSelf['url'],
-				'nurl'             => $memberNurl,
-				'uri-id'           => $memberSelf['uri-id'],
-				'photo'            => $memberSelf['photo'],
-				'thumb'            => $memberSelf['thumb'],
-				'micro'            => $memberSelf['micro'],
-				'contact-type'     => Contact::TYPE_PERSON,
-				'rel'              => Contact::FOLLOWER,
-				'pending'          => false,
-				'archive'          => false,
-				'blocked'          => false,
-				'deleted'          => false,
-				'manually-approve' => false,
-			]);
-			UdpDebug::log('[UdpGC] ensureGroupContactForUser: actor→member (FOLLOWER) contact created', ['actorUid' => $actorUid, 'memberUid' => $memberUid]);
-		}
+		UdpDebug::log('[UdpGC] ensureGroupContactForUser: contact created', ['actorUid' => $actorUid, 'memberUid' => $memberUid]);
 	}
 
 	/**
@@ -572,24 +528,14 @@ class UdpGroupCircle
 	 */
 	public static function close(int $circleId): void
 	{
+		DBA::update('udp-group-circle', ['closed' => DateTimeFormat::utcNow()], ['id' => $circleId]);
+
+		// Free the slug so it can be reused. The actor user row stays for AP tombstone
+		// purposes but the nickname is no longer occupying the original slug.
 		$circle = self::getById($circleId);
 		if ($circle) {
-			// Archive per-user contacts pointing to this actor's URL before freeing the slug.
-			// Without this, a new group that reuses the same nickname would find stale contact
-			// rows in ensureGroupContactForUser and skip creating fresh ones.
-			$actorSelf = Contact::selectFirst(['url'], ['uid' => $circle['actor-uid'], 'self' => true]);
-			if (DBA::isResult($actorSelf)) {
-				DBA::update('contact', ['archive' => true], [
-					'url'     => $actorSelf['url'],
-					'self'    => false,
-					'deleted' => false,
-				]);
-			}
-			// Free the slug so it can be reused.
 			DBA::update('user', ['nickname' => '_deleted_' . $circleId], ['uid' => $circle['actor-uid']]);
 		}
-
-		DBA::update('udp-group-circle', ['closed' => DateTimeFormat::utcNow()], ['id' => $circleId]);
 
 		// TODO: send "this group has been closed" system notification to all members
 	}
