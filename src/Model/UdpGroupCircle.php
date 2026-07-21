@@ -504,28 +504,66 @@ class UdpGroupCircle
 		}
 
 		DBA::insert('contact', [
-			'uid'              => $memberUid,
-			'created'          => DateTimeFormat::utcNow(),
-			'network'          => Protocol::ACTIVITYPUB,
-			'name'             => $actorSelf['name'],
-			'nick'             => $actorSelf['nick'],
-			'addr'             => $actorSelf['addr'],
-			'url'              => $actorSelf['url'],
-			'nurl'             => $nurl,
-			'uri-id'           => $actorSelf['uri-id'],
-			'photo'            => $actorSelf['photo'],
-			'thumb'            => $actorSelf['thumb'],
-			'micro'            => $actorSelf['micro'],
-			'contact-type'     => Contact::TYPE_COMMUNITY,
-			'rel'              => Contact::SHARING,
-			'pending'          => false,
-			'archive'          => false,
-			'blocked'          => false,
-			'deleted'          => false,
-			'manually-approve' => false,
+			'uid'               => $memberUid,
+			'created'           => DateTimeFormat::utcNow(),
+			'network'           => Protocol::ACTIVITYPUB,
+			'name'              => $actorSelf['name'],
+			'nick'              => $actorSelf['nick'],
+			'addr'              => $actorSelf['addr'],
+			'url'               => $actorSelf['url'],
+			'nurl'              => $nurl,
+			'uri-id'            => $actorSelf['uri-id'],
+			'photo'             => $actorSelf['photo'],
+			'thumb'             => $actorSelf['thumb'],
+			'micro'             => $actorSelf['micro'],
+			'contact-type'      => Contact::TYPE_COMMUNITY,
+			'rel'               => Contact::SHARING,
+			'notify_new_posts'  => true,
+			'pending'           => false,
+			'archive'           => false,
+			'blocked'           => false,
+			'deleted'           => false,
+			'manually-approve'  => false,
 		]);
 
-		UdpDebug::log('[UdpGC] ensureGroupContactForUser: contact created', ['actorUid' => $actorUid, 'memberUid' => $memberUid]);
+		UdpDebug::log('[UdpGC] ensureGroupContactForUser: member→actor contact created', ['actorUid' => $actorUid, 'memberUid' => $memberUid]);
+
+		// Also create the reverse contact: group actor → member with rel=FOLLOWER.
+		// Without this, the group actor's Followers circle is empty and the Announce
+		// fan-out in tagDeliver delivers to nobody.
+		$memberSelf = Contact::selectFirst(
+			['url', 'nurl', 'name', 'nick', 'addr', 'photo', 'thumb', 'micro', 'uri-id'],
+			['uid' => $memberUid, 'self' => true]
+		);
+		if (!DBA::isResult($memberSelf)) {
+			return;
+		}
+
+		$memberNurl = $memberSelf['nurl'] ?: Strings::normaliseLink($memberSelf['url']);
+		if (!DBA::exists('contact', ['uid' => $actorUid, 'nurl' => $memberNurl, 'deleted' => false, 'archive' => false])) {
+			DBA::insert('contact', [
+				'uid'              => $actorUid,
+				'created'          => DateTimeFormat::utcNow(),
+				'network'          => Protocol::ACTIVITYPUB,
+				'name'             => $memberSelf['name'],
+				'nick'             => $memberSelf['nick'],
+				'addr'             => $memberSelf['addr'],
+				'url'              => $memberSelf['url'],
+				'nurl'             => $memberNurl,
+				'uri-id'           => $memberSelf['uri-id'],
+				'photo'            => $memberSelf['photo'],
+				'thumb'            => $memberSelf['thumb'],
+				'micro'            => $memberSelf['micro'],
+				'contact-type'     => Contact::TYPE_PERSON,
+				'rel'              => Contact::FOLLOWER,
+				'pending'          => false,
+				'archive'          => false,
+				'blocked'          => false,
+				'deleted'          => false,
+				'manually-approve' => false,
+			]);
+			UdpDebug::log('[UdpGC] ensureGroupContactForUser: actor→member (FOLLOWER) contact created', ['actorUid' => $actorUid, 'memberUid' => $memberUid]);
+		}
 	}
 
 	/**

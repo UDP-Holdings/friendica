@@ -96,10 +96,13 @@ class Members extends BaseModule
 			'$members'             => $members,
 			'$pending_invites'     => $pendingInvites,
 			'$is_co_owner'         => $isCoOwner,
+			'$is_closed'           => !empty($circle['closed']),
 			'$self_contact_id'     => $selfContact['id'],
 			'$form_security_token' => self::getFormSecurityToken('udp_group_members_' . $circleId),
+			'$leave_token'         => self::getFormSecurityToken('udp_group_action_' . $circleId),
 			'$invite_url'          => DI::baseUrl() . '/udp/group/' . $circleId . '/invite',
 			'$invite_token'        => self::getFormSecurityToken('udp_group_invite_' . $circleId),
+			'$leave_url'           => DI::baseUrl() . '/udp/group/' . $circleId . '/leave',
 			'$back_url'            => DI::baseUrl() . '/udp/group/' . $circleId,
 		]);
 	}
