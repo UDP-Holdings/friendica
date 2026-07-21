@@ -16,8 +16,9 @@
 		<div id="sidebar-udp-groups-list" class="sidebar-widget-list">
 			<ul id="sidebar-udp-groups-ul">
 				{{foreach $circles as $circle}}
-					<li class="sidebar-circle-li">
-						<a id="sidebar-udp-group-{{$circle.id}}" class="sidebar-circle-element" href="{{$circle.href}}">{{$circle.name}}</a>
+					<li class="sidebar-circle-li" style="display:flex;align-items:center;">
+						<a id="sidebar-udp-group-{{$circle.id}}" class="sidebar-circle-element" href="{{$circle.href}}" style="flex:1;">{{$circle.name}}</a>
+						<a href="{{$circle.members_href}}" class="faded-icon" title="Members &amp; Settings" style="padding:0 4px;"><i class="fa fa-cog" aria-hidden="true"></i></a>
 					</li>
 				{{foreachelse}}
 					<li class="sidebar-circle-li faded-text">{{$empty_txt}}</li>
