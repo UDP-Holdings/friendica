@@ -32,6 +32,10 @@ class Follow extends BaseApi
 
 		$contact = Contact::getById($this->parameters['id'], ['url']);
 
+		if (!DI::federationFilter()->allowsUrl($contact['url'] ?? '')) {
+			$this->logAndJsonError(422, $this->errorFactory->UnprocessableEntity('This server is not connected to your network.'));
+		}
+
 		$result = Contact::createFromProbeForUser($uid, $contact['url']);
 
 		if (!$result['success']) {
