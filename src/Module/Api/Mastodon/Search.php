@@ -139,7 +139,8 @@ class Search extends BaseApi
 	private function searchAccounts(int $uid, string $q, bool $resolve, int $limit, int $offset, bool $following)
 	{
 		$this->logger->debug('Search', ['q' => $q, 'resolve' => $resolve, 'offset' => $offset]);
-		if (($offset == 0) && (strrpos($q, '@') > 0) && $id = Contact::getIdForURL(ltrim($q, '@'), 0, $resolve ? null : false)) {
+		$resolveAllowed = $resolve && DI::federationFilter()->allowsHandle($q);
+		if (($offset == 0) && (strrpos($q, '@') > 0) && $id = Contact::getIdForURL(ltrim($q, '@'), 0, $resolveAllowed ? null : false)) {
 			return DI::mstdnAccount()->createFromContactId($id, $uid);
 		}
 
