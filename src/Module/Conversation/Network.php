@@ -272,8 +272,9 @@ class Network extends Timeline
 				$default_permissions['allow_cid'] = $allowedCids;
 			}
 
+			$lockstate = $this->circleId || $this->groupCircleId || $this->network || ACL::getLockstateForUserId($this->session->getLocalUserId()) ? 'lock' : 'unlock';
 			$x = [
-				'lockstate' => $this->circleId || $this->groupCircleId || $this->network || ACL::getLockstateForUserId($this->session->getLocalUserId()) ? 'lock' : 'unlock',
+				'lockstate' => $lockstate,
 				'acl'       => ACL::getFullSelectorHTML($this->page, $this->session->getLocalUserId(), true, $default_permissions),
 				'bang'      => (($this->circleId || $this->groupCircleId || $this->network) ? '!' : ''),
 				'content'   => $this->groupHandle,
@@ -421,10 +422,10 @@ class Network extends Timeline
 						['uid' => $uid, 'nurl' => Strings::normaliseLink($actorOwner['url']), 'archive' => false, 'deleted' => false]
 					) : null;
 					if ($actorContact) {
-						$this->groupCircleId      = $groupCircleId;
+						$this->groupCircleId       = $groupCircleId;
 						$this->groupActorContactId = $actorContact['id'];
 						$this->groupName           = $circle['name'];
-						$this->groupHandle         = '@' . $actorOwner['nickname'] . '@' . parse_url((string) DI::baseUrl(), PHP_URL_HOST);
+						$this->groupHandle         = '@' . $actorOwner['nickname'] . '@' . parse_url($actorOwner['url'], PHP_URL_HOST);
 					}
 				}
 			}
