@@ -30,6 +30,24 @@
 	{{/foreach}}
 	</div>
 
+	{{if !$is_closed}}
+	<div style="margin-top:2rem;padding-top:1rem;border-top:1px solid #eee;display:flex;gap:0.5rem;">
+		<form method="post" action="{{$leave_url}}">
+			<input type="hidden" name="form_security_token" value="{{$leave_token}}">
+			<button type="submit" class="btn btn-sm btn-default"
+				onclick="return confirm('Leave this group?')">Leave group</button>
+		</form>
+		{{if $is_co_owner}}
+		<form method="post" action="{{$leave_url}}">
+			<input type="hidden" name="form_security_token" value="{{$leave_token}}">
+			<input type="hidden" name="action" value="close">
+			<button type="submit" class="btn btn-sm btn-danger"
+				onclick="return confirm('Delete this group? This cannot be undone.')">Delete group</button>
+		</form>
+		{{/if}}
+	</div>
+	{{/if}}
+
 	{{if $is_co_owner}}
 	<h3 style="margin-top:2rem;">Invite someone</h3>
 	<form method="post" action="{{$invite_url}}">
