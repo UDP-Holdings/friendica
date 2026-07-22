@@ -1103,6 +1103,8 @@ class Item
 			)->getArray();
 		}
 
+		UdpGroupCircle::localFanOut($posted_item);
+
 		if ($posted_item['gravity'] === self::GRAVITY_PARENT) {
 			self::addShadow($post_user_id);
 		} else {
@@ -2161,6 +2163,13 @@ class Item
 					DI::logger()->info('Group Circle: post from non-member dropped.', ['uri' => $item['uri'], 'author' => $item['author-link']]);
 					Post\User::delete(['uri-id' => $item['uri-id'], 'uid' => $item['uid']]);
 					return true;
+				}
+				// If local fan-out already handled delivery, suppress the AP Announce.
+				// localFanOut() writes udp-group-post synchronously during the POST request;
+				// tagDeliver runs later in the Notifier worker, so the row is already present.
+				if ($circle && DBA::exists('udp-group-post', ['uri-id' => $item['uri-id'], 'circle-id' => $circle['id']])) {
+					DI::logger()->info('Group Circle: Announce suppressed; local fan-out handled delivery.', ['uri-id' => $item['uri-id'], 'circle-id' => $circle['id']]);
+					return false;
 				}
 			}
 			$allow_cid = '';

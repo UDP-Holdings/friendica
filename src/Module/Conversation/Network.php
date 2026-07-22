@@ -42,6 +42,9 @@ use Friendica\Event\ArrayFilterEvent;
 use Friendica\Model\Contact;
 use Friendica\Model\Circle;
 use Friendica\Model\Profile;
+use Friendica\Model\UdpGroupCircle;
+use Friendica\Model\User;
+use Friendica\Util\Strings;
 use Friendica\Module\Response;
 use Friendica\Module\Security\Login;
 use Friendica\Network\HTTPException;
@@ -55,6 +58,16 @@ class Network extends Timeline
 {
 	/** @var int */
 	protected $circleId;
+	/** @var int Group Circle ID (udp-group-circle.id), 0 if not on a group page */
+	protected $groupCircleId = 0;
+	/** @var int The viewer's per-user contact-id for the group actor */
+	protected $groupActorContactId = 0;
+	/** @var int The uid of the group actor user, used for post-user delivery filter */
+	protected $groupActorUid = 0;
+	/** @var string Display name of the group */
+	protected $groupName = '';
+	/** @var string Full @handle of the group actor, pre-filled in compose box */
+	protected $groupHandle = '';
 	/** @var string */
 	protected $dateFrom;
 	/** @var string */
@@ -261,11 +274,13 @@ class Network extends Timeline
 				$default_permissions['allow_cid'] = $allowedCids;
 			}
 
+			$lockstate = $this->circleId || $this->groupCircleId || $this->network || ACL::getLockstateForUserId($this->session->getLocalUserId()) ? 'lock' : 'unlock';
 			$x = [
-				'lockstate' => $this->circleId || $this->network || ACL::getLockstateForUserId($this->session->getLocalUserId()) ? 'lock' : 'unlock',
-				'acl'       => ACL::getFullSelectorHTML($this->page, $this->session->getLocalUserId(), true, $default_permissions),
-				'bang'      => (($this->circleId || $this->network) ? '!' : ''),
-				'content'   => '',
+				'lockstate'       => $lockstate,
+				'acl'             => ACL::getFullSelectorHTML($this->page, $this->session->getLocalUserId(), true, $default_permissions),
+				'bang'            => (($this->circleId || $this->groupCircleId || $this->network) ? '!' : ''),
+				'content'              => '',
+				'group_circle_id' => $this->groupCircleId,
 			];
 
 			$o .= $this->conversation->statusEditor($x);
@@ -278,6 +293,10 @@ class Network extends Timeline
 
 				$o = Renderer::replaceMacros(Renderer::getMarkupTemplate('section_title.tpl'), [
 					'$title' => $this->l10n->t('List: %s', $circle['name']),
+				]) . $o;
+			} elseif ($this->groupCircleId) {
+				$o = Renderer::replaceMacros(Renderer::getMarkupTemplate('section_title.tpl'), [
+					'$title' => $this->groupName,
 				]) . $o;
 			} elseif (Profile::shouldDisplayEventList($this->session->getLocalUserId(), $this->mode)) {
 				$o .= Profile::getBirthdays($this->session->getLocalUserId());
@@ -389,9 +408,32 @@ class Network extends Timeline
 		parent::parseRequest($request);
 
 		// parameters[] comes from path segments (/network/circle/N); request[] is used by
-		// update_network AJAX calls which pass circle_id as a query param because they hit
-		// /update_network not /network/circle/N.
+		// update_network AJAX calls which pass circle_id/group_circle_id as query params because
+		// they hit /update_network not /network/circle/N or /network/group/N.
 		$this->circleId = (int)($this->parameters['circle_id'] ?? $request['circle_id'] ?? 0);
+
+		$groupCircleId = (int)($this->parameters['group_circle_id'] ?? $request['group_circle_id'] ?? 0);
+		if ($groupCircleId) {
+			$uid    = $this->session->getLocalUserId();
+			$circle = UdpGroupCircle::getById($groupCircleId);
+			if ($circle) {
+				$selfContact = Contact::selectFirst(['id'], ['uid' => $uid, 'self' => true]);
+				if ($selfContact && UdpGroupCircle::isMember($groupCircleId, $selfContact['id'])) {
+					$actorOwner   = User::getOwnerDataById($circle['actor-uid']);
+					$actorContact = $actorOwner ? Contact::selectFirst(
+						['id'],
+						['uid' => $uid, 'nurl' => Strings::normaliseLink($actorOwner['url']), 'archive' => false, 'deleted' => false]
+					) : null;
+					if ($actorContact) {
+						$this->groupCircleId       = $groupCircleId;
+						$this->groupActorContactId = $actorContact['id'];
+						$this->groupActorUid       = $circle['actor-uid'];
+						$this->groupName           = $circle['name'];
+						$this->groupHandle         = '@' . $actorOwner['nickname'] . '@' . parse_url($actorOwner['url'], PHP_URL_HOST);
+					}
+				}
+			}
+		}
 
 		if (!$this->selectedTab) {
 			$this->selectedTab = $this->getTimelineOrderBySession();
@@ -497,6 +539,20 @@ class Network extends Timeline
 
 		if ($this->circleId) {
 			$commonCondition = DBA::mergeConditions($commonCondition, ["`contact-id` IN (SELECT `contact-id` FROM `group_member` WHERE `gid` = ?)", $this->circleId]);
+		}
+
+		if ($this->groupCircleId) {
+			// Show posts submitted to this circle. udp-group-post is written at post-creation
+			// time by UdpGroupCircle::localFanOut(), bypassing the AP Announce path entirely.
+			$commonCondition = DBA::mergeConditions($commonCondition, [
+				"`uri-id` IN (SELECT `uri-id` FROM `udp-group-post` WHERE `circle-id` = ?)",
+				$this->groupCircleId,
+			]);
+		} else {
+			// On the regular network timeline, suppress group-circle posts entirely.
+			$commonCondition = DBA::mergeConditions($commonCondition, [
+				"`uri-id` NOT IN (SELECT `uri-id` FROM `udp-group-post`)",
+			]);
 		}
 
 		// Currently only the order modes "received" and "commented" are in use

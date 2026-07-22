@@ -400,6 +400,11 @@ abstract class DI
 		return self::$dice->create(UDP\Federation\Gateway::class);
 	}
 
+	public static function federationFilter(): UDP\Federation\Filter
+	{
+		return self::$dice->create(UDP\Federation\Filter::class);
+	}
+
 	//
 	// "Module" namespace
 	//

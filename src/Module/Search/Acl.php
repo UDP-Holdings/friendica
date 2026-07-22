@@ -283,12 +283,6 @@ class Acl extends BaseModule
 				$groups[] = ['separator' => true];
 			}
 
-			// Deduplicate: the regular contact search may have already surfaced the same
-			// Group Circle actor as a plain contact row. Remove those so the explicit UDP
-			// entry (which carries the correct per-user contact ID) wins.
-			$groupLinks = array_column(array_filter($groups, fn($g) => !empty($g['link'])), 'link');
-			$resultContacts = array_values(array_filter($resultContacts, fn($c) => !in_array($c['link'] ?? '', $groupLinks)));
-
 			$resultContacts = array_merge($groups, $resultContacts);
 		}
 

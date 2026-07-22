@@ -651,6 +651,12 @@ function getUpdateUrl(src)
 		update_url += '&circle_id=' + circleMatch[1];
 	}
 
+	// Same pattern for Group Circle pages (/network/group/N).
+	var groupCircleMatch = window.location.pathname.match(/\/network\/group\/(\d+)/);
+	if (groupCircleMatch) {
+		update_url += '&group_circle_id=' + groupCircleMatch[1];
+	}
+
 	return update_url;
 }
 

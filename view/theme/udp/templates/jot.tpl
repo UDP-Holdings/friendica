@@ -6,7 +6,7 @@
   *}}
 {{* UDP: split dropdown — Post to Timeline / Start a Conversation / Message *}}
 <div class="btn-group pull-right" id="jotOpen">
-	<a id="udp-jot-main" class="action-button btn btn-primary" href="compose/{{$posttype}}{{if $content}}?body={{$content}}{{/if}}">
+	<a id="udp-jot-main" class="action-button btn btn-primary" href="compose/{{$posttype}}{{if $group_circle_id}}?group_circle_id={{$group_circle_id}}{{elseif $content}}?body={{$content}}{{/if}}">
 		<i class="fa fa-lg fa-pencil"></i>
 		<span>{{$new_post}}</span>
 	</a>
@@ -17,12 +17,12 @@
 	</button>
 	<ul class="dropdown-menu dropdown-menu-right">
 		<li>
-			<a id="udp-jot-timeline" href="compose/{{$posttype}}{{if $content}}?body={{$content}}{{/if}}">
+			<a id="udp-jot-timeline" href="compose/{{$posttype}}{{if $group_circle_id}}?group_circle_id={{$group_circle_id}}{{elseif $content}}?body={{$content}}{{/if}}">
 				<i class="fa fa-globe fa-fw" aria-hidden="true"></i> Post to Timeline
 			</a>
 		</li>
 		<li>
-			<a id="udp-jot-convo" href="compose/{{$posttype}}?udp_mode=conversation{{if $content}}&amp;body={{$content}}{{/if}}">
+			<a id="udp-jot-convo" href="compose/{{$posttype}}?udp_mode=conversation{{if $group_circle_id}}&amp;group_circle_id={{$group_circle_id}}{{/if}}{{if $content}}&amp;body={{$content}}{{/if}}">
 				<i class="fa fa-comments fa-fw" aria-hidden="true"></i> Start a Conversation
 			</a>
 		</li>
@@ -130,6 +130,7 @@
 					{{if $notes_cid}}
 					<input type="hidden" name="contact_allow[]" value="<{{$notes_cid}}>" />
 					{{/if}}
+					<input type="hidden" name="group_circle_id" id="jot-gc-id" value="{{$group_circle_id|intval}}" />
 					<div id="jot-title-wrap"><input name="title" id="jot-title" class="jothidden jotforms form-control" type="text" placeholder="{{$placeholdertitle}}" title="{{$placeholdertitle}}" value="{{$title}}" style="display:block;" dir="auto" /></div>
 					{{if $placeholdercategory}}
 					<div id="jot-category-wrap"><input name="category" id="jot-category" class="jothidden jotforms form-control" type="text" placeholder="{{$placeholdercategory}}" title="{{$placeholdercategory}}" value="{{$category}}" dir="auto" /></div>
@@ -201,48 +202,61 @@
 <script>
 (function () {
 	'use strict';
-	var groupMentions = {}; // addr -> display name
+	var ACTORS      = {{$group_circle_actors_json nofilter}};
+	var gcIdField   = document.getElementById('jot-gc-id');
+	var mentionAddr = null;
 
-	function updateGroupBanner() {
-		var names   = Object.keys(groupMentions).map(function (a) { return groupMentions[a]; });
+	function actorByAddr(addr) {
+		for (var i = 0; i < ACTORS.length; i++) {
+			if (ACTORS[i].addr === addr) return ACTORS[i];
+		}
+		return null;
+	}
+
+	function showBanner(name) {
 		var $wrapper = $('#profile-jot-acl-wrapper');
 		var $banner  = $('#udp-group-post-banner');
-		if (names.length === 0) {
-			$banner.remove();
-			$wrapper.show();
-			return;
-		}
-		var label = names.length === 1
-			? names[0]
-			: names.slice(0, -1).join(', ') + ' & ' + names[names.length - 1];
 		if ($banner.length === 0) {
 			$banner = $('<div id="udp-group-post-banner" class="alert alert-info" style="margin:4px 0 8px;">' +
-				'<strong>Group post</strong> — Shared with members of <span id="udp-group-names"></span>. ' +
-				'Visibility controls are managed by the group.</div>');
+				'<strong>Group post</strong> — Posting to <span id="udp-group-names"></span>. ' +
+				'Visibility is managed by the group.</div>');
 			$wrapper.before($banner);
 		}
-		$('#udp-group-names').text(label);
+		$('#udp-group-names').text(name);
 		$wrapper.hide();
+	}
+
+	function hideBanner() {
+		$('#udp-group-post-banner').remove();
+		$('#profile-jot-acl-wrapper').show();
+	}
+
+	// If pre-set from group page URL, hide ACL section on load
+	if (gcIdField && parseInt(gcIdField.value, 10) > 0) {
+		$(function () { $('#profile-jot-acl-wrapper').hide(); });
 	}
 
 	// Fired from editor_replace when a community actor is @mentioned via autocomplete
 	$(document).on('udp:group-mention', function (e, item) {
-		if (item.addr) {
-			groupMentions[item.addr] = item.name;
-			updateGroupBanner();
-		}
+		if (!item.addr) return;
+		var actor = actorByAddr(item.addr);
+		if (!actor) return;
+		mentionAddr = item.addr;
+		if (gcIdField) gcIdField.value = actor.circleId;
+		showBanner(actor.name);
 	});
 
 	// Re-check on every keystroke — handles manual deletion of the @mention
 	$(document).on('input', '#profile-jot-text', function () {
-		var text = $(this).val();
-		Object.keys(groupMentions).forEach(function (addr) {
-			var nick = addr.split('@')[0];
-			if (text.indexOf('@' + nick) === -1) {
-				delete groupMentions[addr];
+		if (!mentionAddr) return;
+		var nick = mentionAddr.split('@')[0];
+		if ($(this).val().indexOf('@' + nick) === -1) {
+			if (gcIdField) gcIdField.value = '{{$group_circle_id|intval}}';
+			mentionAddr = null;
+			if (parseInt(gcIdField ? gcIdField.value : '0', 10) === 0) {
+				hideBanner();
 			}
-		});
-		updateGroupBanner();
+		}
 	});
 }());
 </script>

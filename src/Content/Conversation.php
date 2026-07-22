@@ -31,6 +31,7 @@ use Friendica\Model\Item as ItemModel;
 use Friendica\Model\Post;
 use Friendica\Model\Post\Category;
 use Friendica\Model\Tag;
+use Friendica\Model\UdpGroupCircle;
 use Friendica\Model\User;
 use Friendica\Model\Verb;
 use Friendica\Network\HTTPException\InternalServerErrorException;
@@ -432,6 +433,8 @@ class Conversation
 
 			'$compose_link_title'  => $this->l10n->t('Open Compose page'),
 			'$always_open_compose' => $this->pConfig->get($this->session->getLocalUserId(), 'frio', 'always_open_compose', false),
+			'$group_circle_id'          => $x['group_circle_id'] ?? 0,
+			'$group_circle_actors_json' => json_encode(UdpGroupCircle::getAllActors()),
 		]);
 
 

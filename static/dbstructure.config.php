@@ -2142,6 +2142,7 @@ return [
 			"PRIMARY"              => ["id"],
 			"circle-id-contact-id" => ["UNIQUE", "circle-id", "contact-id"],
 			"circle-id"            => ["circle-id"],
+			"contact-id"           => ["contact-id"],
 			"uid"                  => ["uid"],
 		],
 	],
@@ -2160,7 +2161,20 @@ return [
 		"indexes" => [
 			"PRIMARY"              => ["id"],
 			"circle-id"            => ["circle-id"],
+			"proposed-by"          => ["proposed-by"],
+			"target-cid"           => ["target-cid"],
 			"circle-id-target-cid" => ["circle-id", "target-cid", "status"],
+		],
+	],
+	"udp-group-post" => [
+		"comment" => "UDP Group Circle — maps submitted posts to their circle for feed routing",
+		"fields" => [
+			"uri-id"    => ["type" => "int unsigned", "not null" => "1", "foreign" => ["item-uri" => "id"], "comment" => "Post uri-id"],
+			"circle-id" => ["type" => "int unsigned", "not null" => "1", "foreign" => ["udp-group-circle" => "id"], "comment" => ""],
+		],
+		"indexes" => [
+			"PRIMARY"   => ["uri-id", "circle-id"],
+			"circle-id" => ["circle-id"],
 		],
 	],
 	// UDP Social: unified media index (Cat3 minimal — new table only, no upstream fields changed)

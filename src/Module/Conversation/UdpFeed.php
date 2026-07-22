@@ -88,6 +88,11 @@ class UdpFeed extends Network
 			$uid,
 		]);
 
+		// Group Circle posts must not appear on the general feed.
+		$condition = DBA::mergeConditions($condition, [
+			"`uri-id` NOT IN (SELECT `uri-id` FROM `udp-group-post`)",
+		]);
+
 		// Apply the same cursor constraints the network feed uses for pagination
 		if (isset($this->maxId)) {
 			$condition = DBA::mergeConditions($condition, ["`received` < ?", $this->maxId]);

@@ -50,6 +50,10 @@ class Search
 			return $emptyResultList;
 		}
 
+		if (!DI::federationFilter()->allowsHandle($user)) {
+			return $emptyResultList;
+		}
+
 		$user_data = Contact::getByURL($user);
 		if (empty($user_data)) {
 			return $emptyResultList;

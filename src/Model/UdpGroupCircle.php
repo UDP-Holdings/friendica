@@ -8,7 +8,9 @@ namespace Friendica\Model;
 
 use Friendica\Core\Protocol;
 use Friendica\Database\DBA;
+use Friendica\Database\Database;
 use Friendica\DI;
+use Friendica\Model\Item;
 use Friendica\Model\Notification\ObjectType as NotificationObjectType;
 use Friendica\Model\Notification\Type as NotificationType;
 use Friendica\Protocol\Activity;
@@ -240,6 +242,13 @@ class UdpGroupCircle
 	 */
 	public static function addMember(int $circleId, int $contactId, ?int $uid = null, int $role = self::ROLE_MEMBER): void
 	{
+		if ($uid === null) {
+			$contact = Contact::selectFirst(['url'], ['id' => $contactId]);
+			if (DBA::isResult($contact)) {
+				$uid = User::getIdForURL($contact['url']) ?: null;
+			}
+		}
+
 		$existing = DBA::selectFirst('udp-group-circle-member', ['id'], [
 			'circle-id'  => $circleId,
 			'contact-id' => $contactId,
@@ -343,9 +352,7 @@ class UdpGroupCircle
 		$allAccepted = !in_array(null, $votes, true) && !in_array(false, $votes, true);
 		if ($allAccepted) {
 			DBA::update('udp-group-circle-invite', ['status' => self::INVITE_ACCEPTED], ['id' => $inviteId]);
-			$targetUidRow = Contact::selectFirst(['uid'], ['id' => $targetCid, 'self' => true]);
-			$resolvedUid  = DBA::isResult($targetUidRow) ? (int)$targetUidRow['uid'] : null;
-			self::addMember($circleId, $targetCid, $resolvedUid);
+			self::addMember($circleId, $targetCid);
 			self::notifyInviteTarget($circleId, $targetCid);
 		}
 
@@ -392,10 +399,8 @@ class UdpGroupCircle
 
 		if ($allAccepted) {
 			DBA::update('udp-group-circle-invite', ['status' => self::INVITE_ACCEPTED], ['id' => $inviteId]);
-			$invite          = DBA::selectFirst('udp-group-circle-invite', [], ['id' => $inviteId]);
-			$targetUidRow    = Contact::selectFirst(['uid'], ['id' => $invite['target-cid'], 'self' => true]);
-			$resolvedUid     = DBA::isResult($targetUidRow) ? (int)$targetUidRow['uid'] : null;
-			self::addMember($invite['circle-id'], $invite['target-cid'], $resolvedUid);
+			$invite = DBA::selectFirst('udp-group-circle-invite', [], ['id' => $inviteId]);
+			self::addMember($invite['circle-id'], $invite['target-cid']);
 			self::notifyInviteTarget($invite['circle-id'], $invite['target-cid']);
 		}
 	}
@@ -471,6 +476,116 @@ class UdpGroupCircle
 		return $invites;
 	}
 
+	// ── Local fan-out ─────────────────────────────────────────────────────────
+
+	/** Circle ID set by Compose::post() before item_post() runs; consumed by localFanOut(). */
+	private static int $pendingCircleId = 0;
+
+	/** Called by Compose::post() to register which circle a submission targets. */
+	public static function setPendingCircleId(int $id): void
+	{
+		self::$pendingCircleId = $id;
+	}
+
+	/**
+	 * Returns all active circle actors as an array suitable for JSON encoding.
+	 * Used by Compose::content() to inject the actor list for JS @mention detection.
+	 *
+	 * @return array<array{circleId:int,name:string,nick:string,addr:string}>
+	 */
+	public static function getAllActors(): array
+	{
+		$circles = DBA::selectToArray('udp-group-circle', ['id', 'name', 'actor-uid'], ['closed' => null]);
+		$result  = [];
+		foreach ($circles as $c) {
+			$self = Contact::selectFirst(['nick', 'addr'], ['uid' => $c['actor-uid'], 'self' => true]);
+			if (!DBA::isResult($self)) {
+				continue;
+			}
+			$result[] = [
+				'circleId' => (int)$c['id'],
+				'name'     => $c['name'],
+				'nick'     => $self['nick'],
+				'addr'     => $self['addr'],
+			];
+		}
+		return $result;
+	}
+
+	/**
+	 * Direct local fan-out: write post-user rows for every circle member without AP.
+	 *
+	 * Called from Item::handleCreatedItem() after postProcessPost(). Uses the
+	 * pending circle ID set by Compose::post() (primary path), falling back to
+	 * allow_cid parsing for non-compose callers. Writes to udp-group-post so
+	 * tagDeliver can suppress the AP Announce and the group feed query can find it.
+	 *
+	 * Only fires for top-level posts (gravity=0) from a local user.
+	 */
+	public static function localFanOut(array $item): void
+	{
+		if (($item['gravity'] ?? -1) !== 0 || empty($item['uid'])) {
+			return;
+		}
+
+		$posterUid = (int)$item['uid'];
+		$uriId     = (int)$item['uri-id'];
+
+		// Primary path: explicit circle ID registered by Compose::post() or jot modal hidden field
+		$circleId = self::$pendingCircleId ?: (int)($_REQUEST['group_circle_id'] ?? 0);
+		self::$pendingCircleId = 0;
+
+		if ($circleId) {
+			$circle = self::getById($circleId);
+			if ($circle) {
+				$selfContact = Contact::selectFirst(['id'], ['uid' => $posterUid, 'self' => true]);
+				if ($selfContact && self::isMember($circleId, $selfContact['id'])) {
+					self::doFanOut($uriId, $circle, $posterUid);
+					return;
+				}
+			}
+		}
+
+		// Fallback path: detect group actor contact in allow_cid (legacy / non-compose routes)
+		if (empty($item['allow_cid'])) {
+			return;
+		}
+
+		preg_match_all('/<(\d+)>/', $item['allow_cid'], $matches);
+		foreach ($matches[1] as $rawContactId) {
+			$contact = Contact::selectFirst(['url'], ['id' => (int)$rawContactId, 'uid' => $posterUid]);
+			if (!DBA::isResult($contact)) {
+				continue;
+			}
+			$targetUid = User::getIdForURL($contact['url']);
+			if (!$targetUid) {
+				continue;
+			}
+			$circle = self::getByActorUid($targetUid);
+			if (!$circle) {
+				continue;
+			}
+			self::doFanOut($uriId, $circle, $posterUid);
+		}
+	}
+
+	/** Writes udp-group-post and post-user rows for all circle members except the poster. */
+	private static function doFanOut(int $uriId, array $circle, int $posterUid): void
+	{
+		DBA::insert('udp-group-post', ['uri-id' => $uriId, 'circle-id' => $circle['id']], Database::INSERT_IGNORE);
+		UdpDebug::log('[UdpGC] doFanOut: post mapped to circle', ['uri-id' => $uriId, 'circle-id' => $circle['id']]);
+
+		$members = DBA::selectToArray('udp-group-circle-member', ['uid'], ['circle-id' => $circle['id']]);
+		foreach ($members as $member) {
+			$memberUid = (int)$member['uid'];
+			if (!$memberUid || $memberUid === $posterUid) {
+				continue;
+			}
+			$stored = Item::storeForUserByUriId($uriId, $memberUid, ['post-reason' => Item::PR_AUDIENCE], $posterUid);
+			UdpDebug::log('[UdpGC] doFanOut: stored for member', ['uri-id' => $uriId, 'member-uid' => $memberUid, 'stored' => $stored]);
+		}
+	}
+
 	// ── Lifecycle ─────────────────────────────────────────────────────────────
 
 	// ── Internal helpers ──────────────────────────────────────────────────────
@@ -495,11 +610,9 @@ class UdpGroupCircle
 		// Ensure uid=0 global contact exists so @addr resolves to display name in post rendering
 		Contact::getIdForURL($actorSelf['url'], 0, true);
 
-		// Check if a live (non-archived, non-deleted) per-user contact already exists.
-		// The archive check is critical: close() archives old contacts before freeing the slug,
-		// so an archived row for a previous group with the same nickname must not block this.
+		// Check if per-user contact already exists
 		$nurl = $actorSelf['nurl'] ?: Strings::normaliseLink($actorSelf['url']);
-		if (DBA::exists('contact', ['uid' => $memberUid, 'nurl' => $nurl, 'deleted' => false, 'archive' => false])) {
+		if (DBA::exists('contact', ['uid' => $memberUid, 'nurl' => $nurl, 'deleted' => false])) {
 			return;
 		}
 
@@ -534,24 +647,14 @@ class UdpGroupCircle
 	 */
 	public static function close(int $circleId): void
 	{
+		DBA::update('udp-group-circle', ['closed' => DateTimeFormat::utcNow()], ['id' => $circleId]);
+
+		// Free the slug so it can be reused. The actor user row stays for AP tombstone
+		// purposes but the nickname is no longer occupying the original slug.
 		$circle = self::getById($circleId);
 		if ($circle) {
-			// Archive per-user contacts pointing to this actor's URL before freeing the slug.
-			// Without this, a new group that reuses the same nickname would find stale contact
-			// rows in ensureGroupContactForUser and skip creating fresh ones.
-			$actorSelf = Contact::selectFirst(['url'], ['uid' => $circle['actor-uid'], 'self' => true]);
-			if (DBA::isResult($actorSelf)) {
-				DBA::update('contact', ['archive' => true], [
-					'url'     => $actorSelf['url'],
-					'self'    => false,
-					'deleted' => false,
-				]);
-			}
-			// Free the slug so it can be reused.
 			DBA::update('user', ['nickname' => '_deleted_' . $circleId], ['uid' => $circle['actor-uid']]);
 		}
-
-		DBA::update('udp-group-circle', ['closed' => DateTimeFormat::utcNow()], ['id' => $circleId]);
 
 		// TODO: send "this group has been closed" system notification to all members
 	}
