@@ -60,8 +60,10 @@ class Network extends Timeline
 	protected $circleId;
 	/** @var int Group Circle ID (udp-group-circle.id), 0 if not on a group page */
 	protected $groupCircleId = 0;
-	/** @var int The viewer's per-user contact-id for the group actor, used in owner-id filter */
+	/** @var int The viewer's per-user contact-id for the group actor */
 	protected $groupActorContactId = 0;
+	/** @var int The uid of the group actor user, used for post-user delivery filter */
+	protected $groupActorUid = 0;
 	/** @var string Display name of the group */
 	protected $groupName = '';
 	/** @var string Full @handle of the group actor, pre-filled in compose box */
@@ -274,10 +276,11 @@ class Network extends Timeline
 
 			$lockstate = $this->circleId || $this->groupCircleId || $this->network || ACL::getLockstateForUserId($this->session->getLocalUserId()) ? 'lock' : 'unlock';
 			$x = [
-				'lockstate' => $lockstate,
-				'acl'       => ACL::getFullSelectorHTML($this->page, $this->session->getLocalUserId(), true, $default_permissions),
-				'bang'      => (($this->circleId || $this->groupCircleId || $this->network) ? '!' : ''),
-				'content'   => $this->groupHandle,
+				'lockstate'       => $lockstate,
+				'acl'             => ACL::getFullSelectorHTML($this->page, $this->session->getLocalUserId(), true, $default_permissions),
+				'bang'            => (($this->circleId || $this->groupCircleId || $this->network) ? '!' : ''),
+				'content'              => '',
+				'group_circle_id' => $this->groupCircleId,
 			];
 
 			$o .= $this->conversation->statusEditor($x);
@@ -424,6 +427,7 @@ class Network extends Timeline
 					if ($actorContact) {
 						$this->groupCircleId       = $groupCircleId;
 						$this->groupActorContactId = $actorContact['id'];
+						$this->groupActorUid       = $circle['actor-uid'];
 						$this->groupName           = $circle['name'];
 						$this->groupHandle         = '@' . $actorOwner['nickname'] . '@' . parse_url($actorOwner['url'], PHP_URL_HOST);
 					}
@@ -538,12 +542,16 @@ class Network extends Timeline
 		}
 
 		if ($this->groupCircleId) {
-			// Filter to posts owned by the group actor. owner-id is not projected by
-			// network-thread-view, so we use a correlated subquery on post-thread-user.
+			// Show posts submitted to this circle. udp-group-post is written at post-creation
+			// time by UdpGroupCircle::localFanOut(), bypassing the AP Announce path entirely.
 			$commonCondition = DBA::mergeConditions($commonCondition, [
-				"`uri-id` IN (SELECT `uri-id` FROM `post-thread-user` WHERE `owner-id` = ? AND `uid` = ?)",
-				$this->groupActorContactId,
-				$this->session->getLocalUserId(),
+				"`uri-id` IN (SELECT `uri-id` FROM `udp-group-post` WHERE `circle-id` = ?)",
+				$this->groupCircleId,
+			]);
+		} else {
+			// On the regular network timeline, suppress group-circle posts entirely.
+			$commonCondition = DBA::mergeConditions($commonCondition, [
+				"`uri-id` NOT IN (SELECT `uri-id` FROM `udp-group-post`)",
 			]);
 		}
 
