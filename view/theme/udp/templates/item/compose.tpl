@@ -233,6 +233,11 @@
 			<input type="hidden" name="post_id_random" value="{{$rand_num}}" />
 			<input type="hidden" name="post_type" value="{{$posttype}}" />
 			<input type="hidden" name="wall" value="{{$wall}}" />
+			<input type="hidden" name="group_circle_id" id="udp-gc-id-{{$id}}" value="{{$group_circle_id|intval}}" />
+			<div id="udp-gc-banner-{{$id}}" class="alert alert-info" style="display:{{if $group_circle_id}}flex{{else}}none{{/if}};align-items:center;gap:8px;margin:4px 0 8px;">
+				Posting to <strong id="udp-gc-name-{{$id}}">{{$group_circle_name|escape}}</strong>
+				<button type="button" id="udp-gc-clear-{{$id}}" style="margin-left:auto;background:none;border:none;cursor:pointer;font-size:1.2em;" aria-label="Remove group circle">&times;</button>
+			</div>
 
 			<div id="jot-title-wrap">
 				<input type="text" name="title" id="jot-title" class="jothidden jotforms form-control" placeholder="{{$l10n.placeholdertitle}}" title="{{$l10n.placeholdertitle}}" value="{{$title}}" tabindex="1" dir="auto" />
@@ -522,34 +527,6 @@
 		});
 	});
 
-	// Draft persistence (localStorage, 10-minute TTL)
-	document.addEventListener('DOMContentLoaded', function() {
-		document.querySelectorAll('.expandable-textarea').forEach(function(textarea) {
-			textarea.style.height = 'auto';
-			textarea.style.height = textarea.scrollHeight + 'px';
-
-			var saved    = localStorage.getItem('comment-edit-text-' + textarea.id);
-			var lastSave = localStorage.getItem('last-saved-' + textarea.id);
-			if (saved && lastSave && (new Date().getTime() - parseInt(lastSave, 10)) <= 600000) {
-				textarea.value = saved;
-				textarea.style.height = 'auto';
-				textarea.style.height = textarea.scrollHeight + 'px';
-			} else {
-				localStorage.removeItem('comment-edit-text-' + textarea.id);
-				localStorage.removeItem('last-saved-' + textarea.id);
-			}
-		});
-	});
-
-	setInterval(function() {
-		document.querySelectorAll('.expandable-textarea').forEach(function(textarea) {
-			if (textarea.value.trim()) {
-				localStorage.setItem('comment-edit-text-' + textarea.id, textarea.value);
-				localStorage.setItem('last-saved-' + textarea.id, new Date().getTime().toString());
-			}
-		});
-	}, 5000);
-
 	window.togglePermissions = function() {
 		var s = document.getElementById('permissions-section');
 		s.style.display = (s.style.display === 'none' || !s.style.display) ? 'block' : 'none';
@@ -563,10 +540,6 @@
 			ta.value = window.PhotoTokenizer.expand(ta.value);
 			window.PhotoTokenizer.clear();
 		}
-		document.querySelectorAll('.expandable-textarea').forEach(function(textarea) {
-			localStorage.removeItem('comment-edit-text-' + textarea.id);
-			localStorage.removeItem('last-saved-' + textarea.id);
-		});
 	}
 
 	window.addEventListener('beforeunload', function(event) {
@@ -818,63 +791,66 @@
 		$('#comment-edit-text-' + FORM_ID).bbco_autocomplete('bbcode');
 	});
 
-	// ── Group mention banner ──────────────────────────────────────────────────
-	// Listens for udp:group-mention from autocomplete.js editor_replace(),
-	// shows a banner when a Group Circle is @mentioned, hides the ACL selector.
+	// ── Group Circle banner ──────────────────────────────────────────────────
+	// Shows banner and sets group_circle_id when a Group Circle is active.
+	// Sources: URL param (PHP-rendered value > 0) or @mention via autocomplete.
 	(function () {
-		var groupMentions        = {};
-		var $contactAllowInput   = $('input[name="contact_allow"]');
-		var originalContactAllow = $contactAllowInput.val() || '';
-		var originalVisibility   = $('input[name="visibility"]:checked').val() || '';
+		var ACTORS      = {{$group_circle_actors_json nofilter}};
+		var gcIdField   = document.getElementById('udp-gc-id-' + FORM_ID);
+		var gcNameEl    = document.getElementById('udp-gc-name-' + FORM_ID);
+		var gcBannerEl  = document.getElementById('udp-gc-banner-' + FORM_ID);
+		var gcClearBtn  = document.getElementById('udp-gc-clear-' + FORM_ID);
+		var $section    = $('#permissions-section');
+		var mentionAddr = null;
 
-		function updateGroupBanner() {
-			var addrs    = Object.keys(groupMentions);
-			var names    = addrs.map(function (a) { return groupMentions[a].name; });
-			var cids     = addrs.map(function (a) { return groupMentions[a].cid; }).filter(Boolean);
-			var $section = $('#permissions-section');
-			var $banner  = $('#udp-group-post-banner');
-			if (names.length === 0) {
-				$contactAllowInput.val(originalContactAllow);
-				if (originalVisibility) {
-					$('input[name="visibility"][value="' + originalVisibility + '"]').prop('checked', true);
-				}
-				$banner.remove();
-				$section.show();
-				return;
+		function actorByAddr(addr) {
+			for (var i = 0; i < ACTORS.length; i++) {
+				if (ACTORS[i].addr === addr) return ACTORS[i];
 			}
-			if (cids.length) {
-				$('input[name="visibility"][value="custom"]').prop('checked', true);
-				$contactAllowInput.val(cids.join(','));
-			}
-			var label = names.length === 1
-				? names[0]
-				: names.slice(0, -1).join(', ') + ' & ' + names[names.length - 1];
-			if ($banner.length === 0) {
-				$banner = $('<div id="udp-group-post-banner" class="alert alert-info" style="margin:4px 0 8px;">'
-					+ '<strong>Group post</strong> — Shared with members of <span id="udp-group-names"></span>. '
-					+ 'Visibility controls are managed by the group.</div>');
-				$section.before($banner);
-			}
-			$('#udp-group-names').text(label);
+			return null;
+		}
+
+		function showBanner(name) {
+			if (gcNameEl)   gcNameEl.textContent = name;
+			if (gcBannerEl) gcBannerEl.style.display = 'flex';
 			$section.hide();
 		}
 
+		function hideBanner() {
+			if (gcBannerEl) gcBannerEl.style.display = 'none';
+			$section.show();
+		}
+
+		// PHP pre-set from URL: banner already visible, just hide permissions section
+		if (gcIdField && parseInt(gcIdField.value, 10) > 0) {
+			$section.hide();
+		}
+
+		if (gcClearBtn) {
+			gcClearBtn.addEventListener('click', function () {
+				if (gcIdField) gcIdField.value = '0';
+				mentionAddr = null;
+				hideBanner();
+			});
+		}
+
 		$(document).on('udp:group-mention', function (e, item) {
-			if (item.addr) {
-				groupMentions[item.addr] = { name: item.name, cid: item.id };
-				updateGroupBanner();
-			}
+			if (!item.addr) return;
+			var actor = actorByAddr(item.addr);
+			if (!actor) return;
+			mentionAddr = item.addr;
+			if (gcIdField) gcIdField.value = actor.circleId;
+			showBanner(actor.name);
 		});
 
 		$(document).on('input', '#comment-edit-text-' + FORM_ID, function () {
-			var text = $(this).val();
-			Object.keys(groupMentions).forEach(function (addr) {
-				var nick = addr.split('@')[0];
-				if (text.indexOf('@' + nick) === -1) {
-					delete groupMentions[addr];
-				}
-			});
-			updateGroupBanner();
+			if (!mentionAddr) return;
+			var nick = mentionAddr.split('@')[0];
+			if ($(this).val().indexOf('@' + nick) === -1) {
+				if (gcIdField) gcIdField.value = '0';
+				mentionAddr = null;
+				hideBanner();
+			}
 		});
 	}());
 }());

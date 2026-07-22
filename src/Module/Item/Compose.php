@@ -25,6 +25,7 @@ use Friendica\Database\DBA;
 use Friendica\Event\HtmlFilterEvent;
 use Friendica\Model\Contact;
 use Friendica\Model\Item;
+use Friendica\Model\UdpGroupCircle;
 use Friendica\Model\User;
 use Friendica\Module\Response;
 use Friendica\Module\Security\Login;
@@ -79,6 +80,10 @@ class Compose extends BaseModule
 	protected function post(array $request = [])
 	{
 		if (!empty($request['body'])) {
+			$groupCircleId = (int)($request['group_circle_id'] ?? 0);
+			if ($groupCircleId) {
+				UdpGroupCircle::setPendingCircleId($groupCircleId);
+			}
 			$_REQUEST['return'] = 'network';
 			require_once 'mod/item.php';
 			item_post();
@@ -148,6 +153,26 @@ class Compose extends BaseModule
 
 				break;
 		}
+
+		// UDP Group Circle: read group_circle_id from GET (set by group page link or JS @mention)
+		$groupCircleId   = (int)($request['group_circle_id'] ?? 0);
+		$groupCircleName = '';
+		if ($groupCircleId) {
+			$circle = UdpGroupCircle::getById($groupCircleId);
+			if ($circle) {
+				$selfContact = Contact::selectFirst(['id'], ['uid' => $this->session->getLocalUserId(), 'self' => true]);
+				if (!$selfContact || !UdpGroupCircle::isMember($groupCircleId, $selfContact['id'])) {
+					$groupCircleId = 0; // viewer is not a member
+				} else {
+					$groupCircleName    = $circle['name'];
+					$contact_allow_list = []; // clear URL-based ACL; fan-out handles delivery
+					$circle_allow_list  = [];
+				}
+			} else {
+				$groupCircleId = 0;
+			}
+		}
+		$groupCircleActorsJson = json_encode(UdpGroupCircle::getAllActors());
 
 		$title     = $request['title']     ?? '';
 		$summary   = $request['summary']   ?? '';
@@ -246,6 +271,10 @@ class Compose extends BaseModule
 			'$circle_allow'  => implode(',', $circle_allow_list),
 			'$contact_deny'  => implode(',', $contact_deny_list),
 			'$circle_deny'   => implode(',', $circle_deny_list),
+
+			'$group_circle_id'          => $groupCircleId,
+			'$group_circle_name'        => $groupCircleName,
+			'$group_circle_actors_json' => $groupCircleActorsJson,
 
 			'$jotplugins'   => $jotplugins,
 			'$rand_num'     => Crypto::randomDigits(12),
