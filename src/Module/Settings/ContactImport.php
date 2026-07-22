@@ -9,6 +9,7 @@ namespace Friendica\Module\Settings;
 
 use Friendica\App;
 use Friendica\Core\Config\Capability\IManageConfigValues;
+use Friendica\DI;
 use Friendica\Core\L10n;
 use Friendica\Core\Protocol;
 use Friendica\Core\Renderer;
@@ -76,6 +77,7 @@ class ContactImport extends BaseSettings
 					foreach ($csvArray as $csvRow) {
 						$urls[] = $csvRow[0];
 					}
+					$urls = DI::federationFilter()->filterUrls($urls);
 					AddContact::addByArray($urls, $this->session->getLocalUserId());
 
 					$this->systemMessages->addInfo($this->l10n->t('Importing Contacts done'));
@@ -155,7 +157,7 @@ class ContactImport extends BaseSettings
 			return;
 		}
 
-		AddContact::addByArray($urls, $this->session->getLocalUserId());
+		AddContact::addByArray(DI::federationFilter()->filterUrls($urls), $this->session->getLocalUserId());
 		return;
 	}
 }
