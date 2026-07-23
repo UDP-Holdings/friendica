@@ -9,6 +9,7 @@ namespace Friendica\Module\ActivityPub;
 
 use Friendica\BaseModule;
 use Friendica\Core\System;
+use Friendica\DI;
 use Friendica\Model\Contact;
 use Friendica\Model\User;
 use Friendica\Protocol\ActivityPub;
@@ -24,6 +25,8 @@ class Followers extends BaseModule
 		if (empty($this->parameters['nickname'])) {
 			throw new \Friendica\Network\HTTPException\NotFoundException();
 		}
+
+		DI::federationFilter()->checkInboundFetch($_SERVER);
 
 		// @TODO: Replace with parameter from router
 		$owner = User::getOwnerDataByNick($this->parameters['nickname']);

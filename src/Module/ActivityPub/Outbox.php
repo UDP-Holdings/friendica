@@ -7,6 +7,7 @@
 
 namespace Friendica\Module\ActivityPub;
 
+use Friendica\DI;
 use Friendica\Model\User;
 use Friendica\Module\BaseApi;
 use Friendica\Protocol\ActivityPub;
@@ -23,6 +24,8 @@ class Outbox extends BaseApi
 		if (empty($this->parameters['nickname'])) {
 			$this->jsonExit([], 'application/activity+json');
 		}
+
+		DI::federationFilter()->checkInboundFetch($_SERVER);
 
 		$owner = User::getOwnerDataByNick($this->parameters['nickname']);
 		if (empty($owner)) {
