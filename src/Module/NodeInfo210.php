@@ -14,6 +14,7 @@ use Friendica\BaseModule;
 use Friendica\Capabilities\ICanCreateResponses;
 use Friendica\Core\Config\Capability\IManageConfigValues;
 use Friendica\Core\L10n;
+use Friendica\DI;
 use Friendica\Model\Nodeinfo;
 use Friendica\Util\Profiler;
 use Psr\Log\LoggerInterface;
@@ -36,6 +37,8 @@ class NodeInfo210 extends BaseModule
 
 	protected function rawContent(array $request = [])
 	{
+		DI::federationGateway()->suppressIfEnabled();
+
 		$nodeinfo = [
 			'version' => '1.0',
 			'server'  => [
