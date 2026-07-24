@@ -21,6 +21,11 @@ class XSocialRelay extends BaseModule
 {
 	protected function rawContent(array $request = [])
 	{
+		if (DI::config()->get('udp', 'gateway_enabled', true)) {
+			$this->jsonExit(['subscribe' => false, 'scope' => 'none', 'tags' => [], 'protocols' => []]);
+			return;
+		}
+
 		$config = DI::config();
 
 		$scope = $config->get('system', 'relay_scope');

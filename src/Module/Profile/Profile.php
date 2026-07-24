@@ -23,6 +23,7 @@ use Friendica\Core\Renderer;
 use Friendica\Core\Session\Capability\IHandleUserSessions;
 use Friendica\Database\Database;
 use Friendica\Database\DBA;
+use Friendica\DI;
 use Friendica\Event\HtmlFilterEvent;
 use Friendica\Model\Contact;
 use Friendica\Model\Profile as ProfileModel;
@@ -92,7 +93,9 @@ class Profile extends BaseProfile
 			$user = $this->database->selectFirst('user', ['uid'], ['nickname' => $this->parameters['nickname'] ?? '', 'verified' => true, 'blocked' => false, 'account_removed' => false, 'account_expired' => false]);
 			if ($user) {
 				try {
-					$data = ActivityPub\Transmitter::getProfile($user['uid'], ActivityPub::isAcceptedRequester($user['uid']));
+					DI::federationFilter()->checkInboundFetch($_SERVER);
+					$data = ActivityPub\Transmitter::getProfile($user['uid'], true);
+
 					header('Access-Control-Allow-Origin: *');
 					header('Cache-Control: max-age=23200, stale-while-revalidate=23200');
 					$this->jsonExit($data, 'application/activity+json');

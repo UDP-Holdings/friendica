@@ -86,6 +86,18 @@ class Gateway
 	}
 
 	/**
+	 * Throw NotFoundException (→ HTTP 404) when the UDP gateway is enabled.
+	 * Use this on public discovery endpoints (NodeInfo, host-meta, etc.) that
+	 * should be invisible to crawlers when the instance is in closed-federation mode.
+	 */
+	public function suppressIfEnabled(): void
+	{
+		if ($this->config->get('udp', 'gateway_enabled', true)) {
+			throw new \Friendica\Network\HTTPException\NotFoundException();
+		}
+	}
+
+	/**
 	 * Remove a domain from the allowlist (DB + Redis).
 	 */
 	public function deny(string $domain): void

@@ -17,6 +17,7 @@ use Friendica\Database\Database;
 use Friendica\Factory\Api\Mastodon\Account as AccountFactory;
 use Friendica\Model\User;
 use Friendica\Module\Api\ApiResponse;
+use Friendica\DI;
 use Friendica\Module\BaseApi;
 use Friendica\Object\Api\Mastodon\Instance as InstanceEntity;
 use Friendica\Object\Api\Mastodon\InstanceV2 as InstanceV2Entity;
@@ -56,6 +57,8 @@ class Instance extends BaseApi
 	 */
 	protected function rawContent(array $request = [])
 	{
+		DI::federationGateway()->suppressIfEnabled();
+
 		$administrator = User::getFirstAdmin(['nickname']);
 		if ($administrator) {
 			$adminContact = $this->database->selectFirst('contact', ['uri-id'], ['nick' => $administrator['nickname'], 'self' => true]);

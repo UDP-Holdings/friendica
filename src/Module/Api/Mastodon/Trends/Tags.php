@@ -22,6 +22,8 @@ class Tags extends BaseApi
 	 */
 	protected function rawContent(array $request = [])
 	{
+		DI::federationGateway()->suppressIfEnabled();
+
 		$request = $this->getRequest([
 			'limit' => 20, // Maximum number of results to return. Defaults to 20.
 			'offset' => 0, // Offset in set. Defaults to 0.

@@ -9,6 +9,7 @@ namespace Friendica\Module;
 
 use Friendica\BaseModule;
 use Friendica\Core\Protocol;
+use Friendica\DI;
 use Friendica\Model\Item;
 use Friendica\Model\User;
 use Friendica\Network\HTTPException;
@@ -30,6 +31,8 @@ class Feed extends BaseModule
 {
 	protected function rawContent(array $request = [])
 	{
+		DI::federationGateway()->suppressIfEnabled();
+
 		$nick = $this->parameters['nickname'] ?? '';
 		$type = $this->parameters['type'] ?? null;
 		switch ($type) {

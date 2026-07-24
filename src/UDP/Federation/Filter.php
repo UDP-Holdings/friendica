@@ -4,6 +4,7 @@ namespace Friendica\UDP\Federation;
 
 use Friendica\Object\Search\ContactResult;
 use Friendica\Object\Search\ResultList;
+use Friendica\Util\HTTPSignature;
 
 /**
  * Applies the UDP allowlist to higher-level objects before any outbound probe
@@ -75,5 +76,17 @@ class Filter
 	public function filterUrls(array $urls): array
 	{
 		return array_values(array_filter($urls, fn(string $url) => $this->allowsUrl($url)));
+	}
+
+	/**
+	 * Require a valid HTTP signature from an allowlisted domain on AP fetch endpoints.
+	 * Throws ForbiddenException for unsigned requests or non-allowlisted signers.
+	 * Call this at the top of rawContent() on any AP GET endpoint.
+	 */
+	public function checkInboundFetch(array $server): void
+	{
+		$signer = HTTPSignature::getSigner('', $server);
+		$domain = $signer ? (parse_url($signer, PHP_URL_HOST) ?? '') : '';
+		$this->gateway->checkInbound($domain);
 	}
 }

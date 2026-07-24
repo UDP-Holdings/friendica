@@ -181,7 +181,8 @@ class Xrd extends BaseModule
 
 	private function printJSON(string $alias, array $owner, array $avatar)
 	{
-		$baseURL = (string) $this->baseUrl;
+		$baseURL     = (string) $this->baseUrl;
+		$hideAvatar  = DI::config()->get('udp', 'gateway_enabled', true);
 
 		$json = [
 			'subject' => 'acct:' . $owner['addr'],
@@ -189,7 +190,7 @@ class Xrd extends BaseModule
 				$alias,
 				$owner['url'],
 			],
-			'links' => [
+			'links' => array_values(array_filter([
 				[
 					'rel'  => ActivityNamespace::DFRN,
 					'href' => $owner['url'],
@@ -214,7 +215,7 @@ class Xrd extends BaseModule
 					'type' => 'text/html',
 					'href' => $baseURL . '/hcard/' . $owner['nickname'],
 				],
-				[
+				$hideAvatar ? null : [
 					'rel'  => ActivityNamespace::WEBFINGERAVATAR,
 					'type' => $avatar['type'],
 					'href' => User::getAvatarUrl($owner),
@@ -245,7 +246,7 @@ class Xrd extends BaseModule
 					'type' => 'application/x-zot+json',
 					'href' => $baseURL . '/owa',
 				],
-			],
+			])),
 		];
 
 		header('Access-Control-Allow-Origin: *');
@@ -254,7 +255,8 @@ class Xrd extends BaseModule
 
 	private function printXML(string $alias, array $owner, array $avatar)
 	{
-		$baseURL = (string) $this->baseUrl;
+		$baseURL    = (string) $this->baseUrl;
+		$hideAvatar = DI::config()->get('udp', 'gateway_enabled', true);
 
 		$xmlString = XML::fromArray([
 			'XRD' => [
@@ -298,13 +300,13 @@ class Xrd extends BaseModule
 						'href' => $baseURL . '/hcard/' . $owner['nickname'],
 					],
 				],
-				'6:link' => [
+				...($hideAvatar ? [] : ['6:link' => [
 					'@attributes' => [
 						'rel'  => ActivityNamespace::WEBFINGERAVATAR,
 						'type' => $avatar['type'],
 						'href' => User::getAvatarUrl($owner),
 					],
-				],
+				]]),
 				'7:link' => [
 					'@attributes' => [
 						'rel'  => ActivityNamespace::DIASPORA_SEED,

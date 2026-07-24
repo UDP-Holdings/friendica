@@ -9,6 +9,7 @@ namespace Friendica\Module\WellKnown;
 
 use Friendica\BaseModule;
 use Friendica\DI;
+use Friendica\Network\HTTPException\NotFoundException;
 
 /**
  * Standardized way of exposing metadata about a server running one of the distributed social networks.
@@ -18,6 +19,8 @@ class NodeInfo extends BaseModule
 {
 	protected function rawContent(array $request = [])
 	{
+		DI::federationGateway()->suppressIfEnabled();
+
 		$nodeinfo = [
 			'links' => [
 				[

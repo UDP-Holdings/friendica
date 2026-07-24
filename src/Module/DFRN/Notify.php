@@ -9,6 +9,7 @@ namespace Friendica\Module\DFRN;
 
 use Friendica\BaseModule;
 use Friendica\Core\Protocol;
+use Friendica\DI;
 use Friendica\Model\Contact;
 use Friendica\Model\Conversation;
 use Friendica\Model\Item;
@@ -27,6 +28,8 @@ class Notify extends BaseModule
 {
 	protected function post(array $request = [])
 	{
+		DI::federationGateway()->suppressIfEnabled();
+
 		$postdata = Network::postdata();
 
 		if (empty($postdata)) {
