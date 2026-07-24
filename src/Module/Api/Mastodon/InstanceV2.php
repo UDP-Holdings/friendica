@@ -72,6 +72,8 @@ class InstanceV2 extends BaseApi
 	 */
 	protected function rawContent(array $request = [])
 	{
+		DI::federationGateway()->suppressIfEnabled();
+
 		$domain               = $this->baseUrl->getHost();
 		$title                = $this->config->get('config', 'sitename');
 		$version              = '2.8.0 (compatible; Friendica ' . App::VERSION . ')';

@@ -9,6 +9,7 @@ namespace Friendica\Module\Api\Mastodon\Instance;
 
 use Friendica\Core\Protocol;
 use Friendica\Database\DBA;
+use Friendica\DI;
 use Friendica\Model\GServer;
 use Friendica\Module\BaseApi;
 use Friendica\Network\HTTPException;
@@ -24,6 +25,8 @@ class Peers extends BaseApi
 	 */
 	protected function rawContent(array $request = [])
 	{
+		DI::federationGateway()->suppressIfEnabled();
+
 		$return = [];
 
 		// We only select for Friendica and ActivityPub servers, since it is expected to only deliver AP compatible systems here.
