@@ -55,6 +55,8 @@ class Directory extends BaseModule
 			'account_removed' => false,
 			'account_expired' => false,
 		];
+		// UDP: never surface Group Circle actors (page-flags=5) in any directory listing.
+		$condition = DBA::mergeConditions($condition, ['`page-flags` != ?', Model\User::PAGE_FLAGS_PRVGROUP]);
 		if ($search) {
 			$term      = '%' . $search . '%';
 			$condition = DBA::mergeConditions($condition, [
