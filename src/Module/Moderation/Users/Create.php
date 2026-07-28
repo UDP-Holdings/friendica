@@ -27,7 +27,8 @@ class Create extends BaseUsers
 
 		if ($nu_name !== '' && $nu_email !== '' && $nu_nickname !== '') {
 			try {
-				User::createMinimal($nu_name, $nu_email, $nu_nickname, $nu_language);
+				User::createMinimal($nu_name, $nu_email, $nu_nickname, $nu_language, '', true);
+				$this->systemMessages->addInfo($this->t('User %s created. A welcome email with login details has been sent.', $nu_email));
 				$this->baseUrl->redirect('moderation/users');
 			} catch (\Exception $ex) {
 				$this->systemMessages->addNotice($ex->getMessage());

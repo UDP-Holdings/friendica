@@ -1635,7 +1635,7 @@ class User
 	 * @throws ErrorException
 	 * @throws ImagickException
 	 */
-	public static function createMinimal(string $name, string $email, string $nick, string $lang = L10n::DEFAULT, string $avatar = ''): bool
+	public static function createMinimal(string $name, string $email, string $nick, string $lang = L10n::DEFAULT, string $avatar = '', bool $sendWelcomeEmail = false): bool
 	{
 		if (empty($name)
 			|| empty($email)
@@ -1653,10 +1653,21 @@ class User
 			'photo'          => $avatar,
 		]);
 
-		$user = $result['user'];
-		// UDP: welcome email is sent by the orchestrator after it sets the real
-		// customer password. Sending here would deliver a stale Friendica-generated
-		// password before the orchestrator overwrites it, confusing the customer.
+		// UDP: when called from the orchestrator flow, the welcome email is sent
+		// after the orchestrator sets the real customer password — sending here
+		// would deliver a stale auto-generated password before that overwrite.
+		// When called from the admin moderation panel ($sendWelcomeEmail=true),
+		// there is no orchestrator step, so we send immediately.
+		if ($sendWelcomeEmail) {
+			self::sendRegisterOpenEmail(
+				DI::l10n(),
+				$result['user'],
+				DI::config()->get('config', 'sitename'),
+				DI::baseUrl(),
+				$result['password'],
+			);
+		}
+
 		return true;
 	}
 
