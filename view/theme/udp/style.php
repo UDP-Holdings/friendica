@@ -511,3 +511,6 @@ a.udp-banner-brand {
 	.panel { border-radius: 0; }
 	.panel + .panel { margin-top: 4px; }
 }
+
+/* ---- Contact card: prevent single-char orphans on long addresses ---- */
+aside .vcard .p-addr { word-break: break-all; }
