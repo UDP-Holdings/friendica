@@ -583,6 +583,12 @@ class UdpGroupCircle
 		DBA::insert('udp-group-post', ['uri-id' => $uriId, 'circle-id' => $circle['id']], Database::INSERT_IGNORE);
 		UdpDebug::log('[UdpGC] doFanOut: post mapped to circle', ['uri-id' => $uriId, 'circle-id' => $circle['id']]);
 
+		// Inject a MENTION tag so the group badge renders on direct posts (same result as the @mention path).
+		$actorSelf = Contact::selectFirst(['url'], ['uid' => $circle['actor-uid'], 'self' => true]);
+		if (DBA::isResult($actorSelf)) {
+			Tag::store($uriId, Tag::MENTION, $circle['name'], $actorSelf['url']);
+		}
+
 		$members = DBA::selectToArray('udp-group-circle-member', ['uid'], ['circle-id' => $circle['id']]);
 		foreach ($members as $member) {
 			$memberUid = (int)$member['uid'];
