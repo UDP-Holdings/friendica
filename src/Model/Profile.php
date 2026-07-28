@@ -724,6 +724,9 @@ class Profile
 	 */
 	public static function searchProfiles(int $start = 0, int $count = 100, string $search = null): array
 	{
+		// UDP: private group actors (Group Circles) must never appear in any directory listing.
+		$noPrvGroup = ['`page-flags` != ?', 5]; // 5 = User::PAGE_FLAGS_PRVGROUP
+
 		if (!empty($search)) {
 			$publish    = (DI::config()->get('system', 'publish_all') ? '' : "AND `publish` ");
 			$searchTerm = '%' . $search . '%';
@@ -747,6 +750,8 @@ class Profile
 				$condition['publish'] = true;
 			}
 		}
+
+		$condition = DBA::mergeConditions($condition, $noPrvGroup);
 
 		$total = DBA::count('owner-view', $condition);
 

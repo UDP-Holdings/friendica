@@ -130,10 +130,18 @@ class UdpGroupCircle
 			'hidewall'     => 1,
 		], ['uid' => $actorUid]);
 
+		// Per-user self-contact
 		DBA::update('contact', [
 			'contact-type'      => Contact::TYPE_COMMUNITY,
 			'manually-approve'  => 1,
+			'unsearchable'      => 1,
 		], ['uid' => $actorUid, 'self' => true]);
+
+		// Global (uid=0) contact — excluded from Contact::searchByName() via unsearchable flag
+		$selfContact = Contact::selectFirst(['nurl'], ['uid' => $actorUid, 'self' => true]);
+		if (DBA::isResult($selfContact)) {
+			DBA::update('contact', ['unsearchable' => 1], ['uid' => 0, 'nurl' => $selfContact['nurl']]);
+		}
 
 		DBA::insert('udp-group-circle', [
 			'actor-uid'   => $actorUid,
