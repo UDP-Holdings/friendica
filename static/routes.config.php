@@ -675,11 +675,12 @@ return [
 	'/udp/group' => [
 		''                                    => [Module\Udp\Group\Index::class,   [R::GET]],          // list my Group Circles
 		'/create'                             => [Module\Udp\Group\Create::class,  [R::GET, R::POST]], // create a new circle
-		'/{id:\d+}'                           => [Module\Udp\Group\View::class,    [R::GET]],          // group feed
+		'/{id:\d+}'                           => [Module\Udp\Group\View::class,    [R::GET]],          // group feed (or preview redirect)
 		'/{id:\d+}/members'                   => [Module\Udp\Group\Members::class, [R::GET, R::POST]], // membership management
 		'/{id:\d+}/invite'                    => [Module\Udp\Group\Invite::class,  [R::POST]],         // propose adding someone
 		'/{id:\d+}/invite/{iid:\d+}/vote'     => [Module\Udp\Group\Vote::class,    [R::POST]],         // co-owner votes accept/reject
 		'/{id:\d+}/leave'                     => [Module\Udp\Group\Leave::class,   [R::POST]],         // leave the group
+		'/{id:\d+}/preview'                   => [Module\Udp\Group\Preview::class, [R::GET, R::POST]], // invitee consent preview
 	],
 	'/udp/media'     => [
 		'/photo/upload' => [Module\Udp\Media\PhotoUpload::class,   [R::POST]],       // UDP: photo upload → udp-media indexed

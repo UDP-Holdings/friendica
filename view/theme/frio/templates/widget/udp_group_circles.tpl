@@ -24,6 +24,17 @@
 					<li class="sidebar-circle-li faded-text">{{$empty_txt}}</li>
 				{{/foreach}}
 			</ul>
+			{{if $invitations}}
+			<ul id="sidebar-udp-invitations-ul" style="margin-top:0.5rem;border-top:1px solid rgba(128,128,128,0.2);padding-top:0.5rem;">
+				{{foreach $invitations as $inv}}
+					<li class="sidebar-circle-li">
+						<a href="{{$inv.preview_url}}" style="flex:1;font-style:italic;" title="Pending invitation">
+							<i class="fa fa-envelope-o" aria-hidden="true" style="margin-right:4px;font-size:0.85em;"></i>{{$inv.name}}
+						</a>
+					</li>
+				{{/foreach}}
+			</ul>
+			{{/if}}
 		</div>
 	</div>
 </nav>

@@ -15,8 +15,9 @@ use Friendica\Network\HTTPException;
 /**
  * GET /udp/group/{id} — auth-gate redirect to /network/group/{id}.
  *
- * Validates session and membership before handing off to the network timeline,
- * so direct links to the old URL still work correctly.
+ * Validates session and membership before handing off to the network timeline.
+ * If the user has a pending (awaiting_invitee) invitation, redirects to the
+ * preview page instead so they can accept or decline.
  */
 class View extends BaseModule
 {
@@ -31,6 +32,11 @@ class View extends BaseModule
 		$circle   = UdpGroupCircle::getById($circleId);
 		if (!$circle) {
 			throw new HTTPException\NotFoundException();
+		}
+
+		// Pending invitee: send to the consent preview page.
+		if (UdpGroupCircle::getPendingInviteForUser($circleId, $uid)) {
+			DI::baseUrl()->redirect('udp/group/' . $circleId . '/preview');
 		}
 
 		$selfContact = Contact::selectFirst(['id'], ['uid' => $uid, 'self' => true]);

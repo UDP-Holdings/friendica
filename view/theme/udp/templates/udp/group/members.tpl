@@ -69,19 +69,29 @@
 			<div style="flex:1;">
 				<strong>{{$inv.target.name}}</strong>
 				{{if $inv.target.addr}}<span class="text-muted"> @{{$inv.target.addr}}</span>{{/if}}
-				<div class="text-muted" style="font-size:0.85em;margin-top:2px;">
-					{{foreach $inv.votes as $cid => $vote}}
-						<span class="label {{if $vote === true}}label-success{{elseif $vote === false}}label-danger{{else}}label-default{{/if}}">
-							{{if $vote === true}}✓{{elseif $vote === false}}✗{{else}}?{{/if}}
-						</span>
-					{{/foreach}}
-				</div>
+				{{if $inv.status == 3}}
+					{{* INVITE_AWAITING_INVITEE — co-owners have approved, waiting for invitee *}}
+					<div class="text-muted" style="font-size:0.85em;margin-top:2px;">
+						<span class="label label-info">Waiting for them to accept</span>
+					</div>
+				{{else}}
+					{{* INVITE_PENDING — co-owner vote in progress *}}
+					<div class="text-muted" style="font-size:0.85em;margin-top:2px;">
+						{{foreach $inv.votes as $cid => $vote}}
+							<span class="label {{if $vote === true}}label-success{{elseif $vote === false}}label-danger{{else}}label-default{{/if}}">
+								{{if $vote === true}}✓{{elseif $vote === false}}✗{{else}}?{{/if}}
+							</span>
+						{{/foreach}}
+					</div>
+				{{/if}}
 			</div>
+			{{if $inv.status != 3}}
 			<form method="post" action="/udp/group/{{$circle.id}}/invite/{{$inv.id}}/vote" style="display:inline;">
 				<input type="hidden" name="form_security_token" value="{{$inv.vote_token}}">
 				<button type="submit" name="vote" value="accept" class="btn btn-xs btn-success">Accept</button>
 				<button type="submit" name="vote" value="reject" class="btn btn-xs btn-danger">Reject</button>
 			</form>
+			{{/if}}
 		</div>
 	{{/foreach}}
 	</div>

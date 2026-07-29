@@ -257,19 +257,25 @@ class Widget
 			return '';
 		}
 
-		$circles = UdpGroupCircle::getMembershipsForUser($uid);
+		$circles     = UdpGroupCircle::getMembershipsForUser($uid);
+		$invitations = UdpGroupCircle::getInvitationsForUser($uid);
 
 		return Renderer::replaceMacros(Renderer::getMarkupTemplate('widget/udp_group_circles.tpl'), [
-			'$title'      => DI::l10n()->t('Groups'),
-			'$create_url' => DI::baseUrl() . '/udp/group/create',
-			'$create_txt' => DI::l10n()->t('Create group'),
-			'$empty_txt'  => DI::l10n()->t('No groups yet'),
-			'$circles'    => array_map(fn($c) => [
+			'$title'       => DI::l10n()->t('Groups'),
+			'$create_url'  => DI::baseUrl() . '/udp/group/create',
+			'$create_txt'  => DI::l10n()->t('Create group'),
+			'$empty_txt'   => DI::l10n()->t('No groups yet'),
+			'$circles'     => array_map(fn($c) => [
 				'id'           => $c['id'],
 				'name'         => $c['name'],
 				'href'         => DI::baseUrl() . '/network/group/' . $c['id'],
 				'members_href' => DI::baseUrl() . '/udp/group/' . $c['id'] . '/members',
 			], $circles),
+			'$invitations' => array_map(fn($row) => [
+				'id'          => $row['circle']['id'],
+				'name'        => $row['circle']['name'],
+				'preview_url' => DI::baseUrl() . '/udp/group/' . $row['circle']['id'] . '/preview',
+			], $invitations),
 		]);
 	}
 

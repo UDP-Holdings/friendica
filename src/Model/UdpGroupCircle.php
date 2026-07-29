@@ -37,9 +37,11 @@ class UdpGroupCircle
 	const ROLE_MEMBER   = 0;
 	const ROLE_CO_OWNER = 1;
 
-	const INVITE_PENDING  = 0;
-	const INVITE_ACCEPTED = 1;
-	const INVITE_REJECTED = 2;
+	const INVITE_PENDING          = 0;
+	const INVITE_ACCEPTED         = 1;
+	const INVITE_REJECTED         = 2;
+	const INVITE_AWAITING_INVITEE = 3; // co-owners approved; waiting for invitee's consent
+	const INVITE_DECLINED         = 4; // invitee explicitly declined
 
 	// ── Identity ──────────────────────────────────────────────────────────────
 
@@ -330,11 +332,11 @@ class UdpGroupCircle
 			throw new \InvalidArgumentException('Contact is already a member of this circle.');
 		}
 
-		// Block duplicate pending invite
+		// Block duplicate active invite (voting in progress or awaiting invitee response)
 		if (DBA::exists('udp-group-circle-invite', [
 			'circle-id'  => $circleId,
 			'target-cid' => $targetCid,
-			'status'     => self::INVITE_PENDING,
+			'status'     => [self::INVITE_PENDING, self::INVITE_AWAITING_INVITEE],
 		])) {
 			throw new \InvalidArgumentException('A pending invite for this contact already exists.');
 		}
@@ -361,11 +363,10 @@ class UdpGroupCircle
 
 		$inviteId = DBA::lastInsertId();
 
-		// If the proposer is the only co-owner their vote is already true — resolve immediately.
+		// If the proposer is the only co-owner their vote is already true — move to invitee consent stage.
 		$allAccepted = !in_array(null, $votes, true) && !in_array(false, $votes, true);
 		if ($allAccepted) {
-			DBA::update('udp-group-circle-invite', ['status' => self::INVITE_ACCEPTED], ['id' => $inviteId]);
-			self::addMember($circleId, $targetCid);
+			DBA::update('udp-group-circle-invite', ['status' => self::INVITE_AWAITING_INVITEE], ['id' => $inviteId]);
 			self::notifyInviteTarget($circleId, $targetCid);
 		}
 
@@ -411,9 +412,8 @@ class UdpGroupCircle
 		}
 
 		if ($allAccepted) {
-			DBA::update('udp-group-circle-invite', ['status' => self::INVITE_ACCEPTED], ['id' => $inviteId]);
+			DBA::update('udp-group-circle-invite', ['status' => self::INVITE_AWAITING_INVITEE], ['id' => $inviteId]);
 			$invite = DBA::selectFirst('udp-group-circle-invite', [], ['id' => $inviteId]);
-			self::addMember($invite['circle-id'], $invite['target-cid']);
 			self::notifyInviteTarget($invite['circle-id'], $invite['target-cid']);
 		}
 	}
@@ -467,17 +467,20 @@ class UdpGroupCircle
 			'verb'  => Activity::FOLLOW,
 			'uid'   => $targetUid,
 			'cid'   => $actorCidForTarget ?: $actorCid,
-			'link'  => (string) DI::baseUrl() . '/udp/group/' . $circleId,
+			'link'  => (string) DI::baseUrl() . '/udp/group/' . $circleId . '/preview',
 		]);
 		UdpDebug::log('[UdpGC] notifyInviteTarget: done');
 	}
 
-	/** Returns pending invites for a circle (for the members management page). */
+	/**
+	 * Returns active invites for a circle (for the members management page).
+	 * Includes both INVITE_PENDING (voting in progress) and INVITE_AWAITING_INVITEE rows.
+	 */
 	public static function getPendingInvites(int $circleId): array
 	{
 		$invites = DBA::selectToArray('udp-group-circle-invite', [], [
 			'circle-id' => $circleId,
-			'status'    => self::INVITE_PENDING,
+			'status'    => [self::INVITE_PENDING, self::INVITE_AWAITING_INVITEE],
 		]);
 
 		foreach ($invites as &$inv) {
@@ -487,6 +490,94 @@ class UdpGroupCircle
 		}
 
 		return $invites;
+	}
+
+	/**
+	 * Returns the INVITE_AWAITING_INVITEE row for a local user in a circle, or null.
+	 * Used by View and Preview to determine if the user is a pending invitee.
+	 */
+	public static function getPendingInviteForUser(int $circleId, int $uid): ?array
+	{
+		$selfContact = Contact::selectFirst(['id'], ['uid' => $uid, 'self' => true]);
+		if (!DBA::isResult($selfContact)) {
+			return null;
+		}
+		$row = DBA::selectFirst('udp-group-circle-invite', [], [
+			'circle-id'  => $circleId,
+			'target-cid' => $selfContact['id'],
+			'status'     => self::INVITE_AWAITING_INVITEE,
+		]);
+		return DBA::isResult($row) ? $row : null;
+	}
+
+	/**
+	 * Returns all circles where this user has a pending (awaiting_invitee) invitation.
+	 * Used by the sidebar widget.
+	 *
+	 * @return array<array{circle: array, invite: array}>
+	 */
+	public static function getInvitationsForUser(int $uid): array
+	{
+		$selfContact = Contact::selectFirst(['id'], ['uid' => $uid, 'self' => true]);
+		if (!DBA::isResult($selfContact)) {
+			return [];
+		}
+		$invites = DBA::selectToArray('udp-group-circle-invite', [], [
+			'target-cid' => $selfContact['id'],
+			'status'     => self::INVITE_AWAITING_INVITEE,
+		]);
+		$result = [];
+		foreach ($invites as $invite) {
+			$circle = self::getById($invite['circle-id']);
+			if ($circle && !$circle['closed']) {
+				$result[] = ['circle' => $circle, 'invite' => $invite];
+			}
+		}
+		return $result;
+	}
+
+	/**
+	 * Accepts a pending invitation on behalf of the local user.
+	 * Adds them as a member and marks the invite ACCEPTED.
+	 * Returns false if no awaiting_invitee invite exists for this user.
+	 */
+	public static function acceptInvite(int $circleId, int $uid): bool
+	{
+		$invite = self::getPendingInviteForUser($circleId, $uid);
+		if (!$invite) {
+			return false;
+		}
+
+		$selfContact = Contact::selectFirst(['id'], ['uid' => $uid, 'self' => true]);
+		if (!DBA::isResult($selfContact)) {
+			return false;
+		}
+
+		$circle = self::getById($circleId);
+		if (!$circle) {
+			return false;
+		}
+
+		self::addMember($circleId, $selfContact['id'], $uid);
+		self::ensureGroupContactForUser($circle['actor-uid'], $uid);
+		DBA::update('udp-group-circle-invite', ['status' => self::INVITE_ACCEPTED], ['id' => $invite['id']]);
+		UdpDebug::log('[UdpGC] acceptInvite: accepted', ['circleId' => $circleId, 'uid' => $uid]);
+		return true;
+	}
+
+	/**
+	 * Declines a pending invitation on behalf of the local user.
+	 * Returns false if no awaiting_invitee invite exists for this user.
+	 */
+	public static function declineInvite(int $circleId, int $uid): bool
+	{
+		$invite = self::getPendingInviteForUser($circleId, $uid);
+		if (!$invite) {
+			return false;
+		}
+		DBA::update('udp-group-circle-invite', ['status' => self::INVITE_DECLINED], ['id' => $invite['id']]);
+		UdpDebug::log('[UdpGC] declineInvite: declined', ['circleId' => $circleId, 'uid' => $uid]);
+		return true;
 	}
 
 	// ── Local fan-out ─────────────────────────────────────────────────────────
@@ -553,6 +644,12 @@ class UdpGroupCircle
 			if ($circle) {
 				$selfContact = Contact::selectFirst(['id'], ['uid' => $posterUid, 'self' => true]);
 				if ($selfContact && self::isMember($circleId, $selfContact['id'])) {
+					self::doFanOut($uriId, $circle, $posterUid);
+					return;
+				}
+				// First post to a group the user has been invited to = implicit acceptance.
+				if ($selfContact && self::getPendingInviteForUser($circleId, $posterUid)) {
+					self::acceptInvite($circleId, $posterUid);
 					self::doFanOut($uriId, $circle, $posterUid);
 					return;
 				}
