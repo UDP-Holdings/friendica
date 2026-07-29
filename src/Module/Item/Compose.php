@@ -80,9 +80,37 @@ class Compose extends BaseModule
 	protected function post(array $request = [])
 	{
 		if (!empty($request['body'])) {
+			$uid           = DI::userSession()->getLocalUserId();
 			$groupCircleId = (int)($request['group_circle_id'] ?? 0);
+
+			// !! (bang-bang) syntax: resolve !!nick to a Group Circle from any compose surface.
+			// Takes precedence if group_circle_id is not already set.
+			if (!$groupCircleId && preg_match('/!!(\w+)/', $request['body'], $m)) {
+				$resolved = UdpGroupCircle::findByActorNick($m[1], $uid);
+				if ($resolved) {
+					$groupCircleId = (int)$resolved['id'];
+				}
+			}
+
 			if ($groupCircleId) {
 				UdpGroupCircle::setPendingCircleId($groupCircleId);
+
+				// Force private ACL: restrict post to the group actor so it never leaks
+				// to the poster's public followers. localFanOut() handles member delivery.
+				$circle = UdpGroupCircle::getById($groupCircleId);
+				if ($circle) {
+					$actorSelf = Contact::selectFirst(['url'], ['uid' => $circle['actor-uid'], 'self' => true]);
+					if (DBA::isResult($actorSelf)) {
+						$actorCid = Contact::getIdForURL($actorSelf['url'], $uid, false);
+						if ($actorCid) {
+							$_REQUEST['contact_allow'] = (string)$actorCid;
+							$_REQUEST['contact_deny']  = '';
+							$_REQUEST['circle_allow']  = '';
+							$_REQUEST['circle_deny']   = '';
+							$_REQUEST['visibility']    = 'custom';
+						}
+					}
+				}
 			}
 			$_REQUEST['return'] = 'network';
 			require_once 'mod/item.php';

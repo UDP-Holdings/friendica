@@ -511,6 +511,31 @@ class UdpGroupCircle
 	}
 
 	/**
+	 * Resolves a !!nick mention to a circle the given user is a member of.
+	 * Matches case-insensitively against the group actor's nick.
+	 * Returns the circle row, or null if not found or user is not a member.
+	 */
+	public static function findByActorNick(string $nick, int $uid): ?array
+	{
+		$nick = strtolower(trim($nick));
+		if (!$nick) {
+			return null;
+		}
+
+		$circles = DBA::selectToArray('udp-group-circle', [], ['closed' => null]);
+		foreach ($circles as $circle) {
+			$actorSelf = Contact::selectFirst(['nick'], ['uid' => $circle['actor-uid'], 'self' => true]);
+			if (!DBA::isResult($actorSelf) || strtolower($actorSelf['nick']) !== $nick) {
+				continue;
+			}
+			if (self::isMemberByUid($circle['id'], $uid)) {
+				return $circle;
+			}
+		}
+		return null;
+	}
+
+	/**
 	 * Returns all circles where this user has a pending (awaiting_invitee) invitation.
 	 * Used by the sidebar widget.
 	 *
