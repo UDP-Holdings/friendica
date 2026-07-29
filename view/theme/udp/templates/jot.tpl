@@ -4,7 +4,7 @@
   *
   * SPDX-License-Identifier: AGPL-3.0-or-later
   *}}
-{{* UDP: split dropdown — Post to Timeline / Start a Conversation / Message *}}
+{{* UDP: split dropdown — Compose a post / Direct message *}}
 <div class="btn-group pull-right" id="jotOpen">
 	<a id="udp-jot-main" class="action-button btn btn-primary" href="compose/{{$posttype}}{{if $group_circle_id}}?group_circle_id={{$group_circle_id}}{{elseif $content}}?body={{$content}}{{/if}}">
 		<i class="fa fa-lg fa-pencil"></i>
@@ -18,23 +18,18 @@
 	<ul class="dropdown-menu dropdown-menu-right">
 		<li>
 			<a id="udp-jot-timeline" href="compose/{{$posttype}}{{if $group_circle_id}}?group_circle_id={{$group_circle_id}}{{elseif $content}}?body={{$content}}{{/if}}">
-				<i class="fa fa-globe fa-fw" aria-hidden="true"></i> Post to Timeline
-			</a>
-		</li>
-		<li>
-			<a id="udp-jot-convo" href="compose/{{$posttype}}?udp_mode=conversation{{if $group_circle_id}}&amp;group_circle_id={{$group_circle_id}}{{/if}}{{if $content}}&amp;body={{$content}}{{/if}}">
-				<i class="fa fa-comments fa-fw" aria-hidden="true"></i> Start a Conversation
+				<i class="fa fa-pencil fa-fw" aria-hidden="true"></i> Compose a post
 			</a>
 		</li>
 		<li class="divider" role="separator"></li>
 		<li>
 			<a href="message/new">
-				<i class="fa fa-envelope fa-fw" aria-hidden="true"></i> Message
+				<i class="fa fa-envelope fa-fw" aria-hidden="true"></i> Direct message
 			</a>
 		</li>
 	</ul>
 </div>
-<script>(function(){var d=window.UDP_COMPOSE_DEFAULTS;if(!d||!d.circle_allow)return;var p='circle_allow='+encodeURIComponent(d.circle_allow);['udp-jot-main','udp-jot-timeline','udp-jot-convo'].forEach(function(id){var el=document.getElementById(id);if(!el)return;var h=el.getAttribute('href');el.setAttribute('href',h+(h.indexOf('?')>=0?'&':'?')+p);});}());</script>
+<script>(function(){var d=window.UDP_COMPOSE_DEFAULTS;if(!d||!d.circle_allow)return;var p='circle_allow='+encodeURIComponent(d.circle_allow);['udp-jot-main','udp-jot-timeline'].forEach(function(id){var el=document.getElementById(id);if(!el)return;var h=el.getAttribute('href');el.setAttribute('href',h+(h.indexOf('?')>=0?'&':'?')+p);});}());</script>
 
 <div id="jot-content">
 	<div id="jot-sections">

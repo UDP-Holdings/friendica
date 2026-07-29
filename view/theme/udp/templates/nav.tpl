@@ -650,24 +650,17 @@
 	<div class="udp-compose-sheet-panel">
 		<div class="udp-compose-sheet-header">What would you like to share?</div>
 		<a href="{{$baseurl}}/compose" class="udp-compose-option">
-			<span class="udp-compose-option-icon"><i class="fa fa-globe" aria-hidden="true"></i></span>
+			<span class="udp-compose-option-icon"><i class="fa fa-pencil" aria-hidden="true"></i></span>
 			<div class="udp-compose-option-text">
-				<strong>Post to Timeline</strong>
-				<small>Visible to everyone on this node.</small>
-			</div>
-		</a>
-		<a href="{{$baseurl}}/compose?udp_mode=conversation" class="udp-compose-option">
-			<span class="udp-compose-option-icon"><i class="fa fa-comments" aria-hidden="true"></i></span>
-			<div class="udp-compose-option-text">
-				<strong>Start a Conversation</strong>
-				<small>Private thread with specific people.</small>
+				<strong>Compose a post</strong>
+				<small>Share with your neighborhood or a specific list.</small>
 			</div>
 		</a>
 		<a href="{{$baseurl}}/message/new" class="udp-compose-option">
 			<span class="udp-compose-option-icon"><i class="fa fa-envelope" aria-hidden="true"></i></span>
 			<div class="udp-compose-option-text">
-				<strong>Message</strong>
-				<small>Direct message to one person.</small>
+				<strong>Direct message</strong>
+				<small>Private message to one person.</small>
 			</div>
 		</a>
 	</div>

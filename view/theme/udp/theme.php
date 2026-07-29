@@ -34,10 +34,6 @@ function udp_init(AppHelper $appHelper)
 		DI::pConfig()->set($uid, 'frio', 'always_open_compose', true);
 	}
 
-	// Pass compose mode to client so the template can adapt without a PHP fork
-	$udp_mode = htmlspecialchars($_REQUEST['udp_mode'] ?? '', ENT_QUOTES, 'UTF-8');
-	DI::page()['htmlhead'] .= '<script>window.UDP_MODE=' . json_encode($udp_mode) . ';</script>';
-
 	// Version build suffix: 6-char git hash + 'rc' if worktree is dirty.
 	// Falls back to view/theme/udp/.build-hash (write this file in your docker build step).
 	$_udp_build = '';
