@@ -21,9 +21,9 @@
 				<input type="hidden" name="contact_id" value="{{$m['contact-id']}}">
 				{{if $m.role == 0}}
 					<button type="submit" name="action" value="promote" class="btn btn-xs btn-default">Make co-owner</button>
+					<button type="submit" name="action" value="remove" class="btn btn-xs btn-danger"
+						onclick="return confirm('Remove this member?')">Remove</button>
 				{{/if}}
-				<button type="submit" name="action" value="remove" class="btn btn-xs btn-danger"
-					onclick="return confirm('Remove this member?')">Remove</button>
 			</form>
 			{{/if}}
 		</div>
@@ -37,7 +37,7 @@
 			<button type="submit" class="btn btn-sm btn-default"
 				onclick="return confirm('Leave this group?')">Leave group</button>
 		</form>
-		{{if $is_co_owner}}
+		{{if $is_creator}}
 		<form method="post" action="{{$leave_url}}">
 			<input type="hidden" name="form_security_token" value="{{$leave_token}}">
 			<input type="hidden" name="action" value="close">

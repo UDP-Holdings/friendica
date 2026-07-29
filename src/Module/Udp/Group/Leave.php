@@ -38,8 +38,8 @@ class Leave extends BaseModule
 			DI::baseUrl()->redirect('udp/group');
 		}
 
-		// Co-owner can delete the group entirely
-		if (($request['action'] ?? '') === 'close' && UdpGroupCircle::isCoOwner($circleId, $selfContact['id'])) {
+		// Only the creator can delete the group
+		if (($request['action'] ?? '') === 'close' && $circle['creator-uid'] === $uid) {
 			UdpGroupCircle::close($circleId);
 			DI::sysmsg()->addInfo(DI::l10n()->t('The group has been deleted.'));
 			DI::baseUrl()->redirect('udp/group');

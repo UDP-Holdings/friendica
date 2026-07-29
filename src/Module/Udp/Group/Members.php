@@ -96,6 +96,7 @@ class Members extends BaseModule
 			'$members'             => $members,
 			'$pending_invites'     => $pendingInvites,
 			'$is_co_owner'         => $isCoOwner,
+			'$is_creator'          => ($circle['creator-uid'] === $uid),
 			'$is_closed'           => !empty($circle['closed']),
 			'$self_contact_id'     => $selfContact['id'],
 			'$form_security_token' => self::getFormSecurityToken('udp_group_members_' . $circleId),
