@@ -142,6 +142,10 @@ class Community extends Timeline
 	{
 		parent::parseRequest($request);
 
+		// UDP Social does not expose a local or global community timeline.
+		// Discovery is handled through Lists and the relay model, not a public square.
+		throw new HTTPException\NotFoundException();
+
 		if ($this->config->get('system', 'block_public') && !$this->session->isAuthenticated()) {
 			throw new HTTPException\ForbiddenException($this->l10n->t('Public access denied.'));
 		}

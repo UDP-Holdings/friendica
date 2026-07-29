@@ -68,14 +68,6 @@
 						</a>
 					</li>
 					{{/if}}
-					{{if $nav.community}}
-					<li class="nav-segment">
-						<a accesskey="c" class="nav-menu {{$sel.community}}" href="{{$nav.community.0}}"
-							data-toggle="tooltip" data-viewport="#topbar-first" aria-label="{{$nav.community.3}}" title="{{$nav.community.3}}">
-							<i class="fa fa-lg fa-bullseye fa-fw" aria-hidden="true"></i>
-						</a>
-					</li>
-					{{/if}}
 					{{if $nav.messages}}
 					<li class="nav-segment hidden-xs">
 						<a accesskey="m" id="nav-messages-link" href="{{$nav.messages.0}}"
