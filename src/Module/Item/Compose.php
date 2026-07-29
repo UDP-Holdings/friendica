@@ -89,6 +89,11 @@ class Compose extends BaseModule
 				$resolved = UdpGroupCircle::findByActorNick($m[1], $uid);
 				if ($resolved) {
 					$groupCircleId = (int)$resolved['id'];
+				} else {
+					$this->systemMessages->addNotice($this->l10n->t(
+						'!!%s did not match any of your circles — post was not sent to a circle. Circle names cannot contain spaces.',
+						$m[1]
+					));
 				}
 			}
 
