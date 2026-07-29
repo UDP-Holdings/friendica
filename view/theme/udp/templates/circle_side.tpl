@@ -39,7 +39,8 @@
 								<span class="notify badge pull-right udp-markread"
 									data-circle-id="{{$circle.id}}"
 									data-token="{{$form_security_token_markread}}"
-									title="Mark list as read"
+									data-href="{{$circle.href}}"
+									title="List options"
 									style="cursor:pointer"></span>
 							{{else}}
 								<span class="notify badge pull-right"></span>
@@ -66,17 +67,65 @@
 		</div>
 	</div>
 </nav>
+<div id="udp-markread-popover" role="menu" style="display:none; position:fixed; z-index:9999; border-radius:4px; box-shadow:0 2px 8px rgba(0,0,0,.25); min-width:140px; padding:4px 0; background:#fff; border:1px solid #ccc;">
+	<a id="udp-markread-view" href="#" style="display:block; padding:6px 14px; cursor:pointer; text-decoration:none; color:#333; white-space:nowrap;">View list</a>
+	<a id="udp-markread-clear" href="#" style="display:block; padding:6px 14px; cursor:pointer; text-decoration:none; color:#333; white-space:nowrap;">Mark as read</a>
+</div>
+<style>
+	#udp-markread-popover a:hover { background:#f5f5f5; }
+	@media (prefers-color-scheme: dark) {
+		#udp-markread-popover { background:#2a2a2a !important; border-color:#444 !important; }
+		#udp-markread-popover a { color:#ddd !important; }
+		#udp-markread-popover a:hover { background:#3a3a3a !important; }
+	}
+</style>
 <script>
 	initWidget('circle-sidebar', 'circle-sidebar-inflated');
 
-	document.querySelectorAll('.udp-markread').forEach(function(el) {
-		el.addEventListener('click', function(e) {
+	(function() {
+		var popover      = document.getElementById('udp-markread-popover');
+		var viewLink     = document.getElementById('udp-markread-view');
+		var clearLink    = document.getElementById('udp-markread-clear');
+		var activeBadge  = null;
+
+		document.body.appendChild(popover);
+
+		function closePopover() {
+			popover.style.display = 'none';
+			activeBadge = null;
+		}
+
+		function openPopover(badge) {
+			activeBadge = badge;
+			viewLink.href = badge.dataset.href;
+
+			var rect = badge.getBoundingClientRect();
+			var popW = 144;
+			popover.style.display = 'block';
+			popover.style.top  = (rect.bottom + 4) + 'px';
+			popover.style.left = Math.max(4, rect.right - popW) + 'px';
+		}
+
+		document.querySelectorAll('.udp-markread').forEach(function(el) {
+			el.addEventListener('click', function(e) {
+				e.preventDefault();
+				e.stopPropagation();
+				if (!this.textContent.trim()) return;
+				if (activeBadge === this && popover.style.display !== 'none') {
+					closePopover();
+				} else {
+					openPopover(this);
+				}
+			});
+		});
+
+		clearLink.addEventListener('click', function(e) {
 			e.preventDefault();
-			e.stopPropagation();
-			var badge = this;
-			if (!badge.textContent.trim()) return;
+			if (!activeBadge) return;
+			var badge    = activeBadge;
 			var circleId = badge.dataset.circleId;
 			var token    = badge.dataset.token;
+			closePopover();
 			fetch('/circle/markread/' + circleId + '?t=' + encodeURIComponent(token), {
 				credentials: 'same-origin',
 				redirect:    'follow'
@@ -87,5 +136,11 @@
 				}
 			});
 		});
-	});
+
+		document.addEventListener('click', function(e) {
+			if (popover.style.display !== 'none' && !popover.contains(e.target)) {
+				closePopover();
+			}
+		});
+	})();
 </script>
