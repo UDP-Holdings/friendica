@@ -599,7 +599,8 @@ class Circle
 			'$createtext'          => DI::l10n()->t('Create a new list'),
 			'$create_circle'       => DI::l10n()->t('List Name: '),
 			'$edit_circles_text'   => DI::l10n()->t('Edit lists'),
-			'$form_security_token' => BaseModule::getFormSecurityToken('circle_edit'),
+			'$form_security_token'         => BaseModule::getFormSecurityToken('circle_edit'),
+			'$form_security_token_markread' => BaseModule::getFormSecurityToken('circle_markread'),
 		]);
 
 		return $o;
