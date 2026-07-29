@@ -219,6 +219,11 @@ class UdpGroupCircle
 	/**
 	 * Looks up a contact by AP author URL and returns true if they're a member.
 	 */
+	public static function isMemberByUid(int $circleId, int $uid): bool
+	{
+		return DBA::exists('udp-group-circle-member', ['circle-id' => $circleId, 'uid' => $uid]);
+	}
+
 	public static function isMemberByAuthorLink(int $circleId, string $authorLink): bool
 	{
 		$contact = Contact::selectFirst(['id'], ['url' => $authorLink]);

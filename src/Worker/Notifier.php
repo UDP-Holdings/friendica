@@ -457,6 +457,12 @@ class Notifier
 				}
 				if ($target_item['origin'] || ($target_item['network'] != Protocol::ACTIVITYPUB)) {
 					if ($target_uid != $target_item['uid']) {
+						// Group Circle: doFanOut() handles member copies; skip non-members to prevent phantom badge counts.
+						$gcRow = DBA::selectFirst('udp-group-post', ['circle-id'], ['uri-id' => $target_item['uri-id']]);
+						if (DBA::isResult($gcRow) && !\Friendica\Model\UdpGroupCircle::isMemberByUid($gcRow['circle-id'], $target_uid)) {
+							DI::logger()->info('Group Circle: skipping local delivery to non-member', ['uid' => $target_uid, 'circle-id' => $gcRow['circle-id']]);
+							continue;
+						}
 						$fields = ['protocol' => Conversation::PARCEL_LOCAL_DFRN, 'direction' => Conversation::PUSH, 'post-reason' => Item::PR_DIRECT];
 						Item::storeForUserByUriId($target_item['uri-id'], $target_uid, $fields, $target_item['uid']);
 						DI::logger()->info('Delivered locally', ['cmd' => $cmd, 'id' => $target_item['id'], 'target' => $target_uid]);
@@ -772,6 +778,12 @@ class Notifier
 					}
 					if ($target_item['origin'] || ($target_item['network'] != Protocol::ACTIVITYPUB)) {
 						if ($target_uid != $target_item['uid']) {
+							// Group Circle: doFanOut() handles member copies; skip non-members to prevent phantom badge counts.
+							$gcRow = DBA::selectFirst('udp-group-post', ['circle-id'], ['uri-id' => $target_item['uri-id']]);
+							if (DBA::isResult($gcRow) && !\Friendica\Model\UdpGroupCircle::isMemberByUid($gcRow['circle-id'], $target_uid)) {
+								DI::logger()->info('Group Circle: skipping local delivery to non-member', ['uid' => $target_uid, 'circle-id' => $gcRow['circle-id']]);
+								continue;
+							}
 							$fields = ['protocol' => Conversation::PARCEL_LOCAL_DFRN, 'direction' => Conversation::PUSH, 'post-reason' => Item::PR_BCC];
 							Item::storeForUserByUriId($target_item['uri-id'], $target_uid, $fields, $target_item['uid']);
 							DI::logger()->info('Delivered locally', ['cmd' => $cmd, 'id' => $target_item['id'], 'inbox' => $inbox]);
