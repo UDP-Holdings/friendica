@@ -46,7 +46,6 @@ class MemberInviteApprove extends BaseAdmin
 		}
 
 		$friendEmail = $data['friend_email'] ?? '';
-		$friendName  = $data['friend_name']  ?? $friendEmail;
 		$sitename    = DI::config()->get('config', 'sitename');
 
 		// FIXME: The invite code is placed in the URL and pre-filled in the form, but
@@ -57,19 +56,20 @@ class MemberInviteApprove extends BaseAdmin
 		$inviteCode  = Register::createForInvitation();
 		$registerUrl = (string) DI::baseUrl() . '/register?invite=' . $inviteCode;
 
-		$subject = DI::l10n()->t("You've been invited to join %s", $sitename);
-		$body    = DI::l10n()->t(
-			"Hi %s,\n\n%s has invited you to join their community on %s.\n\nClick the link below to create your account:\n\n%s\n\nThis invitation link expires in 7 days.\n\n— The %s team",
-			$friendName,
+		$subject  = DI::l10n()->t("You're invited to join %s", $sitename);
+		$preamble = DI::l10n()->t(
+			"%s has invited you to join their community on %s.",
 			$data['requester_name'] ?? 'A community member',
 			$sitename,
+		);
+		$body = DI::l10n()->t(
+			"Use the link below to create your account — it expires in 7 days:\n\n%s",
 			$registerUrl,
-			$sitename
 		);
 
 		$mail = DI::emailer()
 			->newSystemMail()
-			->withMessage($subject, $body)
+			->withMessage($subject, $preamble, $body)
 			->withRecipient($friendEmail)
 			->build();
 

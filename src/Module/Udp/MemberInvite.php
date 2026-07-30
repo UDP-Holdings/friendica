@@ -103,20 +103,23 @@ class MemberInvite extends BaseModule
 
 		$approveUrl = (string) DI::baseUrl() . '/udp/member-pair-approve/' . $token;
 		$subject    = DI::l10n()->t('%s wants to connect with someone on %s', $user['username'] ?? 'A member', $remoteDomain);
-		$body       = DI::l10n()->t(
-			"Hi,\n\n%s (%s) wants to connect with %s on %s, but that node isn't paired with %s yet.%s\n\nReview and send a pairing request (expires in 3 days):\n%s\n\n— UDP Social",
+		$preamble   = DI::l10n()->t(
+			"%s (%s) wants to connect with %s, but %s isn't paired with %s yet.%s",
 			$user['username'] ?? '',
 			$user['email']    ?? '',
 			$contact,
 			$remoteDomain,
 			$sitename,
-			$note ? "\n\nNote from user: " . $note : '',
-			$approveUrl
+			$note ? "\n\nNote from member: " . $note : '',
+		);
+		$body = DI::l10n()->t(
+			"Send a pairing request (expires in 3 days):\n  %s",
+			$approveUrl,
 		);
 
 		$mail = DI::emailer()
 			->newSystemMail()
-			->withMessage($subject, $body)
+			->withMessage($subject, $preamble, $body)
 			->withRecipient($adminEmail)
 			->build();
 
@@ -167,20 +170,23 @@ class MemberInvite extends BaseModule
 		]));
 
 		$approveUrl = (string) DI::baseUrl() . '/udp/member-invite-approve/' . $token;
-		$subject    = DI::l10n()->t('%s wants to invite a friend to %s', $user['username'] ?? 'A member', $sitename);
-		$body       = DI::l10n()->t(
-			"Hi,\n\n%s (%s) would like to invite the following person to join %s:\n\nEmail: %s%s\n\nTo approve and send them an invitation, visit:\n%s\n\nThis request expires in 3 days.\n\n— UDP Social",
+		$subject    = DI::l10n()->t('%s wants to invite someone to %s', $user['username'] ?? 'A member', $sitename);
+		$preamble   = DI::l10n()->t(
+			"%s (%s) would like to invite the following person to join %s:\n\n  %s%s",
 			$user['username'] ?? '',
 			$user['email']    ?? '',
 			$sitename,
 			$friendEmail,
-			$note ? "\nNote: " . $note : '',
-			$approveUrl
+			$note ? "\n\n  Note: " . $note : '',
+		);
+		$body = DI::l10n()->t(
+			"Approve and send the invitation (expires in 3 days):\n  %s",
+			$approveUrl,
 		);
 
 		$mail = DI::emailer()
 			->newSystemMail()
-			->withMessage($subject, $body)
+			->withMessage($subject, $preamble, $body)
 			->withRecipient($adminEmail)
 			->build();
 
@@ -199,18 +205,20 @@ class MemberInvite extends BaseModule
 		$inviteCode  = Register::createForInvitation();
 		$registerUrl = (string) DI::baseUrl() . '/register?invite=' . $inviteCode;
 
-		$subject = DI::l10n()->t("You've been invited to join %s", $sitename);
-		$body    = DI::l10n()->t(
-			"Hi,\n\n%s has invited you to join their community on %s.\n\nClick the link below to create your account:\n\n%s\n\nThis invitation link expires in 7 days.\n\n— The %s team",
+		$subject  = DI::l10n()->t("You're invited to join %s", $sitename);
+		$preamble = DI::l10n()->t(
+			"%s has invited you to join their community on %s.",
 			$requesterName,
 			$sitename,
+		);
+		$body = DI::l10n()->t(
+			"Use the link below to create your account — it expires in 7 days:\n\n%s",
 			$registerUrl,
-			$sitename
 		);
 
 		$mail = DI::emailer()
 			->newSystemMail()
-			->withMessage($subject, $body)
+			->withMessage($subject, $preamble, $body)
 			->withRecipient($friendEmail)
 			->build();
 
