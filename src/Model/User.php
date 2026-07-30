@@ -1728,39 +1728,29 @@ class User
 	{
 		$preamble = Strings::deindent($l10n->t(
 			'
-				Dear %1$s,
-				Thank you for registering at %2$s. Your account has been created.
+				Hi %1$s,
+
+				Welcome to %2$s — your account is ready.
 			',
 			$user['username'],
 			$sitename,
 		));
 		$body = Strings::deindent($l10n->t(
 			'
-			The login details are as follows:
+			Your login details:
 
-			Site Location:	%3$s
-			Login Name:		%1$s
-			Password:		%5$s
+			  Site:      %3$s
+			  Username:  %1$s
+			  Password:  %5$s
 
-			You may change your password from your account "Settings" page after logging
-			in.
+			Once you\'re in:
 
-			Please take a few moments to review the other account settings on that page.
+			  · Change your password from Settings → Account.
+			  · Add a profile photo so your community recognizes you.
+			  · Browse Contacts to find people you know.
 
-			You may also wish to add some basic information to your default profile
-			' . "\x28" . 'on the "Profiles" page' . "\x29" . ' so that other people can easily find you.
-
-			We recommend adding a profile photo, adding some profile "keywords" ' . "\x28" . 'very useful
-			in making new friends' . "\x29" . ' - and perhaps what country you live in; if you do not wish
-			to be more specific than that.
-
-			We fully respect your right to privacy, and none of these items are necessary.
-			If you are new and do not know anybody here, they may help
-			you to make some new and interesting friends.
-
-			If you ever want to delete your account, you can do so at %3$s/settings/removeme
-
-			Thank you and welcome to %2$s.',
+			To delete your account at any time:
+			%3$s/settings/removeme',
 			$user['nickname'],
 			$sitename,
 			$siteurl,
@@ -1770,7 +1760,7 @@ class User
 
 		$email = DI::emailer()
 			->newSystemMail()
-			->withMessage(DI::l10n()->t('Registration details for %s', $sitename), $preamble, $body)
+			->withMessage(DI::l10n()->t('Your %s account is ready', $sitename), $preamble, $body)
 			->forUser($user)
 			->withRecipient($user['email'])
 			->build();
