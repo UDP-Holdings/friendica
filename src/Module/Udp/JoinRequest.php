@@ -53,18 +53,19 @@ class JoinRequest extends BaseModule
 		$registerUrl = (string) DI::baseUrl() . '/register?invite=' . $inviteCode;
 
 		$sitename = DI::config()->get('config', 'sitename');
-		$subject  = DI::l10n()->t("You've been invited to join %s", $sitename);
-		$body     = DI::l10n()->t(
-			"Hi %s,\n\nYou've been invited to join %s.\n\nClick the link below to create your account:\n\n%s\n\nThis invitation expires in 3 days.\n\n— The %s team",
-			$recipientName,
+		$subject  = DI::l10n()->t('Your request to join %s has been accepted', $sitename);
+		$preamble = DI::l10n()->t(
+			'Your request to join %s has been accepted.',
 			$sitename,
+		);
+		$body = DI::l10n()->t(
+			"Use the link below to create your account — it expires in 3 days:\n\n%s",
 			$registerUrl,
-			$sitename
 		);
 
 		$email = DI::emailer()
 			->newSystemMail()
-			->withMessage($subject, $body)
+			->withMessage($subject, $preamble, $body)
 			->withRecipient($recipientEmail)
 			->build();
 
