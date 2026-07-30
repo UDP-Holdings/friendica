@@ -80,7 +80,7 @@ class Compose extends BaseModule
 	protected function post(array $request = [])
 	{
 		if (!empty($request['body'])) {
-			$uid           = DI::userSession()->getLocalUserId();
+			$uid           = $this->session->getLocalUserId();
 			$groupCircleId = (int)($request['group_circle_id'] ?? 0);
 
 			// !! (bang-bang) syntax: resolve !!nick to a Group Circle from any compose surface.
