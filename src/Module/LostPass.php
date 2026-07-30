@@ -92,31 +92,22 @@ final class LostPass extends BaseModule
 		$resetlink = $this->baseUrl . '/lostpass/' . $pwdreset_token;
 
 		$preamble = Strings::deindent($this->l10n->t('
-			Dear %1$s,
-				A request was recently received at "%2$s" to reset your account
-			password. In order to confirm this request, please select the verification link
-			below or paste it into your web browser address bar.
+			Hi %1$s,
 
-			If you did NOT request this change, please DO NOT follow the link
-			provided and ignore and/or delete this email, the request will expire shortly.
+			We received a request to reset your %2$s password. Use the link
+			below to continue — it expires in 1 hour.
 
-			Your password will not be changed unless we can verify that you
-			issued this request.', $user['username'], $sitename));
+			If you did not request this, you can ignore this email. Your
+			password will not change.', $user['username'], $sitename));
 		$body = Strings::deindent($this->l10n->t('
-			Follow this link soon to verify your identity:
+			Reset your password:
 
 			%1$s
 
-			You will then receive a follow-up message containing the new password.
-			You may change that password from your account settings page after logging in.
-
-			The login details are as follows:
-
-			Site Location:	%2$s
-			Login Name:	%3$s', $resetlink, $this->baseUrl, $user['nickname']));
+			Your username: %3$s', $resetlink, $this->baseUrl, $user['nickname']));
 
 		$email = $this->emailer->newSystemMail()
-			->withMessage($this->l10n->t('Password reset requested at %s', $sitename), $preamble, $body)
+			->withMessage($this->l10n->t('Reset your %s password', $sitename), $preamble, $body)
 			->forUser($user)
 			->withRecipient($user['email'])
 			->build();
@@ -208,23 +199,21 @@ final class LostPass extends BaseModule
 
 			$sitename = $this->config->get('config', 'sitename');
 			$preamble = Strings::deindent($this->l10n->t('
-				Dear %1$s,
-					Your password has been changed as requested. Please retain this
-				information for your records ' . "\x28" . 'or change your password immediately to
-				something that you will remember' . "\x29" . '.
-			', $user['username']));
+				Hi %1$s,
+
+				Your password has been reset.', $user['username']));
 			$body = Strings::deindent($this->l10n->t('
-				Your login details are as follows:
+				Your new login details:
 
-				Site Location:	%1$s
-				Login Name:	%2$s
-				Password:	%3$s
+				  Site:      %1$s
+				  Username:  %2$s
+				  Password:  %3$s
 
-				You may change that password from your account settings page after logging in.
+				Change your password from Settings → Account once you\'re in.
 			', $this->baseUrl, $user['nickname'], $new_password));
 
 			$email = $this->emailer->newSystemMail()
-				->withMessage($this->l10n->t('Your password has been changed at %s', $sitename), $preamble, $body)
+				->withMessage($this->l10n->t('Your %s password has been reset', $sitename), $preamble, $body)
 				->forUser($user)
 				->withRecipient($user['email'])
 				->build();
