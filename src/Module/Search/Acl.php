@@ -40,6 +40,7 @@ class Acl extends BaseModule
 	const TYPE_MENTION_GROUP          = 'f';
 	const TYPE_PRIVATE_MESSAGE        = 'm';
 	const TYPE_ANY_CONTACT            = 'a';
+	const TYPE_UDP_GROUP_CIRCLE       = 'gg';
 
 	/** @var IHandleUserSessions */
 	private $session;
@@ -81,6 +82,8 @@ class Acl extends BaseModule
 		$type = $request['type'] ?? self::TYPE_MENTION_CONTACT_CIRCLE;
 		if ($type === self::TYPE_GLOBAL_CONTACT) {
 			$o = $this->globalContactSearch($request);
+		} elseif ($type === self::TYPE_UDP_GROUP_CIRCLE) {
+			$o = $this->udpGroupCircleSearch($request);
 		} else {
 			$o = $this->regularContactSearch($request, $type);
 		}
@@ -358,5 +361,43 @@ class Acl extends BaseModule
 
 		$this->logger->info('ACL {action} - {subaction} - done', ['module' => 'acl', 'action' => 'content', 'subaction' => 'search', 'search' => $search, 'type' => $type, 'conversation' => $conv_id]);
 		return $o;
+	}
+
+	// UDP: returns only Group Circle actors the current user belongs to,
+	// for !! autocomplete. Returns id='' so editor_replace inserts !!nick not !!nick+id.
+	private function udpGroupCircleSearch(array $request): array
+	{
+		$search = trim($request['search'] ?? $request['query'] ?? '');
+
+		$memberRows = DBA::selectToArray('udp-group-circle-member', ['circle-id'], ['uid' => $this->session->getLocalUserId()]);
+		if (empty($memberRows)) {
+			return ['tot' => 0, 'start' => 0, 'count' => 0, 'items' => []];
+		}
+
+		$circleIds = array_column($memberRows, 'circle-id');
+		$gcRows    = DBA::selectToArray('udp-group-circle', ['actor-uid', 'name'], ['id' => $circleIds, 'closed' => null]);
+
+		$items = [];
+		foreach ($gcRows as $gc) {
+			$actorSelf = Contact::selectFirst(['url', 'nick', 'micro'], ['uid' => $gc['actor-uid'], 'self' => true]);
+			if (!DBA::isResult($actorSelf)) {
+				continue;
+			}
+			if ($search !== '' && stripos($gc['name'], $search) === false && stripos($actorSelf['nick'], $search) === false) {
+				continue;
+			}
+			$items[] = [
+				'type'    => self::TYPE_MENTION_CONTACT,
+				'photo'   => $actorSelf['micro'] ?: '',
+				'name'    => htmlspecialchars($gc['name']),
+				'id'      => '',
+				'network' => \Friendica\Core\Protocol::ACTIVITYPUB,
+				'link'    => $actorSelf['url'],
+				'nick'    => htmlentities($actorSelf['nick']),
+				'group'   => true,
+			];
+		}
+
+		return ['tot' => count($items), 'start' => 0, 'count' => count($items), 'items' => $items];
 	}
 }

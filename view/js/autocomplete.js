@@ -251,12 +251,24 @@ function string2bb(element) {
 			template: contact_format,
 		};
 
-		// Autocomplete groups
+		// Autocomplete AP group accounts (single !, not !!)
 		groups = {
-			match: /(^|\s)(!\!*)([^ \n]+)$/,
+			match: /(^|\s)(!)(?!!)([^ \n]+)$/,
 			index: 3,
 			search: function(term, callback) { contact_search(term, callback, backend_url, 'f'); },
 			replace: editor_replace,
+			template: contact_format,
+		};
+
+		// UDP: !! syntax — autocomplete Group Circle actors the user belongs to
+		udpCircles = {
+			match: /(^|\s)(!!)([^ \n]+)$/,
+			index: 3,
+			search: function(term, callback) { contact_search(term, callback, backend_url, 'gg'); },
+			replace: function(item) {
+				// !! syntax needs just !!nick (no @addr, no +id suffix)
+				return '$1!!' + (item.nick || '').replace(/\s+/g, '') + ' ';
+			},
 			template: contact_format,
 		};
 
@@ -287,7 +299,7 @@ function string2bb(element) {
 		};
 
 		this.attr('autocomplete','off');
-		this.textcomplete([contacts, groups, smilies, tags], {dropdownClassName: 'acpopup', debounce: 250, zIndex: 1050});
+		this.textcomplete([contacts, udpCircles, groups, smilies, tags], {dropdownClassName: 'acpopup', debounce: 250, zIndex: 1050});
 		this.fixTextcompleteEscape();
 
 		return this;
