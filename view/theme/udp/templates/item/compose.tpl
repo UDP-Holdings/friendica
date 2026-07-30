@@ -735,10 +735,12 @@
 			var myNonce = ++nonce;
 			previewEl.classList.add('is-loading');
 
-			// Expand photo tokens for preview without mutating the textarea
+			// Expand photo tokens for preview without mutating the textarea.
+			// Also strip !! routing directives — they're not display content.
 			var expanded     = window.PhotoTokenizer ? window.PhotoTokenizer.expand(textarea.value) : textarea.value;
+			var previewText  = expanded.replace(/[ \t]*!!(\w+)[ \t]*/g, '').trim();
 			var originalVal  = textarea.value;
-			textarea.value   = expanded;
+			textarea.value   = previewText;
 			var formData     = $('#comment-edit-form-' + FORM_ID).serialize() + '&preview=1';
 			textarea.value   = originalVal;
 

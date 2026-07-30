@@ -152,10 +152,13 @@ class Compose extends BaseModule
 
 		$user = User::getById($this->session->getLocalUserId(), ['allow_cid', 'allow_gid', 'deny_cid', 'deny_gid', 'default-location']);
 
-		$contact_allow_list = $this->ACLFormatter->expand($user['allow_cid']);
-		$circle_allow_list  = $this->ACLFormatter->expand($user['allow_gid']);
-		$contact_deny_list  = $this->ACLFormatter->expand($user['deny_cid']);
-		$circle_deny_list   = $this->ACLFormatter->expand($user['deny_gid']);
+		// UDP: neighborhood (public) is the platform default. Ignore the user's stored
+		// account-level ACL — Friendica creates a "Friends" circle and sets it as the
+		// default allow_gid for new accounts, which would silently make all posts private.
+		$contact_allow_list = [];
+		$circle_allow_list  = [];
+		$contact_deny_list  = [];
+		$circle_deny_list   = [];
 
 		switch ($posttype) {
 			case Item::PT_PERSONAL_NOTE:
