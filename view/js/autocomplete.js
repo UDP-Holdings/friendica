@@ -266,6 +266,10 @@ function string2bb(element) {
 			index: 3,
 			search: function(term, callback) { contact_search(term, callback, backend_url, 'gg'); },
 			replace: function(item) {
+				// Activate the GC banner (same event the @mention path uses)
+				if (item.group) {
+					$(document).trigger('udp:group-mention', [item]);
+				}
 				// !! syntax needs just !!nick (no @addr, no +id suffix)
 				return '$1!!' + (item.nick || '').replace(/\s+/g, '') + ' ';
 			},

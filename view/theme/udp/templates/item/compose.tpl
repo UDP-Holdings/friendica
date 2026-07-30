@@ -846,7 +846,9 @@
 		$(document).on('input', '#comment-edit-text-' + FORM_ID, function () {
 			if (!mentionAddr) return;
 			var nick = mentionAddr.split('@')[0];
-			if ($(this).val().indexOf('@' + nick) === -1) {
+			var val  = $(this).val();
+			// Clear banner if neither @nick nor !!nick is still present
+			if (val.indexOf('@' + nick) === -1 && val.indexOf('!!' + nick) === -1) {
 				if (gcIdField) gcIdField.value = '0';
 				mentionAddr = null;
 				hideBanner();

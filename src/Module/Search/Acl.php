@@ -379,7 +379,7 @@ class Acl extends BaseModule
 
 		$items = [];
 		foreach ($gcRows as $gc) {
-			$actorSelf = Contact::selectFirst(['url', 'nick', 'micro'], ['uid' => $gc['actor-uid'], 'self' => true]);
+			$actorSelf = Contact::selectFirst(['url', 'nick', 'addr', 'micro'], ['uid' => $gc['actor-uid'], 'self' => true]);
 			if (!DBA::isResult($actorSelf)) {
 				continue;
 			}
@@ -394,6 +394,7 @@ class Acl extends BaseModule
 				'network' => \Friendica\Core\Protocol::ACTIVITYPUB,
 				'link'    => $actorSelf['url'],
 				'nick'    => htmlentities($actorSelf['nick']),
+				'addr'    => htmlentities($actorSelf['addr'] ?: ''),
 				'group'   => true,
 			];
 		}
