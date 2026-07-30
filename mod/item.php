@@ -272,7 +272,7 @@ function item_process(array $post, array $request, bool $preview, string $return
 		$post['owner-updated']      = '';
 		$post['has-media']          = false;
 		$post['quote-uri-id']       = Item::getQuoteUriId($post['body'], $post['uid']);
-		$post['body']               = BBCode::removeSharedData(Item::setHashtags($post['body']));
+		$post['body']               = trim(preg_replace('/\s*!!(\w+)\s*/u', ' ', BBCode::removeSharedData(Item::setHashtags($post['body']))));
 		$post['writable']           = true;
 		$post['sensitive']          = false;
 		$post['post-reason']        = Item::PR_LOCAL;

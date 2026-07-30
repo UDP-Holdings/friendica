@@ -117,6 +117,9 @@ class Compose extends BaseModule
 					}
 				}
 			}
+			// Strip !! routing directive from body — it's a send-time signal, not display content.
+			$_REQUEST['body'] = trim(preg_replace('/\s*!!(\w+)\s*/u', ' ', $request['body']));
+
 			$_REQUEST['return'] = 'network';
 			require_once 'mod/item.php';
 			item_post();
