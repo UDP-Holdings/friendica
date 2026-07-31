@@ -510,11 +510,11 @@
 	</a>
 	{{/if}}
 
-	<button type="button" id="udp-me-btn" class="udp-bottom-nav-item"
-		aria-label="Profile and settings" aria-haspopup="dialog" aria-controls="udp-user-menu">
+	<a href="{{$nav.home.0}}" id="udp-me-btn" class="udp-bottom-nav-item"
+		aria-label="My profile">
 		<img src="{{$userinfo.icon}}" alt="" class="udp-nav-avatar" aria-hidden="true">
 		<span class="udp-nav-label">Me</span>
-	</button>
+	</a>
 
 </nav>
 
@@ -674,10 +674,8 @@
 		document.body.style.overflow = '';
 	}
 
-	['udp-me-btn', 'udp-menu-toggle'].forEach(function (id) {
-		var el = document.getElementById(id);
-		if (el) el.addEventListener('click', openMenu);
-	});
+	var menuToggle = document.getElementById('udp-menu-toggle');
+	if (menuToggle) menuToggle.addEventListener('click', openMenu);
 
 	var backdrop = menu && menu.querySelector('.udp-user-menu-backdrop');
 	if (backdrop) backdrop.addEventListener('click', closeMenu);

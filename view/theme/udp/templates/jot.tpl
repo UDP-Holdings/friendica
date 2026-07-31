@@ -5,6 +5,14 @@
   * SPDX-License-Identifier: AGPL-3.0-or-later
   *}}
 {{* UDP: split dropdown — Compose a post / Direct message *}}
+{{* Mobile: theme.js moves #jotOpen into #topbar-second which is display:none on mobile.
+    This button stays in the content flow and is only shown on xs screens for the notes page. *}}
+{{if $notes_cid}}
+<a class="btn btn-sm btn-primary visible-xs-inline-block" style="margin-bottom:8px;"
+   href="compose/{{$posttype}}">
+	<i class="fa fa-pencil"></i> {{$new_post}}
+</a>
+{{/if}}
 <div class="btn-group pull-right" id="jotOpen">
 	<a id="udp-jot-main" class="action-button btn btn-primary" href="compose/{{$posttype}}{{if $group_circle_id}}?group_circle_id={{$group_circle_id}}{{elseif $content}}?body={{$content}}{{/if}}">
 		<i class="fa fa-lg fa-pencil"></i>
