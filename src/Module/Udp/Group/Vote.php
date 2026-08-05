@@ -1,6 +1,6 @@
 <?php
 
-// UDP Social — Group Circle invite voting (co-owner accept / reject)
+// UDP Social — Group invite voting (co-owner accept / reject)
 // SPDX-FileCopyrightText: 2010-2024 the Friendica project
 // SPDX-License-Identifier: AGPL-3.0-or-later
 

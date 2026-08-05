@@ -1,4 +1,4 @@
-{{* UDP Group Circle — create form *}}
+{{* UDP Group — create form *}}
 <div class="generic-page-wrapper">
 	<h2>{{$title}}</h2>
 

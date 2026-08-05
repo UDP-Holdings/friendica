@@ -1,6 +1,6 @@
 <?php
 
-// UDP Social — Group Circle creation
+// UDP Social — Group creation
 // SPDX-FileCopyrightText: 2010-2024 the Friendica project
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
@@ -31,7 +31,7 @@ class Create extends BaseModule
 		$description = trim($request['description'] ?? '');
 
 		if (!$name) {
-			DI::sysmsg()->addNotice(DI::l10n()->t('Please enter a name for the Group Circle.'));
+			DI::sysmsg()->addNotice(DI::l10n()->t('Please enter a name for the Group.'));
 			DI::baseUrl()->redirect('udp/group/create');
 		}
 
@@ -48,11 +48,11 @@ class Create extends BaseModule
 			UdpDebug::log('[Create] success', ['circleId' => $circleId]);
 		} catch (\Exception $e) {
 			UdpDebug::log('[Create] caught exception', ['msg' => $e->getMessage()]);
-			DI::sysmsg()->addNotice(DI::l10n()->t('Could not create the Group Circle. Please try again.'));
+			DI::sysmsg()->addNotice(DI::l10n()->t('Could not create the Group. Please try again.'));
 			DI::baseUrl()->redirect('udp/group/create');
 		}
 
-		DI::sysmsg()->addInfo(DI::l10n()->t('Group Circle "%s" created.', $name));
+		DI::sysmsg()->addInfo(DI::l10n()->t('Group "%s" created.', $name));
 		DI::baseUrl()->redirect('udp/group/' . $circleId);
 	}
 
@@ -63,7 +63,7 @@ class Create extends BaseModule
 		}
 
 		return Renderer::replaceMacros(Renderer::getMarkupTemplate('udp/group/create.tpl'), [
-			'$title'               => DI::l10n()->t('Create a Group Circle'),
+			'$title'               => DI::l10n()->t('Create a Group'),
 			'$form_security_token' => self::getFormSecurityToken('udp_group_create'),
 			'$name_label'          => DI::l10n()->t('Name'),
 			'$desc_label'          => DI::l10n()->t('Description (optional)'),

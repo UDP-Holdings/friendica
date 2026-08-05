@@ -1,4 +1,4 @@
-{{* UDP Group Circle — membership management *}}
+{{* UDP Group — membership management *}}
 <div class="generic-page-wrapper">
 	<h2>{{$circle.name}} — Members</h2>
 	<p><a href="{{$back_url}}" class="btn btn-sm btn-default">&larr; Back to group</a></p>

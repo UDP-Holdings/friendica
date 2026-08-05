@@ -1,4 +1,4 @@
-{{* UDP Group Circle — invitation preview (invitee consent) *}}
+{{* UDP Group — invitation preview (invitee consent) *}}
 <div class="generic-page-wrapper">
 	<h2>You've been invited to join <strong>{{$circle.name}}</strong></h2>
 

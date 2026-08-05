@@ -1,6 +1,6 @@
 <?php
 
-// UDP Social — Group Circle index (list my groups)
+// UDP Social — Group index
 // SPDX-FileCopyrightText: 2010-2024 the Friendica project
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
@@ -27,11 +27,11 @@ class Index extends BaseModule
 		$circles = UdpGroupCircle::getMembershipsForUser($uid);
 
 		return Renderer::replaceMacros(Renderer::getMarkupTemplate('udp/group/index.tpl'), [
-			'$title'        => DI::l10n()->t('Group Circles'),
-			'$create_label' => DI::l10n()->t('Create a Group Circle'),
+			'$title'        => DI::l10n()->t('Groups'),
+			'$create_label' => DI::l10n()->t('Create a Group'),
 			'$create_url'   => DI::baseUrl() . '/udp/group/create',
 			'$circles'      => $circles,
-			'$empty'        => DI::l10n()->t('You are not a member of any Group Circles yet.'),
+			'$empty'        => DI::l10n()->t('You are not a member of any Groups yet.'),
 		]);
 	}
 }

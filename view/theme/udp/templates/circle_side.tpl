@@ -40,7 +40,7 @@
 									data-circle-id="{{$circle.id}}"
 									data-token="{{$form_security_token_markread}}"
 									data-href="{{$circle.href}}"
-									title="List options"
+									title="Circle options"
 									style="cursor:pointer"></span>
 							{{else}}
 								<span class="notify badge pull-right"></span>

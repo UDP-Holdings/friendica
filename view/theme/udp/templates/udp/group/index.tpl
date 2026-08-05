@@ -1,4 +1,4 @@
-{{* UDP Group Circle index *}}
+{{* UDP Group index *}}
 <div class="generic-page-wrapper">
 	<h2>{{$title}}</h2>
 

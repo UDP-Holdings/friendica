@@ -1,4 +1,4 @@
-{{* UDP Group Circle — hub page *}}
+{{* UDP Group — hub page *}}
 <div class="generic-page-wrapper">
 	<div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:0.75rem;">
 		<h2 style="margin:0;flex:1;">{{$circle.name}}{{if $is_closed}} <span class="label label-default" style="font-size:0.6em;vertical-align:middle;">Closed</span>{{/if}}</h2>

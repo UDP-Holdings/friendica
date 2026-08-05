@@ -1,6 +1,6 @@
 <?php
 
-// UDP Social — Group Circle invitation preview (invitee consent)
+// UDP Social — Group invitation preview (invitee consent)
 // SPDX-FileCopyrightText: 2010-2024 the Friendica project
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
