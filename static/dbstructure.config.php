@@ -2177,6 +2177,21 @@ return [
 			"circle-id" => ["circle-id"],
 		],
 	],
+	// UDP Social: hashtag filters for contact circles
+	"udp-circle-hashtag" => [
+		"comment" => "UDP Social — hashtag filters associated with a contact circle",
+		"fields" => [
+			"id"        => ["type" => "int unsigned", "not null" => "1", "extra" => "auto_increment", "primary" => "1", "comment" => ""],
+			"uid"       => ["type" => "mediumint unsigned", "not null" => "1", "foreign" => ["user" => "uid"], "comment" => "Owner user"],
+			"circle-id" => ["type" => "int unsigned", "not null" => "1", "foreign" => ["group" => "id"], "comment" => "Friendica contact circle (group.id)"],
+			"tag"       => ["type" => "varchar(96)", "not null" => "1", "default" => "", "comment" => "Normalised hashtag without leading #"],
+		],
+		"indexes" => [
+			"PRIMARY"        => ["id"],
+			"uid_circle_tag" => ["UNIQUE", "uid", "circle-id", "tag(96)"],
+			"uid"            => ["uid"],
+		],
+	],
 	// UDP Social: unified media index (Cat3 minimal — new table only, no upstream fields changed)
 	"udp-media" => [
 		"comment" => "UDP Social unified media index — links photo and attach records with album and thumbnail metadata",

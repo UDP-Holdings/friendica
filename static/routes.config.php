@@ -454,6 +454,7 @@ return [
 		'/markread/{circle:\d+}'                           => [Module\Circle::class, [R::GET, R::POST]],
 		'/{circle:\d+}/{contact:\d+}'                      => [Module\Circle::class, [R::GET, R::POST]],
 		'/{circle:\d+}/{command:add|remove}/{contact:\d+}' => [Module\Circle::class, [R::GET, R::POST]],
+		'/{circle:\d+}/hashtags'                           => [Module\Udp\CircleHashtag::class, [R::GET, R::POST]],
 	],
 	'/hashtag'                    => [Module\Hashtag::class,           [R::GET]],
 	'/help[/{doc:.+}]'            => [Module\UdpHelp::class,           [R::GET]],

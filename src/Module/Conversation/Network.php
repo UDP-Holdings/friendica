@@ -42,6 +42,7 @@ use Friendica\Event\ArrayFilterEvent;
 use Friendica\Model\Contact;
 use Friendica\Model\Circle;
 use Friendica\Model\Profile;
+use Friendica\Model\Tag;
 use Friendica\Model\UdpGroupCircle;
 use Friendica\Model\User;
 use Friendica\Util\Strings;
@@ -538,7 +539,33 @@ class Network extends Timeline
 		}
 
 		if ($this->circleId) {
-			$commonCondition = DBA::mergeConditions($commonCondition, ["`contact-id` IN (SELECT `contact-id` FROM `group_member` WHERE `gid` = ?)", $this->circleId]);
+			$uid         = $this->session->getLocalUserId();
+			$hashtagRows = $this->database->selectToArray('udp-circle-hashtag', ['tag'], ['circle-id' => $this->circleId, 'uid' => $uid]);
+			$routedTags  = array_column($hashtagRows, 'tag');
+
+			if ($routedTags) {
+				$placeholders = implode(',', array_fill(0, count($routedTags), '?'));
+				$commonCondition = DBA::mergeConditions($commonCondition, array_merge(
+					["(`contact-id` IN (SELECT `contact-id` FROM `group_member` WHERE `gid` = ?) OR `uri-id` IN (SELECT `uri-id` FROM `tag-view` WHERE `type` = ? AND `name` IN ($placeholders)))"],
+					[$this->circleId, Tag::HASHTAG],
+					$routedTags
+				));
+			} else {
+				$commonCondition = DBA::mergeConditions($commonCondition, ["`contact-id` IN (SELECT `contact-id` FROM `group_member` WHERE `gid` = ?)", $this->circleId]);
+			}
+		} elseif (!$this->groupCircleId) {
+			// Exclude from the main timeline any posts whose hashtags are routed to a circle.
+			$uid         = $this->session->getLocalUserId();
+			$hashtagRows = $this->database->selectToArray('udp-circle-hashtag', ['tag'], ['uid' => $uid]);
+			$allTags     = array_column($hashtagRows, 'tag');
+			if ($allTags) {
+				$placeholders    = implode(',', array_fill(0, count($allTags), '?'));
+				$commonCondition = DBA::mergeConditions($commonCondition, array_merge(
+					["`uri-id` NOT IN (SELECT `uri-id` FROM `tag-view` WHERE `type` = ? AND `name` IN ($placeholders))"],
+					[Tag::HASHTAG],
+					$allTags
+				));
+			}
 		}
 
 		if ($this->groupCircleId) {
