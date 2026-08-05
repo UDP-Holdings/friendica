@@ -40,7 +40,7 @@ class Circle extends BaseModule
 					DI::baseUrl()->redirect('circle/' . $r);
 				}
 			} else {
-				DI::sysmsg()->addNotice(DI::l10n()->t('Could not create list.'));
+				DI::sysmsg()->addNotice(DI::l10n()->t('Could not create circle.'));
 			}
 			DI::baseUrl()->redirect('circle');
 		}
@@ -51,13 +51,13 @@ class Circle extends BaseModule
 
 			$circle = DBA::selectFirst('group', ['id', 'name'], ['id' => DI::args()->getArgv()[1], 'uid' => DI::userSession()->getLocalUserId()]);
 			if (!DBA::isResult($circle)) {
-				DI::sysmsg()->addNotice(DI::l10n()->t('List not found.'));
+				DI::sysmsg()->addNotice(DI::l10n()->t('Circle not found.'));
 				DI::baseUrl()->redirect('contact');
 			}
 			$circlename = trim($_POST['circle_name']);
 			if (strlen($circlename) && ($circlename != $circle['name'])) {
 				if (!Model\Circle::update($circle['id'], $circlename)) {
-					DI::sysmsg()->addNotice(DI::l10n()->t('List name was not changed.'));
+					DI::sysmsg()->addNotice(DI::l10n()->t('Circle name was not changed.'));
 				}
 			}
 		}
@@ -77,7 +77,7 @@ class Circle extends BaseModule
 				$contact_id = $this->parameters['contact'];
 
 				if (!Model\Circle::exists($circle_id, DI::userSession()->getLocalUserId())) {
-					throw new \Exception(DI::l10n()->t('Unknown list.'), 404);
+					throw new \Exception(DI::l10n()->t('Unknown circle.'), 404);
 				}
 
 				// @TODO Backward compatibility with user contacts, remove by version 2022.03
@@ -102,17 +102,17 @@ class Circle extends BaseModule
 				switch ($this->parameters['command']) {
 					case 'add':
 						if (!Model\Circle::addMember($circle_id, $cdata['user'])) {
-							throw new \Exception(DI::l10n()->t('Unable to add the contact to the list.'), 500);
+							throw new \Exception(DI::l10n()->t('Unable to add the contact to the circle.'), 500);
 						}
 
-						$message = DI::l10n()->t('Contact successfully added to list.');
+						$message = DI::l10n()->t('Contact successfully added to circle.');
 						break;
 					case 'remove':
 						if (!Model\Circle::removeMember($circle_id, $cdata['user'])) {
-							throw new \Exception(DI::l10n()->t('Unable to remove the contact from the list.'), 500);
+							throw new \Exception(DI::l10n()->t('Unable to remove the contact from the circle.'), 500);
 						}
 
-						$message = DI::l10n()->t('Contact successfully removed from list.');
+						$message = DI::l10n()->t('Contact successfully removed from circle.');
 						break;
 				}
 			} else {
@@ -129,7 +129,7 @@ class Circle extends BaseModule
 
 	protected function content(array $request = []): string
 	{
-		DI::page()['title'] = DI::l10n()->t("Lists");
+		DI::page()['title'] = DI::l10n()->t("Circles");
 		$change             = false;
 		$relation           = $request['rel'] ?? '';
 
@@ -156,15 +156,15 @@ class Circle extends BaseModule
 
 
 		$context = [
-			'$submit'        => DI::l10n()->t('Save List'),
+			'$submit'        => DI::l10n()->t('Save Circle'),
 			'$submit_filter' => DI::l10n()->t('Filter'),
 		];
 
 		// @TODO: Replace with parameter from router
 		if ((DI::args()->getArgc() == 2) && (DI::args()->getArgv()[1] === 'new')) {
 			return Renderer::replaceMacros($tpl, $context + [
-				'$title'               => DI::l10n()->t('Create a new list of contacts.'),
-				'$gname'               => ['circle_name', DI::l10n()->t('List Name: '), '', ''],
+				'$title'               => DI::l10n()->t('Create a new circle of contacts.'),
+				'$gname'               => ['circle_name', DI::l10n()->t('Circle Name: '), '', ''],
 				'$gid'                 => 'new',
 				'$form_security_token' => BaseModule::getFormSecurityToken('circle_edit'),
 			]);
@@ -181,12 +181,12 @@ class Circle extends BaseModule
 			$nocircle = true;
 			$circle   = [
 				'id'   => $id,
-				'name' => DI::l10n()->t('Contacts not in any list'),
+				'name' => DI::l10n()->t('Contacts not in any circle'),
 			];
 
 			$context = $context + [
 				'$title'    => $circle['name'],
-				'$gname'    => ['circle_name', DI::l10n()->t('List Name: '), $circle['name'], ''],
+				'$gname'    => ['circle_name', DI::l10n()->t('Circle Name: '), $circle['name'], ''],
 				'$gid'      => $id,
 				'$editable' => 0,
 			];
@@ -199,12 +199,12 @@ class Circle extends BaseModule
 			// @TODO: Replace with parameter from router
 			if (intval(DI::args()->getArgv()[2])) {
 				if (!Model\Circle::exists(DI::args()->getArgv()[2], DI::userSession()->getLocalUserId())) {
-					DI::sysmsg()->addNotice(DI::l10n()->t('List not found.'));
+					DI::sysmsg()->addNotice(DI::l10n()->t('Circle not found.'));
 					DI::baseUrl()->redirect('contact');
 				}
 
 				if (!Model\Circle::remove(DI::args()->getArgv()[2])) {
-					DI::sysmsg()->addNotice(DI::l10n()->t('Unable to remove list.'));
+					DI::sysmsg()->addNotice(DI::l10n()->t('Unable to remove circle.'));
 				}
 			}
 			DI::baseUrl()->redirect('circle');
@@ -234,7 +234,7 @@ class Circle extends BaseModule
 		if ((DI::args()->getArgc() > 1) && intval(DI::args()->getArgv()[1])) {
 			$circle = DBA::selectFirst('group', ['id', 'name'], ['id' => DI::args()->getArgv()[1], 'uid' => DI::userSession()->getLocalUserId(), 'deleted' => false]);
 			if (!DBA::isResult($circle)) {
-				DI::sysmsg()->addNotice(DI::l10n()->t('List not found.'));
+				DI::sysmsg()->addNotice(DI::l10n()->t('Circle not found.'));
 				DI::baseUrl()->redirect('contact');
 			}
 
@@ -266,18 +266,18 @@ class Circle extends BaseModule
 			$drop_tpl = Renderer::getMarkupTemplate('circle_drop.tpl');
 			$drop_txt = Renderer::replaceMacros($drop_tpl, [
 				'$id'                  => $circle['id'],
-				'$delete'              => DI::l10n()->t('Delete List'),
+				'$delete'              => DI::l10n()->t('Delete Circle'),
 				'$form_security_token' => BaseModule::getFormSecurityToken('circle_drop'),
 			]);
 
 			$context = $context + [
 				'$title'                        => $circle['name'],
-				'$gname'                        => ['circle_name', DI::l10n()->t('List Name: '), $circle['name'], ''],
+				'$gname'                        => ['circle_name', DI::l10n()->t('Circle Name: '), $circle['name'], ''],
 				'$gid'                          => $circle['id'],
 				'$drop'                         => $drop_txt,
 				'$form_security_token'          => BaseModule::getFormSecurityToken('circle_edit'),
 				'$form_security_token_markread' => BaseModule::getFormSecurityToken('circle_markread'),
-				'$edit_name'                    => DI::l10n()->t('Edit List Name'),
+				'$edit_name'                    => DI::l10n()->t('Edit Circle Name'),
 				'$markread_label'               => DI::l10n()->t('Mark all as read'),
 				'$editable'                     => 1,
 			];
@@ -291,7 +291,7 @@ class Circle extends BaseModule
 			'label_members'   => DI::l10n()->t('Members'),
 			'members'         => [],
 			'label_contacts'  => DI::l10n()->t('All Contacts'),
-			'circle_is_empty' => DI::l10n()->t('List is empty'),
+			'circle_is_empty' => DI::l10n()->t('Circle is empty'),
 			'contacts'        => [],
 		];
 
@@ -307,7 +307,7 @@ class Circle extends BaseModule
 				$entry['label']         = 'members';
 				$entry['photo_menu']    = '';
 				$entry['change_member'] = [
-					'title'     => DI::l10n()->t('Remove contact from list'),
+					'title'     => DI::l10n()->t('Remove contact from circle'),
 					'gid'       => $circle['id'],
 					'cid'       => $member['id'],
 					'sec_token' => $sec_token,
@@ -348,7 +348,7 @@ class Circle extends BaseModule
 
 					if (!$nocircle) {
 						$entry['change_member'] = [
-							'title'     => DI::l10n()->t('Add contact to list'),
+							'title'     => DI::l10n()->t('Add contact to circle'),
 							'gid'       => $circle['id'],
 							'cid'       => $member['id'],
 							'sec_token' => $sec_token,

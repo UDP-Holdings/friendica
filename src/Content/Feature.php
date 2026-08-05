@@ -129,7 +129,7 @@ class Feature
 			// Widget visibility on the network stream
 			'network' => [
 				$l10n->t('Network Widgets'),
-				[self::CIRCLES, $l10n->t('Lists'), $l10n->t('Display posts that have been created by accounts of the selected list.'), true, $config->get('feature_lock', self::CIRCLES, false)],
+				[self::CIRCLES, $l10n->t('Circles'), $l10n->t('Display posts that have been created by accounts of the selected circle.'), true, $config->get('feature_lock', self::CIRCLES, false)],
 				[self::GROUPS, $l10n->t('Groups'), $l10n->t('Display posts that have been distributed by the selected group.'), true, $config->get('feature_lock', self::GROUPS, false)],
 				[self::ARCHIVE, $l10n->t('Archives'), $l10n->t('Display an archive where posts can be selected by month and year.'), true, $config->get('feature_lock', self::ARCHIVE, false)],
 				[self::NETWORKS, $l10n->t('Protocols'), $l10n->t('Display posts with the selected protocols.'), false, $config->get('feature_lock', self::NETWORKS, false)],

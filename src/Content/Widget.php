@@ -237,7 +237,7 @@ class Widget
 
 		return self::filter(
 			'circle',
-			DI::l10n()->t('Lists'),
+			DI::l10n()->t('Circles'),
 			'',
 			DI::l10n()->t('Everyone'),
 			$baseurl,
