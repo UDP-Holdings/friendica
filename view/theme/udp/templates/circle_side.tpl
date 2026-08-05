@@ -113,7 +113,6 @@
 			el.addEventListener('click', function(e) {
 				e.preventDefault();
 				e.stopPropagation();
-				if (!this.textContent.trim()) return;
 				if (activeBadge === this && popover.style.display !== 'none') {
 					closePopover();
 				} else {

@@ -2190,6 +2190,7 @@ return [
 			"PRIMARY"        => ["id"],
 			"uid_circle_tag" => ["UNIQUE", "uid", "circle-id", "tag(96)"],
 			"uid"            => ["uid"],
+			"circle-id"      => ["circle-id"],
 		],
 	],
 	// UDP Social: unified media index (Cat3 minimal — new table only, no upstream fields changed)
