@@ -40,8 +40,13 @@
 									data-circle-id="{{$circle.id}}"
 									data-token="{{$form_security_token_markread}}"
 									data-href="{{$circle.href}}"
-									title="Circle options"
+									title="Mark as read"
 									style="cursor:pointer"></span>
+								<a href="/circle/{{$circle.id}}/hashtags"
+									class="pull-right faded-icon udp-circle-hashtag-btn"
+									title="Hashtag filters"
+									style="font-size:0.85em;padding:0 3px;line-height:1.6;opacity:0.45;"
+									onclick="event.stopPropagation();">#</a>
 							{{else}}
 								<span class="notify badge pull-right"></span>
 							{{/if}}
@@ -67,9 +72,8 @@
 		</div>
 	</div>
 </nav>
-<div id="udp-markread-popover" role="menu" style="display:none; position:fixed; z-index:9999; border-radius:4px; box-shadow:0 2px 8px rgba(0,0,0,.25); min-width:160px; padding:4px 0; background:#fff; border:1px solid #ccc;">
+<div id="udp-markread-popover" role="menu" style="display:none; position:fixed; z-index:9999; border-radius:4px; box-shadow:0 2px 8px rgba(0,0,0,.25); min-width:140px; padding:4px 0; background:#fff; border:1px solid #ccc;">
 	<a id="udp-markread-view" href="#" style="display:block; padding:6px 14px; cursor:pointer; text-decoration:none; color:#333; white-space:nowrap;">View circle</a>
-	<a id="udp-markread-hashtags" href="#" style="display:block; padding:6px 14px; cursor:pointer; text-decoration:none; color:#333; white-space:nowrap;">Hashtag filters</a>
 	<a id="udp-markread-clear" href="#" style="display:block; padding:6px 14px; cursor:pointer; text-decoration:none; color:#333; white-space:nowrap;">Mark as read</a>
 </div>
 <style>
@@ -84,11 +88,10 @@
 	initWidget('circle-sidebar', 'circle-sidebar-inflated');
 
 	(function() {
-		var popover      = document.getElementById('udp-markread-popover');
-		var viewLink     = document.getElementById('udp-markread-view');
-		var hashtagsLink = document.getElementById('udp-markread-hashtags');
-		var clearLink    = document.getElementById('udp-markread-clear');
-		var activeBadge  = null;
+		var popover     = document.getElementById('udp-markread-popover');
+		var viewLink    = document.getElementById('udp-markread-view');
+		var clearLink   = document.getElementById('udp-markread-clear');
+		var activeBadge = null;
 
 		document.body.appendChild(popover);
 
@@ -98,9 +101,8 @@
 		}
 
 		function openPopover(badge) {
-			activeBadge = badge;
-			viewLink.href     = badge.dataset.href;
-			hashtagsLink.href = '/circle/' + badge.dataset.circleId + '/hashtags';
+			activeBadge   = badge;
+			viewLink.href = badge.dataset.href;
 
 			var rect = badge.getBoundingClientRect();
 			var popW = 144;
