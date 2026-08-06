@@ -60,6 +60,10 @@ class Contacts extends Module\BaseProfile
 			throw new HTTPException\NotFoundException($this->t('User not found.'));
 		}
 
+		if ((!empty($profile['hidewall']) || $this->config->get('udp', 'gateway_enabled', true)) && !$this->userSession->isAuthenticated()) {
+			$this->baseUrl->redirect('profile/' . $profile['nickname'] . '/restricted');
+		}
+
 		$is_owner = $profile['uid'] == $this->userSession->getLocalUserId();
 
 		if ($profile['hide-friends'] && !$is_owner) {

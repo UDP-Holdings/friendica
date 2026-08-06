@@ -164,7 +164,7 @@ class Profile extends BaseProfile
 			return Login::form();
 		}
 
-		if (!empty($profile['hidewall']) && !$this->session->isAuthenticated()) {
+		if ((!empty($profile['hidewall']) || $this->config->get('udp', 'gateway_enabled', true)) && !$this->session->isAuthenticated()) {
 			$this->baseUrl->redirect('profile/' . $profile['nickname'] . '/restricted');
 		}
 

@@ -13,6 +13,7 @@ use Friendica\AppHelper;
 use Friendica\BaseModule;
 use Friendica\Core\L10n;
 use Friendica\Core\Renderer;
+use Friendica\DI;
 use Friendica\Model\Profile;
 use Friendica\Module\Response;
 use Friendica\Network\HTTPException;
@@ -38,14 +39,24 @@ class Restricted extends BaseModule
 			throw new HTTPException\NotFoundException($this->t('Profile not found.'));
 		}
 
-		if (empty($profile['hidewall'])) {
+		$gatewayEnabled = DI::config()->get('udp', 'gateway_enabled', true);
+
+		if (empty($profile['hidewall']) && !$gatewayEnabled) {
 			$this->baseUrl->redirect('profile/' . $profile['nickname']);
+		}
+
+		if ($gatewayEnabled) {
+			$title   = $this->t('Neighborhood profile');
+			$message = $this->t('This profile is part of a private neighborhood. Sign in or ask a member to invite you.');
+		} else {
+			$title   = $this->t('Restricted profile');
+			$message = $this->t('This profile has been restricted which prevents access to their public content from anonymous visitors.');
 		}
 
 		$tpl = Renderer::getMarkupTemplate('exception.tpl');
 		return Renderer::replaceMacros($tpl, [
-			'$title'   => $this->t('Restricted profile'),
-			'$message' => $this->t('This profile has been restricted which prevents access to their public content from anonymous visitors.'),
+			'$title'   => $title,
+			'$message' => $message,
 		]);
 	}
 }

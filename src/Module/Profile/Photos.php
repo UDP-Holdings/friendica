@@ -280,7 +280,7 @@ class Photos extends \Friendica\Module\BaseProfile
 		$owner_uid = $this->owner['uid'];
 		$is_owner  = $this->session->getLocalUserId() == $owner_uid;
 
-		if ($this->owner['hidewall'] && !$this->session->isAuthenticated()) {
+		if (($this->owner['hidewall'] || $this->config->get('udp', 'gateway_enabled', true)) && !$this->session->isAuthenticated()) {
 			$this->baseUrl->redirect('profile/' . $this->owner['nickname'] . '/restricted');
 		}
 

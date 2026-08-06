@@ -59,7 +59,7 @@ class UdpMedia extends BaseProfile
 			throw new HTTPException\ForbiddenException($this->t('Public access denied.'));
 		}
 
-		if ($this->owner['hidewall'] && !$this->session->isAuthenticated()) {
+		if (($this->owner['hidewall'] || $this->config->get('udp', 'gateway_enabled', true)) && !$this->session->isAuthenticated()) {
 			$this->baseUrl->redirect('profile/' . $this->owner['nickname'] . '/restricted');
 		}
 

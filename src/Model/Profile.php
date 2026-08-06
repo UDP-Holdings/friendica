@@ -319,8 +319,12 @@ class Profile
 
 		if (!$local_user_is_self) {
 			if (!$visitor_is_authenticated) {
-				// Remote follow is only available for local profiles
-				if (!empty($profile['nickname']) && strpos($profile_url, (string) DI::baseUrl()) === 0) {
+				// Remote follow only offered on non-gated servers; on gated servers unauthenticated
+				// visitors are redirected to /restricted before they reach the vcard anyway.
+				if (!DI::config()->get('udp', 'gateway_enabled', true)
+					&& !empty($profile['nickname'])
+					&& strpos($profile_url, (string) DI::baseUrl()) === 0
+				) {
 					$follow_link = 'profile/' . $profile['nickname'] . '/remote_follow';
 				}
 			} else {
