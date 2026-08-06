@@ -81,12 +81,12 @@ class Conversations extends BaseProfile
 			throw new HTTPException\NotFoundException($this->t('User not found.'));
 		}
 
-		if ($this->config->get('system', 'block_public') && !$this->session->isAuthenticated()) {
-			return Login::form();
-		}
-
 		if ((!empty($profile['hidewall']) || $this->config->get('udp', 'gateway_enabled', true)) && !$this->session->isAuthenticated()) {
 			$this->baseUrl->redirect('profile/' . $profile['nickname'] . '/restricted');
+		}
+
+		if ($this->config->get('system', 'block_public') && !$this->session->isAuthenticated()) {
+			return Login::form();
 		}
 
 		if (!$profile['net-publish']) {

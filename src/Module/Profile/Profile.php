@@ -160,12 +160,12 @@ class Profile extends BaseProfile
 
 		$remote_contact_id = $this->session->getRemoteContactID($profile['uid']);
 
-		if ($this->config->get('system', 'block_public') && !$this->session->isAuthenticated()) {
-			return Login::form();
-		}
-
 		if ((!empty($profile['hidewall']) || $this->config->get('udp', 'gateway_enabled', true)) && !$this->session->isAuthenticated()) {
 			$this->baseUrl->redirect('profile/' . $profile['nickname'] . '/restricted');
+		}
+
+		if ($this->config->get('system', 'block_public') && !$this->session->isAuthenticated()) {
+			return Login::form();
 		}
 
 		if (!empty($profile['page-flags']) && in_array($profile['page-flags'], [User::PAGE_FLAGS_COMMUNITY, User::PAGE_FLAGS_COMM_MAN])) {
