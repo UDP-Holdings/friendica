@@ -1,14 +1,182 @@
 <?php
-// UDP Social theme configuration — delegates entirely to frio's color scheme system.
-// Without this file, Friendica's getConfigFile() theme-extends fallback fails silently
-// and the color pickers are absent from Display Settings.
+// UDP Social theme configuration.
+// Defines all four theme hook functions directly so theme_post() can normalise
+// the submit button name (the Display Settings form sends "udp-settings-submit"
+// but frio's original only checks "frio-settings-submit").
 
-// The Display Settings form submits with button name "<theme>-settings-submit".
-// Frio's theme_post() only checks for "frio-settings-submit", so normalize here.
-if (!isset($_POST['frio-settings-submit']) && isset($_POST['udp-settings-submit'])) {
-	$_POST['frio-settings-submit'] = $_POST['udp-settings-submit'];
+use Friendica\AppHelper;
+use Friendica\Content\ContactSelector;
+use Friendica\Core\Renderer;
+use Friendica\DI;
+
+require_once 'view/theme/frio/php/Image.php';
+require_once 'view/theme/frio/php/scheme.php';
+
+function theme_post(AppHelper $appHelper)
+{
+	if (!DI::userSession()->getLocalUserId()) {
+		return;
+	}
+
+	$uid = DI::userSession()->getLocalUserId();
+
+	$previous_scheme = DI::pConfig()->get($uid, 'frio', 'scheme');
+
+	// The Display Settings form names its submit button "<theme>-settings-submit".
+	// Accept either variant so saves work regardless of active theme name.
+	$submitted = isset($_POST['frio-settings-submit']) || isset($_POST['udp-settings-submit']);
+
+	if ($submitted) {
+		foreach ([
+			'scheme',
+			'scheme_accent',
+			'nav_bg',
+			'nav_icon_color',
+			'link_color',
+			'background_color',
+			'contentbg_transp',
+			'background_image',
+			'bg_image_option',
+			'login_bg_image',
+			'login_bg_color',
+			'always_open_compose',
+		] as $field) {
+			if (isset($_POST['frio_' . $field])) {
+				DI::pConfig()->set($uid, 'frio', $field, $_POST['frio_' . $field]);
+			}
+		}
+		DI::pConfig()->set($uid, 'frio', 'css_modified', time());
+
+		$current_scheme = DI::pConfig()->get($uid, 'frio', 'scheme');
+
+		if ($previous_scheme != $current_scheme) {
+			$icon_style = DI::pConfig()->get($uid, 'accessibility', 'platform_icon_style');
+			if (in_array($current_scheme, ['dark', 'black']) && in_array($icon_style, [ContactSelector::SVG_BLACK])) {
+				DI::pConfig()->set($uid, 'accessibility', 'platform_icon_style', ContactSelector::SVG_WHITE);
+			} elseif (in_array($current_scheme, ['dark', 'black']) && in_array($icon_style, [ContactSelector::SVG_COLOR_BLACK])) {
+				DI::pConfig()->set($uid, 'accessibility', 'platform_icon_style', ContactSelector::SVG_COLOR_WHITE);
+			} elseif (in_array($current_scheme, ['light']) && in_array($icon_style, [ContactSelector::SVG_WHITE])) {
+				DI::pConfig()->set($uid, 'accessibility', 'platform_icon_style', ContactSelector::SVG_BLACK);
+			} elseif (in_array($current_scheme, ['light']) && in_array($icon_style, [ContactSelector::SVG_COLOR_WHITE])) {
+				DI::pConfig()->set($uid, 'accessibility', 'platform_icon_style', ContactSelector::SVG_COLOR_BLACK);
+			}
+		}
+	}
 }
 
-if (!function_exists('theme_content')) {
-	require_once 'view/theme/frio/config.php';
+function theme_admin_post()
+{
+	if (!DI::userSession()->isSiteAdmin()) {
+		return;
+	}
+
+	if (isset($_POST['frio-settings-submit'])) {
+		foreach ([
+			'scheme',
+			'scheme_accent',
+			'nav_bg',
+			'nav_icon_color',
+			'link_color',
+			'background_color',
+			'contentbg_transp',
+			'background_image',
+			'bg_image_option',
+			'login_bg_image',
+			'login_bg_color',
+			'always_open_compose',
+		] as $field) {
+			if (isset($_POST['frio_' . $field])) {
+				DI::config()->set('frio', $field, $_POST['frio_' . $field]);
+			}
+		}
+		DI::config()->set('frio', 'css_modified', time());
+	}
+}
+
+function theme_content(AppHelper $appHelper): string
+{
+	if (!DI::userSession()->getLocalUserId()) {
+		return '';
+	}
+
+	$uid = DI::userSession()->getLocalUserId();
+
+	$arr = [
+		'scheme'              => frio_scheme_get_current_for_user($uid),
+		'share_string'        => '',
+		'scheme_accent'       => DI::pConfig()->get($uid, 'frio', 'scheme_accent', DI::config()->get('frio', 'scheme_accent')),
+		'nav_bg'              => DI::pConfig()->get($uid, 'frio', 'nav_bg', DI::config()->get('frio', 'nav_bg')),
+		'nav_icon_color'      => DI::pConfig()->get($uid, 'frio', 'nav_icon_color', DI::config()->get('frio', 'nav_icon_color')),
+		'link_color'          => DI::pConfig()->get($uid, 'frio', 'link_color', DI::config()->get('frio', 'link_color')),
+		'background_color'    => DI::pConfig()->get($uid, 'frio', 'background_color', DI::config()->get('frio', 'background_color')),
+		'contentbg_transp'    => DI::pConfig()->get($uid, 'frio', 'contentbg_transp', DI::config()->get('frio', 'contentbg_transp')),
+		'background_image'    => DI::pConfig()->get($uid, 'frio', 'background_image', DI::config()->get('frio', 'background_image')),
+		'bg_image_option'     => DI::pConfig()->get($uid, 'frio', 'bg_image_option', DI::config()->get('frio', 'bg_image_option')),
+		'always_open_compose' => DI::pConfig()->get($uid, 'frio', 'always_open_compose', DI::config()->get('frio', 'always_open_compose', false)),
+	];
+
+	return frio_form($arr);
+}
+
+function theme_admin(AppHelper $appHelper): string
+{
+	if (!DI::userSession()->isSiteAdmin()) {
+		return '';
+	}
+
+	$arr = [
+		'admin_theme_settings' => true,
+		'scheme'               => frio_scheme_get_current(),
+		'scheme_accent'        => DI::config()->get('frio', 'scheme_accent') ?: FRIO_SCHEME_ACCENT_BLUE,
+		'share_string'         => '',
+		'nav_bg'               => DI::config()->get('frio', 'nav_bg'),
+		'nav_icon_color'       => DI::config()->get('frio', 'nav_icon_color'),
+		'link_color'           => DI::config()->get('frio', 'link_color'),
+		'background_color'     => DI::config()->get('frio', 'background_color'),
+		'contentbg_transp'     => DI::config()->get('frio', 'contentbg_transp'),
+		'background_image'     => DI::config()->get('frio', 'background_image'),
+		'bg_image_option'      => DI::config()->get('frio', 'bg_image_option'),
+		'login_bg_image'       => DI::config()->get('frio', 'login_bg_image'),
+		'login_bg_color'       => DI::config()->get('frio', 'login_bg_color'),
+		'always_open_compose'  => DI::config()->get('frio', 'always_open_compose', false),
+	];
+
+	return frio_form($arr);
+}
+
+function frio_form($arr)
+{
+	$scheme_info = get_scheme_info($arr['scheme']);
+	$disable     = $scheme_info['overwrites'];
+
+	$background_image_help = '<strong>' . DI::l10n()->t('Note') . ': </strong>' . DI::l10n()->t('Ensure that the image has the correct permissions, allowing all users to view it.');
+
+	$t   = Renderer::getMarkupTemplate('theme_settings.tpl');
+	$ctx = [
+		'$admin_theme_settings'   => $arr['admin_theme_settings'] ?? false,
+		'$submit'                 => DI::l10n()->t('Save settings'),
+		'$title'                  => DI::l10n()->t('Theme settings'),
+		'$scheme'                 => ['frio_scheme', DI::l10n()->t('Appearance'), $arr['scheme'], frio_scheme_get_list()],
+		'$scheme_accent'          => !$scheme_info['accented'] ? '' : ['frio_scheme_accent', DI::l10n()->t('Accent color'), $arr['scheme_accent']],
+		'$share_string'           => $arr['scheme'] != FRIO_CUSTOM_SCHEME ? '' : ['frio_share_string', DI::l10n()->t('Copy or paste theme settings'), $arr['share_string'], DI::l10n()->t('You can copy this text to share your theme settings with others. Pasting here updates the theme settings below. Afterwards, if you want, click the save button below to use the new settings.'), false, false],
+		'$nav_bg'                 => array_key_exists('nav_bg', $disable) ? '' : ['frio_nav_bg', DI::l10n()->t('Navigation bar background color'), $arr['nav_bg'], '', false],
+		'$nav_icon_color'         => array_key_exists('nav_icon_color', $disable) ? '' : ['frio_nav_icon_color', DI::l10n()->t('Navigation bar icon color '), $arr['nav_icon_color'], '', false],
+		'$link_color'             => array_key_exists('link_color', $disable) ? '' : ['frio_link_color', DI::l10n()->t('Link color'), $arr['link_color'], '', false],
+		'$background_color'       => array_key_exists('background_color', $disable) ? '' : ['frio_background_color', DI::l10n()->t('Set the background color'), $arr['background_color'], '', false],
+		'$contentbg_transp'       => array_key_exists('contentbg_transp', $disable) ? '' : ['frio_contentbg_transp', DI::l10n()->t('Content background opacity'), $arr['contentbg_transp'] ?? 100, ''],
+		'$background_image'       => array_key_exists('background_image', $disable) ? '' : ['frio_background_image', DI::l10n()->t('Set the background image'), $arr['background_image'], $background_image_help, false],
+		'$bg_image_options_title' => DI::l10n()->t('Background image style'),
+		'$bg_image_options'       => Image::get_options($arr),
+		'$always_open_compose'    => ['frio_always_open_compose', DI::l10n()->t('Always open Compose page'), $arr['always_open_compose'], DI::l10n()->t('If enabled, the button to make a new post always opens a dedicated page (the <a href="/compose">Compose page</a>) instead of a small window on top of the current page. When disabled, the "Compose page" can be accessed with a middle click on the button to make a new post, or via a button in the small window.')],
+	];
+
+	if (array_key_exists('login_bg_image', $arr) && !array_key_exists('login_bg_image', $disable)) {
+		$ctx['$login_bg_image'] = ['frio_login_bg_image', DI::l10n()->t('Login page background image'), $arr['login_bg_image'], $background_image_help, false];
+	}
+
+	if (array_key_exists('login_bg_color', $arr) && !array_key_exists('login_bg_color', $disable)) {
+		$ctx['$login_bg_color'] = ['frio_login_bg_color', DI::l10n()->t('Login page background color'), $arr['login_bg_color'], DI::l10n()->t('Leave background image and color empty to use theme defaults.'), false];
+	}
+
+	return Renderer::replaceMacros($t, $ctx);
 }
