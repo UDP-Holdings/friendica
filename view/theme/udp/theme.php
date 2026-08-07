@@ -67,6 +67,57 @@ function udp_init(AppHelper $appHelper)
 	if ($_udp_compose_defaults !== null) {
 		DI::page()['htmlhead'] .= '<script>window.UDP_COMPOSE_DEFAULTS=' . json_encode($_udp_compose_defaults) . ';</script>';
 	}
+
+	// Recent-colors palette on the Display Settings page
+	if (str_ends_with(parse_url($_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH) ?? '', '/settings/display')) {
+		DI::page()['htmlhead'] .= <<<'HTML'
+<style>
+.udp-palette-row{display:flex;flex-wrap:wrap;align-items:center;gap:5px;margin-top:6px}
+.udp-palette-label{font-size:11px;color:#999;width:100%;margin-bottom:1px}
+.udp-swatch{width:22px;height:22px;border-radius:4px;border:2px solid rgba(0,0,0,.18);cursor:pointer;display:inline-block;flex-shrink:0;transition:transform .1s,border-color .1s}
+.udp-swatch:hover{transform:scale(1.2);border-color:rgba(0,0,0,.45)}
+</style>
+<script>
+(function(){
+var KEY='udp_recent_colors',MAX=8;
+function load(){try{return JSON.parse(localStorage.getItem(KEY)||'[]')}catch(e){return[]}}
+function save(colors){localStorage.setItem(KEY,JSON.stringify(colors.slice(0,MAX)))}
+function push(hex){if(!/^#[0-9a-fA-F]{6}$/.test(hex))return;var c=load().filter(function(x){return x.toLowerCase()!==hex.toLowerCase()});c.unshift(hex);save(c)}
+
+function renderPalette(input,group){
+  var old=group.querySelector('.udp-palette-row');if(old)old.remove();
+  var colors=load();if(!colors.length)return;
+  var row=document.createElement('div');row.className='udp-palette-row';
+  var lbl=document.createElement('span');lbl.className='udp-palette-label';lbl.textContent='Recent';row.appendChild(lbl);
+  colors.forEach(function(hex){
+    var s=document.createElement('span');s.className='udp-swatch';s.style.backgroundColor=hex;s.title=hex;
+    s.addEventListener('click',function(){
+      input.value=hex;
+      var icon=group.querySelector('.input-group-addon i');if(icon)icon.style.backgroundColor=hex;
+      input.dispatchEvent(new Event('input',{bubbles:true}));
+      input.dispatchEvent(new Event('change',{bubbles:true}));
+    });
+    row.appendChild(s);
+  });
+  group.appendChild(row);
+}
+
+function init(){
+  document.querySelectorAll('.form-group.field.input.color').forEach(function(group){
+    var input=group.querySelector('input.form-control.color');if(!input)return;
+    renderPalette(input,group);
+    input.addEventListener('change',function(){push(this.value);renderPalette(this,group)});
+  });
+  var form=document.getElementById('settings-form');
+  if(form)form.addEventListener('submit',function(){
+    document.querySelectorAll('input.form-control.color').forEach(function(i){push(i.value)});
+  });
+}
+setTimeout(init,400);
+})();
+</script>
+HTML;
+	}
 }
 
 function udp_install()
