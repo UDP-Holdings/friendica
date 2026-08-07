@@ -98,8 +98,8 @@ class Summary extends BaseAdmin
 			$warningtext[] = DI::l10n()->t('Friendica\'s configuration now is stored in config/local.config.php, please copy config/local-sample.config.php and move your config from <code>config/local.ini.php</code>. See <a href="%s">the Config help page</a> for help with the transition.', DI::baseUrl() . '/help/admin/config');
 		}
 
-		// Check server vitality
-		if (!self::checkSelfNodeinfo()) {
+		// Check server vitality; skip when UDP gateway intentionally suppresses NodeInfo
+		if (!DI::config()->get('udp', 'gateway_enabled', true) && !self::checkSelfNodeinfo()) {
 			$well_known    = DI::baseUrl() . '/.well-known/nodeinfo';
 			$warningtext[] = DI::l10n()->t(
 				'<a href="%s">%s</a> is not reachable on your system. This is a severe configuration issue that prevents server to server communication. See <a href="%s">the installation page</a> for help.',
