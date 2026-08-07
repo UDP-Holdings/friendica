@@ -29,6 +29,14 @@ class Delivery
 	 */
 	public static function deliver(string $inbox): array
 	{
+		$inboxDomain = parse_url($inbox, PHP_URL_HOST) ?? '';
+		if (!DI::federationGateway()->isAllowedOutbound($inboxDomain)) {
+			foreach (Post\Delivery::selectForInbox($inbox) as $post) {
+				Post\Delivery::remove($post['uri-id'], $inbox);
+			}
+			return ['success' => true, 'uri_ids' => []];
+		}
+
 		$uri_ids    = [];
 		$posts      = Post\Delivery::selectForInbox($inbox);
 		$serverfail = false;
