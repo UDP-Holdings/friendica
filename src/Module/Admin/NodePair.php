@@ -132,6 +132,32 @@ class NodePair extends BaseAdmin
 			}
 			DI::baseUrl()->redirect('admin/node-pair');
 		}
+
+		if ($action === 'remove') {
+			self::checkFormSecurityTokenRedirectOnError('/admin/node-pair', 'admin_node_pair_remove');
+
+			$domain = trim($request['domain'] ?? '');
+			if ($domain) {
+				DI::federationGateway()->deny($domain);
+				$this->removeFromAllowedSites($domain);
+				DI::sysmsg()->addInfo(DI::l10n()->t('%s has been removed from your network.', $domain));
+			}
+			DI::baseUrl()->redirect('admin/node-pair');
+		}
+
+		if ($action === 'add') {
+			self::checkFormSecurityTokenRedirectOnError('/admin/node-pair', 'admin_node_pair_add');
+
+			$domain = strtolower(trim($request['domain'] ?? ''));
+			if ($domain && $this->isValidHostname($domain)) {
+				DI::federationGateway()->allow($domain, 'peer');
+				$this->addToAllowedSites($domain);
+				DI::sysmsg()->addInfo(DI::l10n()->t('%s has been added to your network.', $domain));
+			} else {
+				DI::sysmsg()->addNotice(DI::l10n()->t('Invalid domain name.'));
+			}
+			DI::baseUrl()->redirect('admin/node-pair');
+		}
 	}
 
 	protected function content(array $request = []): string
@@ -163,12 +189,13 @@ class NodePair extends BaseAdmin
 			}
 		}
 
-		$allowed_raw  = DI::config()->get('system', 'allowed_sites') ?? '';
 		$local_host   = DI::baseUrl()->getHost();
-		$paired_nodes = array_values(array_filter(
-			array_map('trim', explode(',', $allowed_raw)),
-			fn($d) => $d !== '' && $d !== $local_host
-		));
+		$paired_nodes = DI::dba()->selectToArray(
+			'udp_allowlist',
+			['allowed_domain', 'source', 'created_at'],
+			['slot_domain' => $local_host],
+			['order' => ['source', 'allowed_domain']]
+		);
 
 		// Load pending inbound pair requests from other UDP nodes
 		$pending_requests = [];
@@ -206,13 +233,15 @@ class NodePair extends BaseAdmin
 			'$form_security_token_gen'    => self::getFormSecurityToken('admin_node_pair_generate'),
 			'$form_security_token_accept' => self::getFormSecurityToken('admin_node_pair_accept'),
 			'$form_security_token_reject' => self::getFormSecurityToken('admin_node_pair_reject'),
+			'$form_security_token_remove' => self::getFormSecurityToken('admin_node_pair_remove'),
+			'$form_security_token_add'    => self::getFormSecurityToken('admin_node_pair_add'),
 			'$baseurl'                    => (string) DI::baseUrl(),
 		]);
 	}
 
 	private function addToAllowedSites(string $domain): void
 	{
-		if (!preg_match('/^(?:[a-zA-Z0-9](?:[a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}$/', $domain)) {
+		if (!$this->isValidHostname($domain)) {
 			return;
 		}
 		$current = DI::config()->get('system', 'allowed_sites') ?? '';
@@ -221,5 +250,17 @@ class NodePair extends BaseAdmin
 			$domains[] = $domain;
 			DI::config()->set('system', 'allowed_sites', implode(',', $domains));
 		}
+	}
+
+	private function removeFromAllowedSites(string $domain): void
+	{
+		$current = DI::config()->get('system', 'allowed_sites') ?? '';
+		$domains = array_filter(array_map('trim', explode(',', $current)), fn($d) => $d !== $domain);
+		DI::config()->set('system', 'allowed_sites', implode(',', $domains));
+	}
+
+	private function isValidHostname(string $domain): bool
+	{
+		return (bool) preg_match('/^(?:[a-zA-Z0-9](?:[a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}$/', $domain);
 	}
 }

@@ -37,14 +37,51 @@
 
 	{{if $paired_nodes}}
 	<div class="well" style="margin-bottom:1.5em;">
-		<h4 style="margin-top:0;">Paired nodes</h4>
-		<ul style="margin:0; padding-left:1.25em;">
+		<h4 style="margin-top:0;">Connected nodes</h4>
+		<table class="table table-condensed" style="margin:0;">
+			<thead>
+				<tr>
+					<th>Domain</th>
+					<th>Type</th>
+					<th>Added</th>
+					<th></th>
+				</tr>
+			</thead>
+			<tbody>
 			{{foreach $paired_nodes as $node}}
-			<li><a href="https://{{$node}}" target="_blank" rel="noopener">{{$node}}</a></li>
+			<tr>
+				<td><a href="https://{{$node.allowed_domain}}" target="_blank" rel="noopener">{{$node.allowed_domain}}</a></td>
+				<td><span class="label label-{{if $node.source == 'peer'}}success{{else}}info{{/if}}">{{$node.source}}</span></td>
+				<td><small class="text-muted">{{$node.created_at}}</small></td>
+				<td>
+					<form action="{{$baseurl}}/admin/node-pair/remove" method="post" style="margin:0;">
+						<input type="hidden" name="form_security_token" value="{{$form_security_token_remove}}">
+						<input type="hidden" name="domain" value="{{$node.allowed_domain}}">
+						<button type="submit" class="btn btn-danger btn-xs"
+						        onclick="return confirm('Remove {{$node.allowed_domain}} from your network?')">Remove</button>
+					</form>
+				</td>
+			</tr>
 			{{/foreach}}
-		</ul>
+			</tbody>
+		</table>
 	</div>
 	{{/if}}
+
+	{{* ── Manual domain add ──────────────────────────────────────────── *}}
+	<div class="well" style="margin-bottom:1.5em;">
+		<h4 style="margin-top:0;">Add a domain manually</h4>
+		<p class="text-muted" style="margin-bottom:.75em;">Directly allow a server without going through the QR pairing flow — useful for relay nodes or nodes you trust by domain.</p>
+		<form action="{{$baseurl}}/admin/node-pair/add" method="post" style="display:flex; gap:.5em; align-items:flex-end; flex-wrap:wrap;">
+			<input type="hidden" name="form_security_token" value="{{$form_security_token_add}}">
+			<div class="form-group" style="margin:0; flex:1; min-width:200px;">
+				<label for="udp-manual-domain" style="font-weight:normal;">Domain</label>
+				<input type="text" id="udp-manual-domain" name="domain" class="form-control"
+					placeholder="example.social" style="margin-top:.25em;">
+			</div>
+			<button type="submit" class="btn btn-default">Add</button>
+		</form>
+	</div>
 
 	<div style="display:flex; gap:2em; flex-wrap:wrap; margin-top:1.5em;">
 		<div class="well" style="flex:1; min-width:220px;">
