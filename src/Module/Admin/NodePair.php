@@ -13,6 +13,7 @@ use BaconQrCode\Writer;
 use Friendica\Core\Renderer;
 use Friendica\DI;
 use Friendica\Module\BaseAdmin;
+use Friendica\Network\HTTPClient\Client\HttpClientAccept;
 use Friendica\Network\HTTPClient\Client\HttpClientRequest;
 
 /**
@@ -158,6 +159,85 @@ class NodePair extends BaseAdmin
 			}
 			DI::baseUrl()->redirect('admin/node-pair');
 		}
+
+		if ($action === 'bulk_add') {
+			self::checkFormSecurityTokenRedirectOnError('/admin/node-pair', 'admin_node_pair_bulk_add');
+
+			$raw        = trim($request['domains'] ?? '');
+			$local_host = DI::baseUrl()->getHost();
+
+			$candidates = array_unique(array_filter(array_map(
+				fn($d) => strtolower(trim($d, " \t\r\n,.")),
+				preg_split('/[\s,]+/', $raw)
+			)));
+
+			// Generate a multi-use token so each existing admin can accept independently
+			$token = bin2hex(random_bytes(24));
+			DI::config()->set('udp_pair', $token, json_encode([
+				'domain'     => $local_host,
+				'expires_at' => time() + 86400,
+				'multi_use'  => true,
+			]));
+
+			$added   = [];
+			$invalid = [];
+			$failed  = [];
+
+			foreach ($candidates as $domain) {
+				if ($domain === $local_host) {
+					continue;
+				}
+				if (!$this->isValidHostname($domain)) {
+					$invalid[] = $domain;
+					continue;
+				}
+
+				DI::federationGateway()->allow($domain, 'peer');
+				$this->addToAllowedSites($domain);
+				$added[] = $domain;
+
+				// Broadcast "please add me back" — creates a pending pair request on the remote node
+				try {
+					DI::httpClient()->post(
+						'https://' . $domain . '/udp/pair-request',
+						json_encode([
+							'requesting_domain' => $local_host,
+							'pairing_token'     => $token,
+						]),
+						['Content-Type' => 'application/json'],
+						5,
+						HttpClientRequest::ACTIVITYPUB
+					);
+				} catch (\Throwable $e) {
+					$failed[] = $domain;
+					DI::logger()->notice('UDP bulk announce failed', ['domain' => $domain, 'error' => $e->getMessage()]);
+				}
+			}
+
+			if ($added) {
+				$announced = count($added) - count($failed);
+				DI::sysmsg()->addInfo(DI::l10n()->t(
+					'%d node(s) added to your allowlist; %d notified (their admins will see a pending pairing request).',
+					count($added),
+					$announced
+				));
+			}
+			if ($invalid) {
+				DI::sysmsg()->addNotice(DI::l10n()->t(
+					'%d invalid domain(s) skipped: %s',
+					count($invalid),
+					implode(', ', $invalid)
+				));
+			}
+			if ($failed) {
+				DI::sysmsg()->addNotice(DI::l10n()->t(
+					'%d node(s) could not be reached for announcement (added to allowlist anyway): %s',
+					count($failed),
+					implode(', ', $failed)
+				));
+			}
+			DI::baseUrl()->redirect('admin/node-pair');
+		}
 	}
 
 	protected function content(array $request = []): string
@@ -233,8 +313,9 @@ class NodePair extends BaseAdmin
 			'$form_security_token_gen'    => self::getFormSecurityToken('admin_node_pair_generate'),
 			'$form_security_token_accept' => self::getFormSecurityToken('admin_node_pair_accept'),
 			'$form_security_token_reject' => self::getFormSecurityToken('admin_node_pair_reject'),
-			'$form_security_token_remove' => self::getFormSecurityToken('admin_node_pair_remove'),
-			'$form_security_token_add'    => self::getFormSecurityToken('admin_node_pair_add'),
+			'$form_security_token_remove'    => self::getFormSecurityToken('admin_node_pair_remove'),
+			'$form_security_token_add'       => self::getFormSecurityToken('admin_node_pair_add'),
+			'$form_security_token_bulk_add'  => self::getFormSecurityToken('admin_node_pair_bulk_add'),
 			'$baseurl'                    => (string) DI::baseUrl(),
 		]);
 	}

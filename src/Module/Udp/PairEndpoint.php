@@ -59,8 +59,10 @@ class PairEndpoint extends BaseModule
 			$this->jsonExit(['success' => false, 'error' => 'invalid requesting_domain'], 'application/json', 400);
 		}
 
-		// Consume token (single-use)
-		DI::config()->delete('udp_pair', $token);
+		// Consume token — single-use unless flagged multi_use (group broadcast tokens)
+		if (empty($pair_data['multi_use'])) {
+			DI::config()->delete('udp_pair', $token);
+		}
 
 		// Add the requesting node to this node's allowlist
 		$this->addToAllowedSites($requesting_domain);

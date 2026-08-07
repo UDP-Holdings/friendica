@@ -68,16 +68,32 @@
 	</div>
 	{{/if}}
 
-	{{* ── Manual domain add ──────────────────────────────────────────── *}}
+	{{* ── Bulk import ────────────────────────────────────────────────── *}}
 	<div class="well" style="margin-bottom:1.5em;">
-		<h4 style="margin-top:0;">Add a domain manually</h4>
-		<p class="text-muted" style="margin-bottom:.75em;">Directly allow a server without going through the QR pairing flow — useful for relay nodes or nodes you trust by domain.</p>
+		<h4 style="margin-top:0;">Import a trusted node list</h4>
+		<p class="text-muted" style="margin-bottom:.75em;">Paste a list of node domains (one per line, or comma-separated). Each node is added to your allowlist and sent a pairing request — their admins will see a one-click accept in their admin panel.</p>
+		<form action="{{$baseurl}}/admin/node-pair/bulk_add" method="post">
+			<input type="hidden" name="form_security_token" value="{{$form_security_token_bulk_add}}">
+			<div class="form-group" style="margin-bottom:.75em;">
+				<label for="udp-bulk-domains" style="font-weight:normal;">Node domains</label>
+				<textarea id="udp-bulk-domains" name="domains" class="form-control" rows="6"
+					placeholder="alice.udp.social&#10;bob.udp.social&#10;carol.udp.social"
+					style="font-family:monospace; font-size:12px; margin-top:.25em;"></textarea>
+			</div>
+			<button type="submit" class="btn btn-primary">Import and announce</button>
+		</form>
+	</div>
+
+	{{* ── Single domain add ──────────────────────────────────────────── *}}
+	<div class="well" style="margin-bottom:1.5em;">
+		<h4 style="margin-top:0;">Add a single domain</h4>
+		<p class="text-muted" style="margin-bottom:.75em;">Add one domain without sending a pairing request — useful for relay nodes.</p>
 		<form action="{{$baseurl}}/admin/node-pair/add" method="post" style="display:flex; gap:.5em; align-items:flex-end; flex-wrap:wrap;">
 			<input type="hidden" name="form_security_token" value="{{$form_security_token_add}}">
 			<div class="form-group" style="margin:0; flex:1; min-width:200px;">
 				<label for="udp-manual-domain" style="font-weight:normal;">Domain</label>
 				<input type="text" id="udp-manual-domain" name="domain" class="form-control"
-					placeholder="example.social" style="margin-top:.25em;">
+					placeholder="relay.example.social" style="margin-top:.25em;">
 			</div>
 			<button type="submit" class="btn btn-default">Add</button>
 		</form>
