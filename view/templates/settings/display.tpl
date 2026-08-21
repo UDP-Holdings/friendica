@@ -33,6 +33,7 @@
 	{{include file="field_select.tpl" field=$platform_icon_style}}
 	{{include file="field_checkbox.tpl" field=$embed_remote_media}}
 	{{include file="field_checkbox.tpl" field=$embed_media}}
+	{{include file="field_checkbox.tpl" field=$photo_keep_original}}
 	<h2 tabindex="0">{{$timeline_title}}</h2>
 	<p tabindex="0">{{$timeline_explanation}} {{$sortable}}</p>
 	<h3 tabindex="0">{{$timeline_enable}}</h3>
