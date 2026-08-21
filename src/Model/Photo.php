@@ -37,6 +37,7 @@ class Photo
 	public const BANNER_PHOTOS  = 'Banner Photos';
 
 	public const DEFAULT        = 0;
+	public const SCALE_ORIGINAL = 7;
 	public const USER_AVATAR    = 10;
 	public const USER_BANNER    = 11;
 	public const CONTACT_AVATAR = 20;

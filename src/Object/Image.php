@@ -513,6 +513,17 @@ class Image
 		return $exif;
 	}
 
+
+	public function stripExif(): void
+	{
+		if (!$this->isValid()) {
+			return;
+		}
+		if ($this->isImagick()) {
+			$this->image->stripImage();
+		}
+		// GD: imagejpeg() in asString() already drops EXIF on re-encode.
+	}
 	/**
 	 * Rescales image to minimum size
 	 *
