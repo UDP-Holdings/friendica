@@ -8,6 +8,7 @@ namespace Friendica\Module\Udp\Media;
 use Friendica\App;
 use Friendica\BaseModule;
 use Friendica\Core\Config\Capability\IManageConfigValues;
+use Friendica\Core\PConfig\Capability\IManagePersonalConfigValues;
 use Friendica\Core\L10n;
 use Friendica\Core\Session\Model\UserSession;
 use Friendica\Core\System;
@@ -24,10 +25,12 @@ class PhotoUpload extends BaseModule
 {
 	private UserSession $userSession;
 	private IManageConfigValues $config;
+	private IManagePersonalConfigValues $pConfig;
 
 	public function __construct(
 		UserSession $userSession,
 		IManageConfigValues $config,
+		IManagePersonalConfigValues $pConfig,
 		L10n $l10n,
 		App\BaseURL $baseUrl,
 		App\Arguments $args,
@@ -40,6 +43,7 @@ class PhotoUpload extends BaseModule
 		parent::__construct($l10n, $baseUrl, $args, $logger, $profiler, $response, $server, $parameters);
 		$this->userSession = $userSession;
 		$this->config      = $config;
+		$this->pConfig     = $pConfig;
 	}
 
 	protected function post(array $request = [])
@@ -80,6 +84,16 @@ class PhotoUpload extends BaseModule
 		$image->orient($src);
 		@unlink($src);
 
+		// Determine per-post keep_original flag (explicit POST field wins over user default)
+		if (isset($request['keep_original'])) {
+			$keepOriginal = $request['keep_original'] === '1';
+		} else {
+			$keepOriginal = (bool) $this->pConfig->get($owner['uid'], 'udp', 'photo_keep_original', false);
+		}
+
+		// Capture full-res oriented image before any pixel scaling for scale-7 storage
+		$originalImageData = $keepOriginal ? $image->asString() : null;
+
 		$maxLength = $this->config->get('system', 'max_image_length');
 		if ($maxLength > 0) {
 			$image->scaleDown($maxLength);
@@ -94,6 +108,15 @@ class PhotoUpload extends BaseModule
 
 		if ($preview < 0) {
 			$this->jsonError(500, ['error' => $this->t('Image upload failed.')]);
+		}
+
+		// Store EXIF-stripped full-res original as scale 7 (download original)
+		if ($keepOriginal && $originalImageData !== null) {
+			$origImage = new Image($originalImageData, $filetype, $filename);
+			if ($origImage->isValid()) {
+				$origImage->stripExif();
+				Photo::store($origImage, $owner['uid'], 0, $resourceId, $filename, '', Photo::SCALE_ORIGINAL, Photo::DEFAULT, $allowCid, '', '', '');
+			}
 		}
 
 		// Index in udp-media so this photo appears in the unified media manager
