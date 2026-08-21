@@ -314,6 +314,7 @@ class Compose extends BaseModule
 			'$group_circle_id'          => $groupCircleId,
 			'$group_circle_name'        => $groupCircleName,
 			'$group_circle_actors_json' => $groupCircleActorsJson,
+			'$keep_original_default' => (bool) $this->pConfig->get($this->session->getLocalUserId(), 'udp', 'photo_keep_original', false),
 
 			'$jotplugins'   => $jotplugins,
 			'$rand_num'     => Crypto::randomDigits(12),

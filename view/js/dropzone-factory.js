@@ -147,6 +147,8 @@ var DzFactory = function (max_imagesize) {
 						var el = scope.querySelector('[name="' + field + '"]');
 						formData.append(field, el ? el.value : '');
 					});
+					var keepOrigEl = scope.querySelector('[name="keep_original"]');
+					formData.append('keep_original', (keepOrigEl && keepOrigEl.checked) ? '1' : '0');
 				});
 
 				this.on("chunksUploaded", function(file, done) {

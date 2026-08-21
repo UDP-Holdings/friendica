@@ -228,10 +228,11 @@
 	<p>{{$l10n.always_open_compose nofilter}}</p>
 	{{/if}}
 	<div id="profile-jot-wrapper">
-		<form class="comment-edit-form" data-item-id="{{$id}}" id="comment-edit-form-{{$id}}" action="compose/{{$type}}" method="post">
+		<form class="comment-edit-form" data-item-id="{{$id}}" id="comment-edit-form-{{$id}}" action="{{if $form_action}}{{$form_action}}{{else}}compose/{{$type}}{{/if}}" method="post">
 			<input type="hidden" name="post_id_random" value="{{$rand_num}}" />
 			<input type="hidden" name="post_type" value="{{$posttype}}" />
 			<input type="hidden" name="wall" value="{{$wall}}" />
+			{{if $post_id}}<input type="hidden" name="post_id" value="{{$post_id}}" />{{/if}}
 			<input type="hidden" name="group_circle_id" id="udp-gc-id-{{$id}}" value="{{$group_circle_id|intval}}" />
 			<div id="udp-gc-banner-{{$id}}" class="alert alert-info" style="display:{{if $group_circle_id}}flex{{else}}none{{/if}};align-items:center;gap:8px;margin:4px 0 8px;">
 				Posting to <strong id="udp-gc-name-{{$id}}">{{$group_circle_name|escape}}</strong>
@@ -291,6 +292,12 @@
 				</span>
 			</p>
 
+			<div class="udp-keep-original-row" style="font-size:0.8em;color:var(--text-muted,#888);margin:2px 4px 4px;">
+				<label style="cursor:pointer;user-select:none;">
+					<input type="checkbox" name="keep_original" id="keep-original-{{$id}}" {{if $keep_original_default}}checked{{/if}} style="vertical-align:middle;margin-right:4px;">
+					Keep full-resolution original
+				</label>
+			</div>
 			<div class="compose-split-pane">
 				<div class="compose-editor-pane">
 					<div id="dropzone-{{$id}}" class="dropzone">
