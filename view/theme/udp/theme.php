@@ -68,6 +68,22 @@ function udp_init(AppHelper $appHelper)
 		DI::page()['htmlhead'] .= '<script>window.UDP_COMPOSE_DEFAULTS=' . json_encode($_udp_compose_defaults) . ';</script>';
 	}
 
+	// Override editpost() so the "Edit" post menu navigates to the compose-edit
+	// full page instead of loading in the jot modal (which doesn't support our compose UI).
+	DI::page()['htmlhead'] .= <<<'HTML'
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+	window.editpost = (function(orig) {
+		return function(url) {
+			var m = (url || '').match(/compose\/edit\/(\d+)/);
+			if (m) { window.location.href = baseurl + '/compose/edit/' + m[1]; return; }
+			if (orig) orig.call(this, url);
+		};
+	}(window.editpost));
+});
+</script>
+HTML;
+
 	// Recent-colors palette on the Display Settings page
 	if (str_ends_with(parse_url($_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH) ?? '', '/settings/display')) {
 		DI::page()['htmlhead'] .= <<<'HTML'

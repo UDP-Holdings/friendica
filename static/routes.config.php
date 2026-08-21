@@ -381,7 +381,8 @@ return [
 	'/channel[/{content}]'   => [Module\Conversation\Channel::class,   [R::GET]],
 	'/community[/{content}]' => [Module\Conversation\Community::class, [R::GET]],
 
-	'/compose[/{type}]' => [Module\Item\Compose::class, [R::GET, R::POST]],
+	'/compose/edit/{post_id}'  => [Module\Item\ComposeEdit::class, [R::GET         ]],
+	'/compose[/{type}]'        => [Module\Item\Compose::class,     [R::GET, R::POST]],
 
 	'/contact' => [
 		'[/]'          => [Module\Contact::class,                [R::GET]],
