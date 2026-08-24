@@ -240,7 +240,7 @@
 			</div>
 
 			<div id="jot-title-wrap">
-				<input type="text" name="title" id="jot-title" class="jothidden jotforms form-control" placeholder="{{$l10n.placeholdertitle}}" title="{{$l10n.placeholdertitle}}" value="{{$title}}" tabindex="1" dir="auto" autocapitalize="words" />
+				<input type="text" name="title" id="jot-title" class="jothidden jotforms form-control" placeholder="{{$l10n.placeholdertitle}}" title="{{$l10n.placeholdertitle}}" value="{{$title}}" tabindex="1" dir="auto" autocapitalize="sentences" />
 			</div>
 			{{if $l10n.placeholdercategory}}
 				<div id="jot-category-wrap">
