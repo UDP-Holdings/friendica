@@ -23,10 +23,13 @@ function udp_init(AppHelper $appHelper)
 
 	// Force a cache-bust for the UDP stylesheet on every theme version bump.
 	// Friendica uses App::VERSION (e.g. "2026.01") as the ?v= param for all assets,
-	// which never changes between our deploys. Adding ?udp=1 gives us a distinct URL
+	// which never changes between our deploys. Adding ?udp=N gives us a distinct URL
 	// that Page::registerStylesheet() won't overwrite (it only merges the 'v' key),
 	// so browsers re-fetch when we increment this string.
-	Renderer::$theme['stylesheet'] = 'view/theme/udp/style.pcss?udp=5';
+	// Must also append puid so style.pcss applies the logged-in user's scheme/accent.
+	$_udp_puid = \Friendica\Model\Profile::getThemeUid(DI::appHelper());
+	$_udp_qs   = 'udp=5' . ($_udp_puid ? '&puid=' . $_udp_puid : '');
+	Renderer::$theme['stylesheet'] = 'view/theme/udp/style.pcss?' . $_udp_qs;
 
 	// UDP always routes "New post" directly to /compose — no jot modal
 	$uid = DI::userSession()->getLocalUserId();
