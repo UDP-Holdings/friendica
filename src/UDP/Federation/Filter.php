@@ -2,6 +2,7 @@
 
 namespace Friendica\UDP\Federation;
 
+use Friendica\Network\HTTPException\NotFoundException;
 use Friendica\Object\Search\ContactResult;
 use Friendica\Object\Search\ResultList;
 use Friendica\Util\HTTPSignature;
@@ -88,5 +89,23 @@ class Filter
 		$signer = HTTPSignature::getSigner('', $server);
 		$domain = $signer ? (parse_url($signer, PHP_URL_HOST) ?? '') : '';
 		$this->gateway->checkInbound($domain);
+	}
+
+	/**
+	 * Gate WebFinger /.well-known/webfinger by allowlist.
+	 * Unsigned or non-allowlisted requests get NotFoundException (404) so the
+	 * user's existence is not confirmed to outside crawlers.
+	 * Safe to call even when gateway is disabled — Gateway::checkInbound() no-ops in that case.
+	 */
+	public function checkInboundWebFinger(array $server): void
+	{
+		$signer = HTTPSignature::getSigner('', $server);
+		$domain = $signer ? (parse_url($signer, PHP_URL_HOST) ?? '') : '';
+
+		try {
+			$this->gateway->checkInbound($domain);
+		} catch (\Friendica\Network\HTTPException\ForbiddenException $e) {
+			throw new NotFoundException();
+		}
 	}
 }

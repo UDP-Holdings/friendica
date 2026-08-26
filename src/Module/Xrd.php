@@ -62,6 +62,8 @@ class Xrd extends BaseModule
 			throw new NotFoundException('Invalid host name for xrd query: ' . $host);
 		}
 
+		DI::federationFilter()->checkInboundWebFinger($this->server);
+
 		header('Vary: Accept', false);
 
 		$alias = '';
