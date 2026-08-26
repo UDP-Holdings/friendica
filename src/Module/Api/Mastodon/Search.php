@@ -112,6 +112,9 @@ class Search extends BaseApi
 		}
 
 		if ((empty($type) || ($type == 'accounts')) && in_array($data['type'], [Post\Media::HTML, Post\Media::ACCOUNT, Post\Media::UNKNOWN])) {
+			if (!$uid && DI::config()->get('udp', 'gateway_enabled', true)) {
+				$this->jsonExit($result);
+			}
 			$id = Contact::getIdForURL($q, 0, false);
 			if ($id) {
 				$result['accounts'] = [DI::mstdnAccount()->createFromContactId($id, $uid)];
@@ -139,6 +142,9 @@ class Search extends BaseApi
 	private function searchAccounts(int $uid, string $q, bool $resolve, int $limit, int $offset, bool $following)
 	{
 		$this->logger->debug('Search', ['q' => $q, 'resolve' => $resolve, 'offset' => $offset]);
+		if (!$uid && DI::config()->get('udp', 'gateway_enabled', true)) {
+			return [];
+		}
 		$resolveAllowed = $resolve && DI::federationFilter()->allowsHandle($q);
 		if (($offset == 0) && (strrpos($q, '@') > 0) && $id = Contact::getIdForURL(ltrim($q, '@'), 0, $resolveAllowed ? null : false)) {
 			return DI::mstdnAccount()->createFromContactId($id, $uid);

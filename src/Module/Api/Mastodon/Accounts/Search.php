@@ -27,6 +27,10 @@ class Search extends BaseApi
 		$this->checkAllowedScope(self::SCOPE_READ);
 		$uid = self::getCurrentUserID();
 
+		if (!$uid && DI::config()->get('udp', 'gateway_enabled', true)) {
+			$this->jsonExit([]);
+		}
+
 		$request = $this->getRequest([
 			'q'         => '',    // What to search for
 			'limit'     => 40,    // Maximum number of results. Defaults to 40.

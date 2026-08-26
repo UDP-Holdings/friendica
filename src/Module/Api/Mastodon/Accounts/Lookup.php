@@ -25,6 +25,10 @@ class Lookup extends BaseApi
 		$this->checkAllowedScope(self::SCOPE_READ);
 		$uid = self::getCurrentUserID();
 
+		if (!$uid && DI::config()->get('udp', 'gateway_enabled', true)) {
+			$this->logAndJsonError(404, $this->errorFactory->RecordNotFound());
+		}
+
 		$request = $this->getRequest([
 			'acct' => '', // The username or Webfinger address to lookup.
 		], $request);
