@@ -83,15 +83,15 @@ class Compose extends BaseModule
 			$uid           = $this->session->getLocalUserId();
 			$groupCircleId = (int)($request['group_circle_id'] ?? 0);
 
-			// !! (bang-bang) syntax: resolve !!nick to a Group Circle from any compose surface.
+			// #! (shebang) syntax: resolve #!nick to a Group from any compose surface.
 			// Takes precedence if group_circle_id is not already set.
-			if (!$groupCircleId && preg_match('/!!(\w+)/', $request['body'], $m)) {
+			if (!$groupCircleId && preg_match('/#!(\w+)/', $request['body'], $m)) {
 				$resolved = UdpGroupCircle::findByActorNick($m[1], $uid);
 				if ($resolved) {
 					$groupCircleId = (int)$resolved['id'];
 				} else {
 					$this->systemMessages->addNotice($this->l10n->t(
-						'!!%s did not match any of your circles — post was not sent to a circle. Circle names cannot contain spaces.',
+						'#!%s did not match any of your groups — post was not sent to a group. Group names cannot contain spaces.',
 						$m[1]
 					));
 				}
@@ -117,8 +117,9 @@ class Compose extends BaseModule
 					}
 				}
 			}
-			// Strip !! routing directive from body — it's a send-time signal, not display content.
-			$_REQUEST['body'] = trim(preg_replace('/\s*!!(\w+)\s*/u', ' ', $request['body']));
+			// Strip #! routing directive from body — it's a send-time signal, not display content.
+			// \w* (not \w+) so a bare #! with no nick is also removed.
+			$_REQUEST['body'] = trim(preg_replace('/\s*#!(\w*)\s*/u', ' ', $request['body']));
 
 			$_REQUEST['return'] = 'network';
 			require_once 'mod/item.php';

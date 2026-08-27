@@ -511,7 +511,7 @@ class UdpGroupCircle
 	}
 
 	/**
-	 * Resolves a !!nick mention to a circle the given user is a member of.
+	 * Resolves a #!nick mention to a group the given user is a member of.
 	 * Matches case-insensitively against the group actor's nick.
 	 * Returns the circle row, or null if not found or user is not a member.
 	 */

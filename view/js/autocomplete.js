@@ -260,9 +260,9 @@ function string2bb(element) {
 			template: contact_format,
 		};
 
-		// UDP: !! syntax — autocomplete Group Circle actors the user belongs to
+		// UDP: #! syntax — autocomplete Group actors the user belongs to
 		udpCircles = {
-			match: /(^|\s)(!!)([^ \n]+)$/,
+			match: /(^|\s)(#!)([^ \n]+)$/,
 			index: 3,
 			search: function(term, callback) { contact_search(term, callback, backend_url, 'gg'); },
 			replace: function(item) {
@@ -270,8 +270,8 @@ function string2bb(element) {
 				if (item.group) {
 					$(document).trigger('udp:group-mention', [item]);
 				}
-				// !! syntax needs just !!nick (no @addr, no +id suffix)
-				return '$1!!' + (item.nick || '').replace(/\s+/g, '') + ' ';
+				// #! syntax needs just #!nick (no @addr, no +id suffix)
+				return '$1#!' + (item.nick || '').replace(/\s+/g, '') + ' ';
 			},
 			template: contact_format,
 		};

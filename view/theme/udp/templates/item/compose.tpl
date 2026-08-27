@@ -743,9 +743,9 @@
 			previewEl.classList.add('is-loading');
 
 			// Expand photo tokens for preview without mutating the textarea.
-			// Also strip !! routing directives — they're not display content.
+			// Also strip #! routing directives — they're not display content.
 			var expanded     = window.PhotoTokenizer ? window.PhotoTokenizer.expand(textarea.value) : textarea.value;
-			var previewText  = expanded.replace(/[ \t]*!!(\w+)[ \t]*/g, '').trim();
+			var previewText  = expanded.replace(/[ \t]*#!(\w*)[ \t]*/g, '').trim();
 			var originalVal  = textarea.value;
 			textarea.value   = previewText;
 			var formData     = $('#comment-edit-form-' + FORM_ID).serialize() + '&preview=1';
@@ -854,8 +854,8 @@
 			if (!mentionAddr) return;
 			var nick = mentionAddr.split('@')[0];
 			var val  = $(this).val();
-			// Clear banner if neither @nick nor !!nick is still present
-			if (val.indexOf('@' + nick) === -1 && val.indexOf('!!' + nick) === -1) {
+			// Clear banner if neither @nick nor #!nick is still present
+			if (val.indexOf('@' + nick) === -1 && val.indexOf('#!' + nick) === -1) {
 				if (gcIdField) gcIdField.value = '0';
 				mentionAddr = null;
 				hideBanner();
