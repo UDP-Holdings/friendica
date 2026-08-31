@@ -543,8 +543,8 @@ class Widget
 				$dyear       = intval(substr($dnow, 0, 4));
 				$dstart      = substr($dnow, 0, 8) . '01';
 				$dend        = substr($dnow, 0, 8) . Temporal::getDaysInMonth(intval($dnow), intval(substr($dnow, 5)));
-				$start_month = DateTimeFormat::utc($dstart, 'Y-m-d');
-				$end_month   = DateTimeFormat::utc($dend, 'Y-m-d');
+				$start_month = $dstart;
+				$end_month   = $dend;
 				$str         = DI::l10n()->formatDateTimeByPattern($dnow, 'LLLL');
 
 				if (empty($ret[$dyear])) {
