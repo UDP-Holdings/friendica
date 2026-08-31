@@ -12,6 +12,7 @@ use Friendica\Core\Config\Capability\IManageConfigValues;
 use Friendica\Core\L10n;
 use Friendica\Core\Session\Capability\IHandleUserSessions;
 use Friendica\Core\System;
+use Friendica\DI;
 use Friendica\Model\Photo;
 use Friendica\Model\User;
 use Friendica\Module\Response;
@@ -154,9 +155,20 @@ class Upload extends \Friendica\BaseModule
 			$album = $this->t('Wall Photos');
 		}
 
-		$allow_cid = '<' . $owner['id'] . '>';
+		// Inherit ACL from the compose form's visibility selection.
+		// Dropzone sends visibility/contact_allow/circle_allow/contact_deny/circle_deny
+		// with the upload so the photo is stored with the same permissions as the post.
+		$acl = DI::aclFormatter();
+		if (($request['visibility'] ?? '') === 'public' || !isset($request['visibility'])) {
+			$allow_cid = $allow_gid = $deny_cid = $deny_gid = '';
+		} else {
+			$allow_cid = $acl->toString($request['contact_allow'] ?? '');
+			$allow_gid = $acl->toString($request['circle_allow']  ?? '');
+			$deny_cid  = $acl->toString($request['contact_deny']  ?? '');
+			$deny_gid  = $acl->toString($request['circle_deny']   ?? '');
+		}
 
-		$preview = Photo::storeWithPreview($image, $owner['uid'], $resource_id, $filename, $filesize, $album, '', $allow_cid, '', '', '');
+		$preview = Photo::storeWithPreview($image, $owner['uid'], $resource_id, $filename, $filesize, $album, '', $allow_cid, $allow_gid, $deny_cid, $deny_gid);
 		if ($preview < 0) {
 			$this->logger->warning('Photo::store() failed');
 			$this->return(401, $this->t('Image upload failed.'));
