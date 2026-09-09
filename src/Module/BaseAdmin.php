@@ -76,6 +76,9 @@ abstract class BaseAdmin extends BaseModule
 				'tos'       => ['admin/tos'         , DI::l10n()->t('Terms of Service')        , 'tos'],
 				'node-pair' => ['admin/node-pair'   , DI::l10n()->t('Node Pairing')            , 'node-pair'],
 			]],
+			'legal' => [DI::l10n()->t('Legal'), [
+				'takedown' => ['admin/takedown', DI::l10n()->t('Takedown Requests'), 'takedown'],
+			]],
 		];
 
 		$addons_admin = [];
