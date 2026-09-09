@@ -11,6 +11,7 @@ use Friendica\DI;
 use Friendica\Model\Item;
 use Friendica\Model\Post;
 use Friendica\Model\User;
+use Friendica\Moderation\Entity\Report;
 use Friendica\Module\BaseAdmin;
 
 /**
@@ -142,7 +143,7 @@ class Takedown extends BaseAdmin
 		$id     = (int) ($this->parameters['id'] ?? 0);
 
 		if ($action === 'new') {
-			return $this->renderNew();
+			return $this->renderNew($request);
 		}
 
 		if ($action === 'review' && $id) {
@@ -159,23 +160,54 @@ class Takedown extends BaseAdmin
 		$open   = DI::dba()->selectToArray('udp_takedown', [], ['status' => self::STATUS_OPEN],   ['order' => ['received_at' => true]]);
 		$closed = DI::dba()->selectToArray('udp_takedown', [], ['status' => [self::STATUS_ACTIONED, self::STATUS_DISMISSED]], ['order' => ['actioned_at' => true], 'limit' => 50]);
 
+		// Pull open user reports flagged as copyright so the admin can promote them to takedown requests
+		$copyright_reports = DI::dba()->selectToArray(
+			'report',
+			['id', 'cid', 'comment', 'created'],
+			['category-id' => Report::CATEGORY_COPYRIGHT, 'status' => Report::STATUS_OPEN],
+			['order' => ['created' => true]]
+		);
+
 		return Renderer::replaceMacros(Renderer::getMarkupTemplate('admin/takedown.tpl'), [
-			'$title'    => DI::l10n()->t('Administration'),
-			'$page'     => DI::l10n()->t('Takedown Requests'),
-			'$view'     => 'list',
-			'$open'     => $open,
-			'$closed'   => $closed,
-			'$baseurl'  => (string) DI::baseUrl(),
+			'$title'              => DI::l10n()->t('Administration'),
+			'$page'               => DI::l10n()->t('Takedown Requests'),
+			'$view'               => 'list',
+			'$open'               => $open,
+			'$closed'             => $closed,
+			'$copyright_reports'  => $copyright_reports,
+			'$baseurl'            => (string) DI::baseUrl(),
 		]);
 	}
 
-	private function renderNew(): string
+	private function renderNew(array $request = []): string
 	{
+		$prefill_url     = '';
+		$prefill_comment = '';
+		$from_report_id  = (int) ($request['from_report'] ?? 0);
+
+		if ($from_report_id) {
+			$report = DI::dba()->selectFirst('report', ['comment'], ['id' => $from_report_id]);
+			if ($report) {
+				$prefill_comment = $report['comment'];
+			}
+			// Try to get a plink from the first post attached to the report
+			$rpost = DI::dba()->selectFirst('report-post', ['uri-id'], ['rid' => $from_report_id]);
+			if ($rpost) {
+				$post = Post::selectFirst(['plink'], ['uri-id' => $rpost['uri-id']]);
+				if ($post) {
+					$prefill_url = $post['plink'];
+				}
+			}
+		}
+
 		return Renderer::replaceMacros(Renderer::getMarkupTemplate('admin/takedown.tpl'), [
 			'$title'                => DI::l10n()->t('Administration'),
 			'$page'                 => DI::l10n()->t('New Takedown Request'),
 			'$view'                 => 'new',
 			'$baseurl'              => (string) DI::baseUrl(),
+			'$prefill_url'          => $prefill_url,
+			'$prefill_comment'      => $prefill_comment,
+			'$from_report_id'       => $from_report_id,
 			'$form_security_token'  => self::getFormSecurityToken('admin_takedown_new'),
 		]);
 	}

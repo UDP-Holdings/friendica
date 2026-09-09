@@ -13,6 +13,35 @@
 	<a href="{{$baseurl}}/admin/takedown/new" class="btn btn-primary">+ New takedown request</a>
 </p>
 
+{{if $copyright_reports}}
+<h3>User-flagged copyright content</h3>
+<p class="text-muted">These posts were flagged as "Copyright / DMCA" by users on this node. Review each one and, if a formal takedown is warranted, open a new request.</p>
+<table class="table table-striped">
+	<thead>
+		<tr>
+			<th>Report #</th>
+			<th>Flagged</th>
+			<th>User comment</th>
+			<th></th>
+		</tr>
+	</thead>
+	<tbody>
+	{{foreach $copyright_reports as $rep}}
+	<tr>
+		<td><a href="{{$baseurl}}/moderation/reports/{{$rep.id}}">{{$rep.id}}</a></td>
+		<td><small>{{$rep.created}}</small></td>
+		<td>{{$rep.comment}}</td>
+		<td>
+			<a href="{{$baseurl}}/admin/takedown/new?from_report={{$rep.id}}"
+			   class="btn btn-warning btn-xs">Open takedown request</a>
+		</td>
+	</tr>
+	{{/foreach}}
+	</tbody>
+</table>
+<hr>
+{{/if}}
+
 <h3>Open requests</h3>
 {{if $open}}
 <table class="table table-striped">
@@ -109,17 +138,23 @@
 		       placeholder='e.g. "Photograph titled Example, © 2024 Jane Smith"'>
 	</div>
 
+	{{if $from_report_id}}
+	<input type="hidden" name="from_report_id" value="{{$from_report_id}}">
+	<div class="alert alert-info">Pre-filled from user report #{{$from_report_id}}. Add the complainant details and confirm the URL before saving.</div>
+	{{/if}}
+
 	<div class="form-group">
 		<label for="claimed_url">URL of allegedly infringing content <span class="text-danger">*</span></label>
 		<input type="url" class="form-control" id="claimed_url" name="claimed_url"
-		       placeholder="https://this.node/display/...">
+		       value="{{$prefill_url}}" placeholder="https://this.node/display/...">
 		<p class="help-block">Paste the full URL as provided by the complainant. If this is a post on this node, the system will attempt to locate it for inline review.</p>
 	</div>
 
 	<div class="form-group">
 		<label for="notes">Notes</label>
 		<textarea class="form-control" id="notes" name="notes" rows="4"
-		          placeholder="Any additional context — how the notice was received, attachments, correspondence summary, etc."></textarea>
+		          placeholder="Any additional context — how the notice was received, attachments, correspondence summary, etc."
+		          >{{$prefill_comment}}</textarea>
 	</div>
 
 	<button type="submit" class="btn btn-primary">Record request</button>

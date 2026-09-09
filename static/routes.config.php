@@ -349,9 +349,7 @@ return [
 		'/tos' => [Module\Admin\Tos::class, [R::GET, R::POST]],
 
 		'/node-pair[/{action}]'          => [Module\Admin\NodePair::class,   [R::GET, R::POST]], // UDP: node pairing UI
-		'/takedown'                      => [Module\Admin\Takedown::class,  [R::GET, R::POST]], // UDP: takedown request list
-		'/takedown/new'                  => [Module\Admin\Takedown::class,  [R::GET, R::POST]], // UDP: new takedown intake
-		'/takedown/review/{id:\d+}'      => [Module\Admin\Takedown::class,  [R::GET, R::POST]], // UDP: review & act on request
+		'/takedown[/{action}[/{id:\d+}]]' => [Module\Admin\Takedown::class,  [R::GET, R::POST]], // UDP: takedown requests
 	],
 	'/amcd'              => [Module\AccountManagementControlDocument::class, [R::GET]],
 	'/acctlink'          => [Module\Acctlink::class,     [R::GET]],
