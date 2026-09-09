@@ -32,6 +32,8 @@ final class ReportUtil
 				return $this->l10n->t('Unwanted Content/Behavior');
 			case Report::CATEGORY_VIOLATION:
 				return $this->l10n->t('Rules Violation');
+			case Report::CATEGORY_COPYRIGHT:
+				return $this->l10n->t('Copyright / DMCA');
 			case Report::CATEGORY_OTHER:
 				return $this->l10n->t('Other');
 			default:

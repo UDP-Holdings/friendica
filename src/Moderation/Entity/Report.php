@@ -31,12 +31,13 @@ use Friendica\Moderation\Collection;
  */
 final class Report extends \Friendica\BaseEntity
 {
-	public const CATEGORY_OTHER     = 1;
-	public const CATEGORY_SPAM      = 2;
-	public const CATEGORY_ILLEGAL   = 4;
-	public const CATEGORY_SAFETY    = 8;
-	public const CATEGORY_UNWANTED  = 16;
-	public const CATEGORY_VIOLATION = 32;
+	public const CATEGORY_OTHER      = 1;
+	public const CATEGORY_SPAM       = 2;
+	public const CATEGORY_ILLEGAL    = 4;
+	public const CATEGORY_SAFETY     = 8;
+	public const CATEGORY_UNWANTED   = 16;
+	public const CATEGORY_VIOLATION  = 32;
+	public const CATEGORY_COPYRIGHT  = 64;
 
 	public const CATEGORIES = [
 		self::CATEGORY_OTHER,
@@ -45,6 +46,7 @@ final class Report extends \Friendica\BaseEntity
 		self::CATEGORY_SAFETY,
 		self::CATEGORY_UNWANTED,
 		self::CATEGORY_VIOLATION,
+		self::CATEGORY_COPYRIGHT,
 	];
 
 	public const STATUS_CLOSED = 1;

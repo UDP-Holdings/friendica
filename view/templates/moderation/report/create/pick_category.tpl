@@ -14,6 +14,7 @@
         {{include file="field_radio.tpl" field=$category_safety}}
         {{include file="field_radio.tpl" field=$category_unwanted}}
         {{include file="field_radio.tpl" field=$category_violation}}
+        {{include file="field_radio.tpl" field=$category_copyright}}
         {{include file="field_radio.tpl" field=$category_other}}
 
 		{{include file="field_textarea.tpl" field=$comment}}
